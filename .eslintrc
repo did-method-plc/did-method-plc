@@ -1,0 +1,35 @@
+{
+  "root": true,
+  // parse TypeScript files
+  // https://github.com/typescript-eslint/typescript-eslint/tree/master/packages/parser
+  "parser": "@typescript-eslint/parser",
+  // configure eslint using options described at
+  // https://github.com/typescript-eslint/typescript-eslint/tree/master/packages/eslint-plugin
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+    "prettier"
+  ],
+  "ignorePatterns":[
+    "dist",
+    "node_modules",
+    "jest.config.base.js",
+    "jest.bench.config.js",
+    "jest.config.js",
+    "babel.config.js",
+    "build.js",
+    "update-pkg.js"
+  ],
+  "rules": {
+    "no-var": "error",
+    "prefer-const": "warn",
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-empty-function": "off"
+  }
+}

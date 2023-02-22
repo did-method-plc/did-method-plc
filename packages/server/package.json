@@ -1,0 +1,46 @@
+{
+  "name": "@did-plc/server",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node dist/bin.js",
+    "test": "jest",
+    "test:pg": "../../pg/with-test-db.sh jest",
+    "test:log": "cat test.log | pino-pretty",
+    "prettier": "prettier --check src/",
+    "prettier:fix": "prettier --write src/",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "yarn lint --fix",
+    "verify": "run-p prettier lint",
+    "verify:fix": "yarn prettier:fix && yarn lint:fix",
+    "build": "node ./build.js",
+    "postbuild": "tsc --build tsconfig.build.json",
+    "migration:create": "ts-node ./bin/migration-create.ts",
+    "did:create": "ts-node ./bin/did-create.ts",
+    "update-main-to-dist": "node ./update-pkg.js --update-main-to-dist",
+    "update-main-to-src": "node ./update-pkg.js --update-main-to-src",
+    "prepublish": "npm run update-main-to-dist",
+    "postpublish": "npm run update-main-to-src"
+  },
+  "dependencies": {
+    "@atproto/common": "0.1.0",
+    "@atproto/crypto": "0.1.0",
+    "@did-plc/lib": "*",
+    "axios": "^0.27.2",
+    "better-sqlite3": "^8.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "http-terminator": "^3.2.0",
+    "kysely": "^0.23.4",
+    "multiformats": "^9.6.4",
+    "pg": "^8.9.0",
+    "pino": "^8.11.0",
+    "pino-http": "^8.3.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.6.5",
+    "eslint-plugin-prettier": "^4.2.1"
+  }
+}
