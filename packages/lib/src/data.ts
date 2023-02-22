@@ -70,9 +70,7 @@ export const assureValidNextOp = async (
   )
 
   const indexOfSigner = lastOpNormalized.rotationKeys.indexOf(disputedSigner)
-  const morePowerfulKeys = lastOpNormalized.rotationKeys.slice(
-    indexOfSigner + 1,
-  )
+  const morePowerfulKeys = lastOpNormalized.rotationKeys.slice(0, indexOfSigner)
 
   await assureValidSig(morePowerfulKeys, proposed)
 

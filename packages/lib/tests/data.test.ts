@@ -1,14 +1,12 @@
 import { check, cidForCbor } from '@atproto/common'
+import { EcdsaKeypair, Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import {
-  EcdsaKeypair,
-  Keypair,
-  parseDidKey,
-  Secp256k1Keypair,
-} from '@atproto/crypto'
-import * as uint8arrays from 'uint8arrays'
-import { InvalidSignatureError } from '../src'
+  GenesisHashError,
+  ImproperOperationError,
+  InvalidSignatureError,
+  MisorderedOperationError,
+} from '../src'
 import * as data from '../src/data'
-import * as document from '../src/document'
 import * as operations from '../src/operations'
 import * as t from '../src/types'
 
@@ -22,7 +20,6 @@ describe('plc did data', () => {
   let handle = 'alice.example.com'
   let atpPds = 'https://example.com'
 
-  let oldSigningKey: Secp256k1Keypair
   let oldRotationKey1: Secp256k1Keypair
 
   beforeAll(async () => {
@@ -125,7 +122,6 @@ describe('plc did data', () => {
     )
     ops.push(op)
 
-    oldSigningKey = signingKey
     signingKey = newSigningKey
 
     const doc = await data.validateOperationLog(did, ops)
@@ -189,6 +185,8 @@ describe('plc did data', () => {
       },
       rotationKey2,
     )
+    ops.push(op)
+    handle = newHandle
     const doc = await data.validateOperationLog(did, ops)
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
@@ -197,28 +195,45 @@ describe('plc did data', () => {
     expect(doc.services).toEqual({ atpPds })
   })
 
-  // it('requires operations to be in order', async () => {
-  //   const prev = await cidForCbor(ops[ops.length - 2])
-  //   const op = await operations.updateAtpPds(
-  //     'foobar.com',
-  //     prev.toString(),
-  //     signingKey,
-  //   )
-  //   expect(document.validateOperationLog(did, [...ops, op])).rejects.toThrow()
-  // })
+  it('requires operations to be in order', async () => {
+    const prev = await cidForCbor(ops[ops.length - 2])
+    const op = await makeNextOp(
+      {
+        handles: ['bob.test'],
+        prev: prev.toString(),
+      },
+      rotationKey1,
+    )
+    expect(data.validateOperationLog(did, [...ops, op])).rejects.toThrow(
+      MisorderedOperationError,
+    )
+  })
 
-  // it('does not allow a create operation in the middle of the log', async () => {
-  //   const op = await operations.create(
-  //     signingKey,
-  //     recoveryKey.did(),
-  //     handle,
-  //     atpPds,
-  //   )
-  //   expect(document.validateOperationLog(did, [...ops, op])).rejects.toThrow()
-  // })
+  it('does not allow a create operation in the middle of the log', async () => {
+    const op = await makeNextOp(
+      {
+        handles: ['bob.test'],
+        prev: null,
+      },
+      rotationKey1,
+    )
+    expect(data.validateOperationLog(did, [...ops, op])).rejects.toThrow(
+      MisorderedOperationError,
+    )
+  })
 
-  // it('requires that the log start with a create operation', async () => {
-  //   const rest = ops.slice(1)
-  //   expect(document.validateOperationLog(did, rest)).rejects.toThrow()
-  // })
+  it('requires that the did is the hash of the genesis op', async () => {
+    const rest = ops.slice(1)
+    expect(data.validateOperationLog(did, rest)).rejects.toThrow(
+      GenesisHashError,
+    )
+  })
+
+  it('requires that the log starts with a create op (no prev)', async () => {
+    const rest = ops.slice(1)
+    const expectedDid = await operations.didForCreateOp(rest[0])
+    expect(data.validateOperationLog(expectedDid, rest)).rejects.toThrow(
+      ImproperOperationError,
+    )
+  })
 })

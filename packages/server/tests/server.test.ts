@@ -1,5 +1,5 @@
 import { EcdsaKeypair } from '@atproto/crypto'
-import { Client, document } from '@did-plc/lib'
+import { Client } from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
 import { cidForCbor } from '@atproto/common'
 import { AxiosError } from 'axios'
@@ -48,8 +48,6 @@ describe('PLC server', () => {
     expect(doc.handle).toEqual(handle)
     expect(doc.atpPds).toEqual(atpPds)
   })
-
-  return
 
   it('can perform some updates', async () => {
     const newSigningKey = await EcdsaKeypair.create()
