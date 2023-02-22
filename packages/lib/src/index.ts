@@ -1,4 +1,5 @@
-export * as document from './document'
-export * as operations from './operations'
+export * from './data'
+export * from './document'
+export * from './operations'
 export * from './types'
 export * from './client'

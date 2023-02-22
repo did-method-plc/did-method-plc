@@ -19,6 +19,18 @@ export const createRouter = (ctx: AppContext): express.Router => {
     res.send({ version })
   })
 
+  router.get('/export', async function (req, res) {
+    const fullExport = await ctx.db.fullExport()
+    res.setHeader('content-type', 'application/jsonlines')
+    res.status(200)
+    for (const [did, ops] of Object.entries(fullExport)) {
+      const line = JSON.stringify({ did, ops })
+      res.write(line)
+      res.write('\n')
+    }
+    res.end()
+  })
+
   // Get data for a DID document
   router.get('/:did', async function (req, res) {
     const { did } = req.params
@@ -26,8 +38,8 @@ export const createRouter = (ctx: AppContext): express.Router => {
     if (log.length === 0) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
-    const data = await plc.document.validateOperationLog(did, log)
-    const doc = await plc.document.formatDidDoc(data)
+    const data = await plc.validateOperationLog(did, log)
+    const doc = await plc.formatDidDoc(data)
     res.type('application/did+ld+json')
     res.send(JSON.stringify(doc))
   })
@@ -39,7 +51,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
     if (log.length === 0) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
-    const data = await plc.document.validateOperationLog(did, log)
+    const data = await plc.validateOperationLog(did, log)
     res.send(data)
   })
 
@@ -59,9 +71,6 @@ export const createRouter = (ctx: AppContext): express.Router => {
     const op = req.body
     if (!check.is(op, plc.def.operation)) {
       throw new ServerError(400, `Not a valid operation: ${JSON.stringify(op)}`)
-    }
-    if (op.type !== 'create') {
-      throw new Error('All ops apart from `create` are temporarily disabled')
     }
     await ctx.db.validateAndAddOp(did, op)
     res.sendStatus(200)
