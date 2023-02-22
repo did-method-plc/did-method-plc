@@ -5,7 +5,14 @@ import { check, cidForCbor, HOUR } from '@atproto/common'
 import * as crypto from '@atproto/crypto'
 import * as t from './types'
 import { didForCreateOp, normalizeOp } from './operations'
-import { ServerError } from './error'
+import {
+  GenesisHashError,
+  ImproperOperationError,
+  InvalidSignatureError,
+  LateRecoveryError,
+  MisorderedOperationError,
+  UnsupportedKeyError,
+} from './error'
 
 export const assureValidNextOp = async (
   did: string,
@@ -14,7 +21,15 @@ export const assureValidNextOp = async (
 ): Promise<{ nullified: CID[]; prev: CID | null }> => {
   // ensure we support the proposed keys
   const keys = [proposed.signingKey, ...proposed.rotationKeys]
-  await Promise.all(keys.map((k) => crypto.parseDidKey(k)))
+  await Promise.all(
+    keys.map(async (k) => {
+      try {
+        crypto.parseDidKey(k)
+      } catch (err) {
+        throw new UnsupportedKeyError(k, err)
+      }
+    }),
+  )
 
   // special case if account creation
   if (ops.length === 0) {
@@ -24,12 +39,12 @@ export const assureValidNextOp = async (
 
   const proposedPrev = proposed.prev ? CID.parse(proposed.prev) : undefined
   if (!proposedPrev) {
-    throw new ServerError(400, `Invalid prev on operation: ${proposed.prev}`)
+    throw new ImproperOperationError('could not parse prev', proposed)
   }
 
   const indexOfPrev = ops.findIndex((op) => proposedPrev.equals(op.cid))
   if (indexOfPrev < 0) {
-    throw new ServerError(409, 'Operations not correctly ordered')
+    throw new MisorderedOperationError()
   }
 
   // if we are forking history, these are the ops still in the proposed canonical history
@@ -37,7 +52,7 @@ export const assureValidNextOp = async (
   const nullified = ops.slice(indexOfPrev + 1)
   const lastOp = opsInHistory.at(-1)
   if (!lastOp) {
-    throw new ServerError(400, 'Could not locate last op in history')
+    throw new MisorderedOperationError()
   }
   const lastOpNormalized = normalizeOp(lastOp.operation)
   const firstNullified = nullified[0]
@@ -66,10 +81,7 @@ export const assureValidNextOp = async (
     const RECOVERY_WINDOW = 72 * HOUR
     const timeLapsed = Date.now() - firstNullified.createdAt.getTime()
     if (timeLapsed > RECOVERY_WINDOW) {
-      throw new ServerError(
-        400,
-        'Recovery operation occured outside of the allowed 72 hr recovery window',
-      )
+      throw new LateRecoveryError(timeLapsed)
     }
   }
 
@@ -86,11 +98,11 @@ export const validateOperationLog = async (
   // make sure they're all validly formatted operations
   const [first, ...rest] = ops
   if (!check.is(first, t.def.compatibleOp)) {
-    throw new ServerError(400, `Improperly formatted operation: ${first}`)
+    throw new ImproperOperationError('incorrect structure', first)
   }
   for (const op of rest) {
     if (!check.is(op, t.def.operation)) {
-      throw new ServerError(400, `Improperly formatted operation: ${op}`)
+      throw new ImproperOperationError('incorrect structure', op)
     }
   }
 
@@ -100,7 +112,7 @@ export const validateOperationLog = async (
 
   for (const op of rest) {
     if (!op.prev || !CID.parse(op.prev).equals(prev)) {
-      throw new ServerError(400, 'Operations not correctly ordered')
+      throw new MisorderedOperationError()
     }
 
     await assureValidSig(doc.rotationKeys, op)
@@ -120,13 +132,10 @@ export const assureValidCreationOp = async (
   await assureValidSig(normalized.rotationKeys, op)
   const expectedDid = await didForCreateOp(op, 64)
   if (!expectedDid.startsWith(did)) {
-    throw new ServerError(
-      400,
-      `Hash of genesis operation does not match DID identifier: ${expectedDid}`,
-    )
+    throw new GenesisHashError(expectedDid)
   }
   if (op.prev !== null) {
-    throw new ServerError(400, `Prev of create op is not null: ${op}`)
+    throw new ImproperOperationError('expected null prev on create', op)
   }
   const { signingKey, rotationKeys, handles, services } = normalized
   return { did, signingKey, rotationKeys, handles, services }
@@ -142,7 +151,9 @@ export const assureValidSig = async (
   let isValid = true
   for (const did of allowedDids) {
     isValid = await crypto.verifySignature(did, dataBytes, sigBytes)
-    if (isValid) return did
+    if (isValid) {
+      return did
+    }
   }
-  throw new ServerError(400, `Invalid signature on op: ${JSON.stringify(op)}`)
+  throw new InvalidSignatureError(op)
 }

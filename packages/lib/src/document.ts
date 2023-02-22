@@ -1,7 +1,8 @@
 import * as uint8arrays from 'uint8arrays'
 import * as crypto from '@atproto/crypto'
 import * as t from './types'
-import { ServerError } from './error'
+import { UnsupportedKeyError } from './error'
+import { ParsedDidKey } from '@atproto/crypto'
 
 export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
   const context = ['https://www.w3.org/ns/did/v1']
@@ -53,11 +54,11 @@ type KeyAndContext = {
 }
 
 const formatKeyAndContext = (key: string): KeyAndContext => {
-  let keyInfo
+  let keyInfo: ParsedDidKey
   try {
     keyInfo = crypto.parseDidKey(key)
   } catch (err) {
-    throw new ServerError(400, `Could not parse did:key: ${err}`)
+    throw new UnsupportedKeyError(key, err)
   }
   const { jwtAlg, keyBytes } = keyInfo
 
@@ -74,7 +75,7 @@ const formatKeyAndContext = (key: string): KeyAndContext => {
       publicKeyMultibase: `z${uint8arrays.toString(keyBytes, 'base58btc')}`,
     }
   }
-  throw new ServerError(400, `Unsupported key type: ${jwtAlg}`)
+  throw new UnsupportedKeyError(key, `Unsupported key type: ${jwtAlg}`)
 }
 
 export const ensureHttpPrefix = (str: string): string => {

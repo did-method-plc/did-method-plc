@@ -1,5 +1,6 @@
+export * from './client'
 export * from './data'
 export * from './document'
+export * from './error'
 export * from './operations'
 export * from './types'
-export * from './client'

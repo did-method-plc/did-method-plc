@@ -23,6 +23,18 @@ export const signOperation = async (
   }
 }
 
+export const deprecatedSignCreate = async (
+  op: t.UnsignedCreateOpV1,
+  signingKey: Keypair,
+): Promise<t.CreateOpV1> => {
+  const data = new Uint8Array(cbor.encode(op))
+  const sig = await signingKey.sign(data)
+  return {
+    ...op,
+    sig: uint8arrays.toString(sig, 'base64url'),
+  }
+}
+
 export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
   if (check.is(op, t.def.operation)) {
     return op
