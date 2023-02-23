@@ -43,6 +43,9 @@ export const assureValidNextOp = async (
   if (!lastOp) {
     throw new MisorderedOperationError()
   }
+  if (check.is(lastOp.operation, t.def.tombstone)) {
+    throw new MisorderedOperationError()
+  }
   const lastOpNormalized = normalizeOp(lastOp.operation)
   const firstNullified = nullified[0]
   // const firstNullifiedNormalized = normalizeCreateOp(firstNullified.operation)
@@ -80,7 +83,7 @@ export const assureValidNextOp = async (
 
 export const validateOperationLog = async (
   did: string,
-  ops: t.CompaitbleOpOrTombstone[],
+  ops: t.CompatibleOpOrTombstone[],
 ): Promise<t.DocumentData | null> => {
   // make sure they're all validly formatted operations
   const [first, ...rest] = ops
@@ -116,4 +119,15 @@ export const validateOperationLog = async (
   }
 
   return doc
+}
+
+export const getLastOpWithCid = async (
+  ops: t.CompatibleOpOrTombstone[],
+): Promise<{ op: t.CompatibleOpOrTombstone; cid: CID }> => {
+  const op = ops.at(-1)
+  if (!op) {
+    throw new Error('log is empty')
+  }
+  const cid = await cidForCbor(op)
+  return { op, cid }
 }

@@ -26,6 +26,20 @@ describe('plc recovery', () => {
     rotationKey3 = await EcdsaKeypair.create()
   })
 
+  const formatIndexed = async (
+    op: t.Operation,
+  ): Promise<t.IndexedOperation> => {
+    const cid = await cidForCbor(op)
+
+    return {
+      did,
+      operation: op,
+      cid,
+      nullified: false,
+      createdAt: new Date(),
+    }
+  }
+
   const signOpForKeys = async (
     keys: Keypair[],
     prev: CID | null,
@@ -45,16 +59,7 @@ describe('plc recovery', () => {
       },
       signer,
     )
-
-    const cid = await cidForCbor(op)
-
-    const indexed = {
-      did,
-      operation: op,
-      cid,
-      nullified: false,
-      createdAt: new Date(),
-    }
+    const indexed = await formatIndexed(op)
     return { op, indexed }
   }
 
@@ -153,5 +158,33 @@ describe('plc recovery', () => {
     await expect(
       data.assureValidNextOp(did, timeOutOps, rotateBack.op),
     ).rejects.toThrow(LateRecoveryError)
+  })
+
+  it('allows recovery from a tombstoned DID', async () => {
+    const tombstone = await operations.signTombstone(createCid, rotationKey2)
+    const cid = await cidForCbor(tombstone)
+    const tombstoneOps = [
+      log[0],
+      {
+        did,
+        operation: tombstone,
+        cid,
+        nullified: false,
+        createdAt: new Date(),
+      },
+    ]
+    const rotateBack = await signOpForKeys(
+      [rotationKey1],
+      createCid,
+      rotationKey1,
+    )
+    const result = await data.assureValidNextOp(
+      did,
+      tombstoneOps,
+      rotateBack.op,
+    )
+    expect(result.nullified.length).toBe(1)
+    expect(result.nullified[0].equals(cid))
+    expect(result.prev?.equals(createCid))
   })
 })

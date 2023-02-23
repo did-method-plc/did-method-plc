@@ -57,11 +57,11 @@ export type OpOrTombstone = z.infer<typeof opOrTombstone>
 const compatibleOp = z.union([createOpV1, operation])
 export type CompatibleOp = z.infer<typeof compatibleOp>
 const compatibleOpOrTombstone = z.union([createOpV1, operation, tombstone])
-export type CompaitbleOpOrTombstone = z.infer<typeof compatibleOpOrTombstone>
+export type CompatibleOpOrTombstone = z.infer<typeof compatibleOpOrTombstone>
 
 export const indexedOperation = z.object({
   did: z.string(),
-  operation: compatibleOp,
+  operation: compatibleOpOrTombstone,
   cid: cid,
   nullified: z.boolean(),
   createdAt: z.date(),
