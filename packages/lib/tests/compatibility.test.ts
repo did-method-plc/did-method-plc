@@ -1,13 +1,31 @@
-import { EcdsaKeypair, Secp256k1Keypair } from '@atproto/crypto'
-import { deprecatedSignCreate, normalizeOp } from '../src'
+import { cidForCbor, DAY } from '@atproto/common'
+import { Secp256k1Keypair } from '@atproto/crypto'
+import {
+  assureValidNextOp,
+  CreateOpV1,
+  deprecatedSignCreate,
+  didForCreateOp,
+  normalizeOp,
+  signOperation,
+  validateOperationLog,
+} from '../src'
 
 describe('compatibility', () => {
+  let signingKey: Secp256k1Keypair
+  let recoveryKey: Secp256k1Keypair
+  const handle = 'alice.test'
+  const service = 'https://example.com'
+  let did: string
+
+  let legacyOp: CreateOpV1
+
+  beforeAll(async () => {
+    signingKey = await Secp256k1Keypair.create()
+    recoveryKey = await Secp256k1Keypair.create()
+  })
+
   it('normalizes legacy create ops', async () => {
-    const signingKey = await Secp256k1Keypair.create()
-    const recoveryKey = await EcdsaKeypair.create()
-    const handle = 'alice.test'
-    const service = 'https://example.com'
-    const legacy = await deprecatedSignCreate(
+    legacyOp = await deprecatedSignCreate(
       {
         type: 'create',
         signingKey: signingKey.did(),
@@ -19,7 +37,9 @@ describe('compatibility', () => {
       signingKey,
     )
 
-    const normalized = normalizeOp(legacy)
+    did = await didForCreateOp(legacyOp)
+
+    const normalized = normalizeOp(legacyOp)
     expect(normalized).toEqual({
       signingKey: signingKey.did(),
       rotationKeys: [recoveryKey.did(), signingKey.did()],
@@ -28,7 +48,36 @@ describe('compatibility', () => {
         atpPds: service,
       },
       prev: null,
-      sig: legacy.sig,
+      sig: legacyOp.sig,
     })
+  })
+
+  it('validates a log with a legacy create op', async () => {
+    const legacyCid = await cidForCbor(legacyOp)
+    const newSigner = await Secp256k1Keypair.create()
+    const newRotater = await Secp256k1Keypair.create()
+    const nextOp = await signOperation(
+      {
+        signingKey: newSigner.did(),
+        rotationKeys: [newRotater.did()],
+        handles: [handle],
+        services: { atpPds: service },
+        prev: legacyCid.toString(),
+      },
+      signingKey,
+    )
+    await validateOperationLog(did, [legacyOp, nextOp])
+
+    const indexedLegacy = {
+      did,
+      operation: legacyOp,
+      cid: legacyCid,
+      nullified: false,
+      createdAt: new Date(Date.now() - 7 * DAY),
+    }
+
+    const result = await assureValidNextOp(did, [indexedLegacy], nextOp)
+    expect(result.nullified.length).toBe(0)
+    expect(result.prev?.equals(legacyCid))
   })
 })

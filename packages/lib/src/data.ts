@@ -91,7 +91,7 @@ export const assureValidNextOp = async (
 
 export const validateOperationLog = async (
   did: string,
-  ops: (t.CreateOpV1 | t.Operation)[],
+  ops: t.CompatibleOp[],
 ): Promise<t.DocumentData> => {
   // make sure they're all validly formatted operations
   const [first, ...rest] = ops
@@ -141,7 +141,7 @@ export const assureValidCreationOp = async (
 
 export const assureValidSig = async (
   allowedDids: string[],
-  op: t.CreateOpV1 | t.Operation,
+  op: t.CompatibleOp,
 ): Promise<string> => {
   const { sig, ...opData } = op
   const sigBytes = uint8arrays.fromString(sig, 'base64url')
