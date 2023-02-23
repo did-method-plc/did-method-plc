@@ -1,18 +1,16 @@
 import { CID } from 'multiformats/cid'
-import * as uint8arrays from 'uint8arrays'
-import * as cbor from '@ipld/dag-cbor'
 import { check, cidForCbor, HOUR } from '@atproto/common'
-import * as crypto from '@atproto/crypto'
 import * as t from './types'
-import { didForCreateOp, normalizeOp } from './operations'
 import {
-  GenesisHashError,
-  ImproperlyFormattedDidError,
+  assureValidCreationOp,
+  assureValidOp,
+  assureValidSig,
+  normalizeOp,
+} from './operations'
+import {
   ImproperOperationError,
-  InvalidSignatureError,
   LateRecoveryError,
   MisorderedOperationError,
-  UnsupportedKeyError,
 } from './error'
 
 export const assureValidNextOp = async (
@@ -20,17 +18,7 @@ export const assureValidNextOp = async (
   ops: t.IndexedOperation[],
   proposed: t.Operation,
 ): Promise<{ nullified: CID[]; prev: CID | null }> => {
-  // ensure we support the proposed keys
-  const keys = [proposed.signingKey, ...proposed.rotationKeys]
-  await Promise.all(
-    keys.map(async (k) => {
-      try {
-        crypto.parseDidKey(k)
-      } catch (err) {
-        throw new UnsupportedKeyError(k, err)
-      }
-    }),
-  )
+  await assureValidOp(proposed)
 
   // special case if account creation
   if (ops.length === 0) {
@@ -40,7 +28,7 @@ export const assureValidNextOp = async (
 
   const proposedPrev = proposed.prev ? CID.parse(proposed.prev) : undefined
   if (!proposedPrev) {
-    throw new ImproperOperationError('could not parse prev', proposed)
+    throw new MisorderedOperationError()
   }
 
   const indexOfPrev = ops.findIndex((op) => proposedPrev.equals(op.cid))
@@ -121,42 +109,4 @@ export const validateOperationLog = async (
   }
 
   return doc
-}
-
-export const assureValidCreationOp = async (
-  did: string,
-  op: t.CompatibleOp,
-): Promise<t.DocumentData> => {
-  const normalized = normalizeOp(op)
-  await assureValidSig(normalized.rotationKeys, op)
-  const expectedDid = await didForCreateOp(op, 64)
-  // id must be >=24 chars & prefix is 8chars
-  if (did.length < 32) {
-    throw new ImproperlyFormattedDidError('too short')
-  }
-  if (!expectedDid.startsWith(did)) {
-    throw new GenesisHashError(expectedDid)
-  }
-  if (op.prev !== null) {
-    throw new ImproperOperationError('expected null prev on create', op)
-  }
-  const { signingKey, rotationKeys, handles, services } = normalized
-  return { did, signingKey, rotationKeys, handles, services }
-}
-
-export const assureValidSig = async (
-  allowedDids: string[],
-  op: t.CompatibleOp,
-): Promise<string> => {
-  const { sig, ...opData } = op
-  const sigBytes = uint8arrays.fromString(sig, 'base64url')
-  const dataBytes = new Uint8Array(cbor.encode(opData))
-  let isValid = true
-  for (const did of allowedDids) {
-    isValid = await crypto.verifySignature(did, dataBytes, sigBytes)
-    if (isValid) {
-      return did
-    }
-  }
-  throw new InvalidSignatureError(op)
 }
