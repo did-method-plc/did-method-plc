@@ -52,7 +52,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
     const data = await plc.validateOperationLog(did, log)
-    res.send(data)
+    res.json(data)
   })
 
   // Get operation log for a DID
@@ -62,7 +62,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
     if (log.length === 0) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
-    res.send({ log })
+    res.json({ log })
   })
 
   // Get operation log for a DID
@@ -73,7 +73,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
     if (!curr) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
-    res.send(curr)
+    res.json(curr)
   })
 
   // Update or create a DID doc

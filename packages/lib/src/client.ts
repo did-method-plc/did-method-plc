@@ -1,7 +1,7 @@
 import { cidForCbor } from '@atproto/common'
 import { Keypair } from '@atproto/crypto'
 import axios from 'axios'
-import { signOperation } from './operations'
+import { didForCreateOp, signOperation } from './operations'
 import * as t from './types'
 
 export class Client {
@@ -27,23 +27,46 @@ export class Client {
   }
 
   async getLastOp(did: string): Promise<t.Operation> {
-    const res = await axios.get(`${this.url}/log/${encodeURIComponent(did)}`)
+    const res = await axios.get(`${this.url}/last/${encodeURIComponent(did)}`)
     return res.data
   }
 
-  async applyPartialOp(did: string, delta: Partial<t.Operation>, key: Keypair) {
+  async applyPartialOp(
+    did: string,
+    delta: Partial<t.UnsignedOperation>,
+    key: Keypair,
+  ) {
     const lastOp = await this.getLastOp(did)
     const prev = await cidForCbor(lastOp)
+    const { signingKey, rotationKeys, handles, services } = lastOp
     const op = await signOperation(
       {
-        ...lastOp,
-        ...delta,
+        signingKey,
+        rotationKeys,
+        handles,
+        services,
         prev: prev.toString(),
+        ...delta,
       },
       key,
     )
-    console.log(op)
     await this.sendOperation(did, op)
+  }
+
+  async create(
+    op: Omit<t.UnsignedOperation, 'prev'>,
+    key: Keypair,
+  ): Promise<string> {
+    const createOp = await signOperation(
+      {
+        ...op,
+        prev: null,
+      },
+      key,
+    )
+    const did = await didForCreateOp(createOp)
+    await this.sendOperation(did, createOp)
+    return did
   }
 
   async sendOperation(did: string, op: t.Operation) {
