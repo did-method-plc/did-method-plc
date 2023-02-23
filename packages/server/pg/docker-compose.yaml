@@ -22,6 +22,6 @@ services:
     healthcheck:
       disable: true
     volumes:
-      - atp_db:/var/lib/postgresql/data
+      - plc_db:/var/lib/postgresql/data
 volumes:
-  atp_db:
+  plc_db:
