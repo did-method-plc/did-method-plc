@@ -1,13 +1,7 @@
-import { check, cidForCbor, DAY, HOUR } from '@atproto/common'
+import { cidForCbor, DAY, HOUR } from '@atproto/common'
 import { EcdsaKeypair, Keypair, Secp256k1Keypair } from '@atproto/crypto'
-import { create } from 'domain'
 import { CID } from 'multiformats/cid'
-import {
-  GenesisHashError,
-  ImproperOperationError,
-  InvalidSignatureError,
-  MisorderedOperationError,
-} from '../src'
+import { InvalidSignatureError, LateRecoveryError } from '../src'
 import * as data from '../src/data'
 import * as operations from '../src/operations'
 import * as t from '../src/types'
@@ -18,14 +12,12 @@ describe('plc recovery', () => {
   let rotationKey2: EcdsaKeypair
   let rotationKey3: EcdsaKeypair
   let did: string
-  let handle = 'alice.example.com'
-  let atpPds = 'https://example.com'
+  const handle = 'alice.example.com'
+  const atpPds = 'https://example.com'
 
   let log: t.IndexedOperation[] = []
 
   let createCid: CID
-  const key3AttackCids: CID[] = []
-  const key2AttackCid: CID[] = []
 
   beforeAll(async () => {
     signingKey = await Secp256k1Keypair.create()
@@ -119,5 +111,47 @@ describe('plc recovery', () => {
     await expect(data.assureValidNextOp(did, log, rotate.op)).rejects.toThrow(
       InvalidSignatureError,
     )
+  })
+
+  it('allows a rotation key with even higher authority to rewrite history', async () => {
+    const rotate = await signOpForKeys([rotationKey1], createCid, rotationKey1)
+
+    const res = await data.assureValidNextOp(did, log, rotate.op)
+    expect(res.nullified.length).toBe(1)
+    expect(res.nullified[0].equals(log[1].cid))
+    expect(res.prev?.equals(createCid))
+
+    log = [log[0], rotate.indexed]
+  })
+
+  it('does not allow the either invalidated key to take control back', async () => {
+    const rotate1 = await signOpForKeys([rotationKey3], createCid, rotationKey3)
+    await expect(data.assureValidNextOp(did, log, rotate1.op)).rejects.toThrow(
+      InvalidSignatureError,
+    )
+
+    const rotate2 = await signOpForKeys([rotationKey2], createCid, rotationKey2)
+    await expect(data.assureValidNextOp(did, log, rotate2.op)).rejects.toThrow(
+      InvalidSignatureError,
+    )
+  })
+
+  it('does not allow recovery outside of 72 hrs', async () => {
+    const rotate = await signOpForKeys([rotationKey3], createCid, rotationKey3)
+    const timeOutOps = [
+      log[0],
+      {
+        ...rotate.indexed,
+        createdAt: new Date(Date.now() - 4 * DAY),
+      },
+    ]
+    const rotateBack = await signOpForKeys(
+      [rotationKey2],
+      createCid,
+      rotationKey2,
+    )
+    await expect(
+      data.assureValidNextOp(did, timeOutOps, rotateBack.op),
+    ).rejects.toThrow(LateRecoveryError)
   })
 })
