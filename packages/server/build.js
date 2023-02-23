@@ -2,7 +2,7 @@ const pkgJson = require('@npmcli/package-json')
 const { nodeExternalsPlugin } = require('esbuild-node-externals')
 
 const buildShallow =
-  process.argv.includes('--shallow') || process.env.ATP_BUILD_SHALLOW === 'true'
+  process.argv.includes('--shallow') || process.env.PLC_BUILD_SHALLOW === 'true'
 
 if (process.argv.includes('--update-main-to-dist')) {
   return pkgJson
