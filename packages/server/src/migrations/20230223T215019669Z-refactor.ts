@@ -22,7 +22,9 @@ export async function up(db: Kysely<any>): Promise<void> {
     createdAt: row.createdAt,
   }))
 
-  await db.insertInto('operations_new').values(vals).execute()
+  if (vals.length > 0) {
+    await db.insertInto('operations_new').values(vals).execute()
+  }
 
   await db.schema.dropTable('operations').execute()
 

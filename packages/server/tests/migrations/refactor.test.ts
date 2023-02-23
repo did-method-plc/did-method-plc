@@ -1,10 +1,12 @@
 import { cidForCbor, DAY } from '@atproto/common'
 import { Secp256k1Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
+import { Kysely } from 'kysely'
 import { Database } from '../../src'
 
 describe('refactor migration', () => {
   let db: Database
+  let rawDb: Kysely<any>
 
   beforeAll(async () => {
     const dbPostgresUrl = process.env.DB_POSTGRES_URL
@@ -17,6 +19,7 @@ describe('refactor migration', () => {
     })
 
     await db.migrateToOrThrow('_20221020T204908820Z')
+    rawDb = db.db
   })
 
   afterAll(async () => {
@@ -53,9 +56,9 @@ describe('refactor migration', () => {
         createdAt: time,
       })
     }
-    await db.db.insertInto('operations').values(ops).execute()
+    await rawDb.insertInto('operations').values(ops).execute()
 
-    before = await db.db
+    before = await rawDb
       .selectFrom('operations')
       .selectAll()
       .orderBy('did', 'asc')
@@ -67,7 +70,7 @@ describe('refactor migration', () => {
   })
 
   it('correctly migrated all data', async () => {
-    const migrated = await db.db
+    const migrated = await rawDb
       .selectFrom('operations')
       .selectAll()
       .orderBy('did', 'asc')
@@ -87,7 +90,7 @@ describe('refactor migration', () => {
 
   it('migrates down', async () => {
     await db.migrateToOrThrow('_20221020T204908820Z')
-    const migratedBack = await db.db
+    const migratedBack = await rawDb
       .selectFrom('operations')
       .selectAll()
       .orderBy('did', 'asc')

@@ -1,4 +1,4 @@
-import { Kysely, Migrator, PostgresDialect, sql } from 'kysely'
+import { Generated, Kysely, Migrator, PostgresDialect, sql } from 'kysely'
 import { Pool as PgPool, types as pgTypes } from 'pg'
 import { CID } from 'multiformats/cid'
 import { cidForCbor, check } from '@atproto/common'
@@ -106,10 +106,9 @@ export class Database implements PlcDatabase {
           .insertInto('operations')
           .values({
             did,
-            operation: JSON.stringify(proposed),
+            operation: proposed,
             cid: cid.toString(),
-            nullified: 0,
-            createdAt: new Date().toISOString(),
+            nullified: false,
           })
           .execute()
 
@@ -117,7 +116,7 @@ export class Database implements PlcDatabase {
           const nullfiedStrs = nullified.map((cid) => cid.toString())
           await tx
             .updateTable('operations')
-            .set({ nullified: 1 })
+            .set({ nullified: true })
             .where('did', '=', did)
             .where('cid', 'in', nullfiedStrs)
             .execute()
@@ -129,7 +128,7 @@ export class Database implements PlcDatabase {
           .selectFrom('operations')
           .select('cid')
           .where('did', '=', did)
-          .where('nullified', '=', 0)
+          .where('nullified', '=', false)
           .orderBy('createdAt', 'desc')
           .limit(2)
           .execute()
@@ -152,7 +151,7 @@ export class Database implements PlcDatabase {
       .selectFrom('operations')
       .select('cid')
       .where('did', '=', did)
-      .where('nullified', '=', 0)
+      .where('nullified', '=', false)
       .where('cid', 'not in', notIncludedStr)
       .orderBy('createdAt', 'desc')
       .executeTakeFirst()
@@ -174,35 +173,36 @@ export class Database implements PlcDatabase {
       .selectFrom('operations')
       .selectAll()
       .where('did', '=', did)
-      .where('nullified', '=', 0)
+      .where('nullified', '=', false)
       .orderBy('createdAt', 'asc')
       .execute()
 
     return res.map((row) => ({
       did: row.did,
-      operation: JSON.parse(row.operation),
+      operation: row.operation,
       cid: CID.parse(row.cid),
-      nullified: row.nullified === 1,
-      createdAt: new Date(row.createdAt),
+      nullified: row.nullified,
+      createdAt: row.createdAt,
     }))
   }
 
   async fullExport(): Promise<Record<string, OpLogExport>> {
-    const res = await this.db
-      .selectFrom('operations')
-      .selectAll()
-      .orderBy('did')
-      .orderBy('createdAt')
-      .execute()
-    return res.reduce((acc, cur) => {
-      acc[cur.did] ??= []
-      acc[cur.did].push({
-        op: JSON.parse(cur.operation),
-        nullified: cur.nullified === 1,
-        createdAt: cur.createdAt,
-      })
-      return acc
-    }, {} as Record<string, OpLogExport>)
+    return {}
+    //   const res = await this.db
+    //     .selectFrom('operations')
+    //     .selectAll()
+    //     .orderBy('did')
+    //     .orderBy('createdAt')
+    //     .execute()
+    //   return res.reduce((acc, cur) => {
+    //     acc[cur.did] ??= []
+    //     acc[cur.did].push({
+    //       op: cur.operation),
+    //       nullified: cur.nullified === 1,
+    //       createdAt: cur.createdAt,
+    //     })
+    //     return acc
+    //   }, {} as Record<string, OpLogExport>)
   }
 }
 
@@ -210,10 +210,10 @@ export default Database
 
 interface OperationsTable {
   did: string
-  operation: string
+  operation: plc.CompatibleOpOrTombstone
   cid: string
-  nullified: 0 | 1
-  createdAt: string
+  nullified: boolean
+  createdAt: Generated<Date>
 }
 
 interface DatabaseSchema {
