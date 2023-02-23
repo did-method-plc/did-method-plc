@@ -13,12 +13,19 @@ export class Client {
   }
 
   async getDocumentData(did: string): Promise<t.DocumentData> {
-    const res = await axios.get(`${this.url}/data/${encodeURIComponent(did)}`)
+    const res = await axios.get(`${this.url}/${encodeURIComponent(did)}/data`)
     return res.data
   }
 
-  async getOperationLog(did: string): Promise<t.Operation[]> {
-    const res = await axios.get(`${this.url}/log/${encodeURIComponent(did)}`)
+  async getOperationLog(
+    did: string,
+    includeNull = false,
+  ): Promise<t.Operation[]> {
+    let url = `${this.url}/${encodeURIComponent(did)}/log`
+    if (includeNull) {
+      url += '?includeNull=true'
+    }
+    const res = await axios.get(url)
     return res.data.log
   }
 
@@ -27,7 +34,7 @@ export class Client {
   }
 
   async getLastOp(did: string): Promise<t.Operation> {
-    const res = await axios.get(`${this.url}/last/${encodeURIComponent(did)}`)
+    const res = await axios.get(`${this.url}/${encodeURIComponent(did)}/last`)
     return res.data
   }
 

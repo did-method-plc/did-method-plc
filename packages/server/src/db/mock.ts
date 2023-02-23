@@ -1,7 +1,8 @@
 import { cidForCbor, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
+import { Selectable } from 'kysely'
 import { ServerError } from '../error'
-import { OpLogExport, PlcDatabase } from './types'
+import { OperationsTable, PlcDatabase } from './types'
 
 type Contents = Record<string, plc.IndexedOperation[]>
 
@@ -43,8 +44,8 @@ export class MockDatabase implements PlcDatabase {
     }
   }
 
-  async opsForDid(did: string): Promise<plc.OpOrTombstone[]> {
-    const ops = await this._opsForDid(did)
+  async opsForDid(did: string): Promise<plc.CompatibleOpOrTombstone[]> {
+    const ops = await this.indexedOpsForDid(did)
     return ops.map((op) => {
       if (check.is(op.operation, plc.def.createOpV1)) {
         return plc.normalizeOp(op.operation)
@@ -53,12 +54,30 @@ export class MockDatabase implements PlcDatabase {
     })
   }
 
-  async _opsForDid(did: string): Promise<plc.IndexedOperation[]> {
-    return this.contents[did] ?? []
+  async indexedOpsForDid(
+    did: string,
+    includeNull = false,
+  ): Promise<plc.IndexedOperation[]> {
+    const ops = this.contents[did] ?? []
+    if (includeNull) {
+      return ops
+    }
+    return ops.filter((op) => op.nullified === false)
   }
 
-  async fullExport(): Promise<Record<string, OpLogExport>> {
-    return {}
+  async lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null> {
+    const op = this.contents[did]?.at(-1)
+
+    if (!op) return null
+    return op.operation
+  }
+
+  // disabled in mocks
+  async exportOps(
+    _count: number,
+    _after?: Date,
+  ): Promise<Selectable<OperationsTable>[]> {
+    return []
   }
 }
 

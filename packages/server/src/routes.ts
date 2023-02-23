@@ -18,13 +18,16 @@ export const createRouter = (ctx: AppContext): express.Router => {
     res.send({ version })
   })
 
-  // @TODO paginate & test this
+  // Export ops in the form of paginated json lines
   router.get('/export', async function (req, res) {
-    const fullExport = await ctx.db.fullExport()
+    const parsedCount = parseInt(req.query.count)
+    const count = isNaN(parsedCount) ? 1000 : Math.min(parsedCount, 1000)
+    const after = req.query.after ? new Date(req.query.after) : undefined
+    const ops = await ctx.db.exportOps(count, after)
     res.setHeader('content-type', 'application/jsonlines')
     res.status(200)
-    for (const [did, ops] of Object.entries(fullExport)) {
-      const line = JSON.stringify({ did, ops })
+    for (const op of ops) {
+      const line = JSON.stringify(op)
       res.write(line)
       res.write('\n')
     }
@@ -48,7 +51,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get data for a DID document
-  router.get('/data/:did', async function (req, res) {
+  router.get('/:did/data', async function (req, res) {
     const { did } = req.params
     const log = await ctx.db.opsForDid(did)
     if (log.length === 0) {
@@ -62,9 +65,14 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get operation log for a DID
-  router.get('/log/:did', async function (req, res) {
+  router.get('/:did/log', async function (req, res) {
     const { did } = req.params
-    const log = await ctx.db.opsForDid(did)
+    const includeNull = req.query.includeNull === 'true'
+
+    const log = includeNull
+      ? await ctx.db.indexedOpsForDid(did, includeNull)
+      : await ctx.db.opsForDid(did)
+
     if (log.length === 0) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
@@ -72,14 +80,13 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get the most recent operation in the log for a DID
-  router.get('/last/:did', async function (req, res) {
+  router.get('/:did/last', async function (req, res) {
     const { did } = req.params
-    const log = await ctx.db.opsForDid(did)
-    const curr = log.at(-1)
-    if (!curr) {
+    const last = await ctx.db.lastOpForDid(did)
+    if (!last) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
-    res.json(curr)
+    res.json(last)
   })
 
   // Update or create a DID doc
