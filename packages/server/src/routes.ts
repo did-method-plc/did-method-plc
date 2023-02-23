@@ -40,6 +40,9 @@ export const createRouter = (ctx: AppContext): express.Router => {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
     const data = await plc.validateOperationLog(did, log)
+    if (data === null) {
+      throw new ServerError(404, `DID not available: ${did}`)
+    }
     const doc = await plc.formatDidDoc(data)
     res.type('application/did+ld+json')
     res.send(JSON.stringify(doc))
@@ -53,6 +56,9 @@ export const createRouter = (ctx: AppContext): express.Router => {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
     const data = await plc.validateOperationLog(did, log)
+    if (data === null) {
+      throw new ServerError(404, `DID not available: ${did}`)
+    }
     res.json(data)
   })
 

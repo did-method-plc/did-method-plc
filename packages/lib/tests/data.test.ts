@@ -72,6 +72,9 @@ describe('plc did data', () => {
   it('parses an operation log with no updates', async () => {
     const doc = await data.validateOperationLog(did, ops)
 
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -85,6 +88,9 @@ describe('plc did data', () => {
     ops.push(op)
 
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -105,6 +111,9 @@ describe('plc did data', () => {
     ops.push(op)
 
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -125,6 +134,9 @@ describe('plc did data', () => {
     signingKey = newSigningKey
 
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -146,6 +158,10 @@ describe('plc did data', () => {
     rotationKey1 = newRotationKey
 
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
+
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -188,6 +204,9 @@ describe('plc did data', () => {
     ops.push(op)
     handle = newHandle
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])

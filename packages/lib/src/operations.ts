@@ -8,6 +8,7 @@ import {
   ImproperlyFormattedDidError,
   ImproperOperationError,
   InvalidSignatureError,
+  MisorderedOperationError,
   UnsupportedKeyError,
 } from './error'
 
@@ -58,7 +59,10 @@ export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
   }
 }
 
-export const assureValidOp = async (op: t.Operation) => {
+export const assureValidOp = async (op: t.OpOrTombstone) => {
+  if (check.is(op, t.def.tombstone)) {
+    return true
+  }
   // ensure we support the op's keys
   const keys = [op.signingKey, ...op.rotationKeys]
   await Promise.all(
@@ -79,8 +83,11 @@ export const assureValidOp = async (op: t.Operation) => {
 
 export const assureValidCreationOp = async (
   did: string,
-  op: t.CompatibleOp,
+  op: t.CompaitbleOpOrTombstone,
 ): Promise<t.DocumentData> => {
+  if (check.is(op, t.def.tombstone)) {
+    throw new MisorderedOperationError()
+  }
   const normalized = normalizeOp(op)
   await assureValidOp(normalized)
   await assureValidSig(normalized.rotationKeys, op)
@@ -101,7 +108,7 @@ export const assureValidCreationOp = async (
 
 export const assureValidSig = async (
   allowedDids: string[],
-  op: t.CompatibleOp,
+  op: t.CompaitbleOpOrTombstone,
 ): Promise<string> => {
   const { sig, ...opData } = op
   const sigBytes = uint8arrays.fromString(sig, 'base64url')

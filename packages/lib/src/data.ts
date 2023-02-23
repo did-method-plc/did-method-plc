@@ -16,7 +16,7 @@ import {
 export const assureValidNextOp = async (
   did: string,
   ops: t.IndexedOperation[],
-  proposed: t.Operation,
+  proposed: t.OpOrTombstone,
 ): Promise<{ nullified: CID[]; prev: CID | null }> => {
   await assureValidOp(proposed)
 
@@ -80,15 +80,15 @@ export const assureValidNextOp = async (
 
 export const validateOperationLog = async (
   did: string,
-  ops: t.CompatibleOp[],
-): Promise<t.DocumentData> => {
+  ops: t.CompaitbleOpOrTombstone[],
+): Promise<t.DocumentData | null> => {
   // make sure they're all validly formatted operations
   const [first, ...rest] = ops
   if (!check.is(first, t.def.compatibleOp)) {
     throw new ImproperOperationError('incorrect structure', first)
   }
   for (const op of rest) {
-    if (!check.is(op, t.def.operation)) {
+    if (!check.is(op, t.def.opOrTombstone)) {
       throw new ImproperOperationError('incorrect structure', op)
     }
   }
@@ -97,12 +97,19 @@ export const validateOperationLog = async (
   let doc = await assureValidCreationOp(did, first)
   let prev = await cidForCbor(first)
 
-  for (const op of rest) {
+  for (let i = 0; i < rest.length; i++) {
+    const op = rest[i]
     if (!op.prev || !CID.parse(op.prev).equals(prev)) {
       throw new MisorderedOperationError()
     }
-
     await assureValidSig(doc.rotationKeys, op)
+    if (check.is(op, t.def.tombstone)) {
+      if (i === rest.length - 1) {
+        return null
+      } else {
+        throw new MisorderedOperationError()
+      }
+    }
     const { signingKey, rotationKeys, handles, services } = op
     doc = { did, signingKey, rotationKeys, handles, services }
     prev = await cidForCbor(op)
