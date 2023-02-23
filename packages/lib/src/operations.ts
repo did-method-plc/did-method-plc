@@ -41,7 +41,7 @@ export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
   }
   return {
     signingKey: op.signingKey,
-    rotationKeys: [op.signingKey, op.recoveryKey],
+    rotationKeys: [op.recoveryKey, op.signingKey],
     handles: [op.handle],
     services: {
       atpPds: op.service,

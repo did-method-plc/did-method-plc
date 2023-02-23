@@ -65,6 +65,17 @@ export const createRouter = (ctx: AppContext): express.Router => {
     res.send({ log })
   })
 
+  // Get operation log for a DID
+  router.get('/last/:did', async function (req, res) {
+    const { did } = req.params
+    const log = await ctx.db.opsForDid(did)
+    const curr = log.at(-1)
+    if (!curr) {
+      throw new ServerError(404, `DID not registered: ${did}`)
+    }
+    res.send(curr)
+  })
+
   // Update or create a DID doc
   router.post('/:did', async function (req, res) {
     const { did } = req.params
