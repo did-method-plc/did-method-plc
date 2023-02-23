@@ -1,9 +1,7 @@
 import * as plc from '@did-plc/lib'
-import { MigrationResult } from 'kysely'
 
 export interface PlcDatabase {
   close(): Promise<void>
-  migrateToLatestOrThrow(): Promise<MigrationResult[]>
   healthCheck(): Promise<void>
   validateAndAddOp(did: string, proposed: plc.Operation): Promise<void>
   opsForDid(did: string): Promise<plc.OpOrTombstone[]>

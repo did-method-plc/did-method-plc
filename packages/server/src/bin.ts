@@ -7,12 +7,12 @@ const run = async () => {
 
   let db: PlcDatabase
   if (dbPostgresUrl) {
-    db = Database.postgres({ url: dbPostgresUrl })
+    const pgDb = Database.postgres({ url: dbPostgresUrl })
+    await pgDb.migrateToLatestOrThrow()
+    db = pgDb
   } else {
     db = Database.mock()
   }
-
-  await db.migrateToLatestOrThrow()
 
   const envPort = parseInt(process.env.PORT || '')
   const port = isNaN(envPort) ? 2582 : envPort

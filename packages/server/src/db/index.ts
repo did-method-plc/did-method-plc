@@ -64,6 +64,20 @@ export class Database implements PlcDatabase {
     await sql`select 1`.execute(this.db)
   }
 
+  async migrateToOrThrow(migration: string) {
+    if (this.schema !== undefined) {
+      await this.db.schema.createSchema(this.schema).ifNotExists().execute()
+    }
+    const { error, results } = await this.migrator.migrateTo(migration)
+    if (error) {
+      throw error
+    }
+    if (!results) {
+      throw new Error('An unknown failure occurred while migrating')
+    }
+    return results
+  }
+
   async migrateToLatestOrThrow() {
     if (this.schema !== undefined) {
       await this.db.schema.createSchema(this.schema).ifNotExists().execute()

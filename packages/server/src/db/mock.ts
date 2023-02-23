@@ -1,6 +1,5 @@
 import { cidForCbor, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { MigrationResult } from 'kysely'
 import { ServerError } from '../error'
 import { OpLogExport, PlcDatabase } from './types'
 
@@ -11,9 +10,6 @@ export class MockDatabase implements PlcDatabase {
 
   async close(): Promise<void> {}
   async healthCheck(): Promise<void> {}
-  async migrateToLatestOrThrow(): Promise<MigrationResult[]> {
-    return []
-  }
 
   async validateAndAddOp(did: string, proposed: plc.Operation): Promise<void> {
     this.contents[did] ??= []
