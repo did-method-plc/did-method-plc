@@ -7,6 +7,7 @@ import * as t from './types'
 import { didForCreateOp, normalizeOp } from './operations'
 import {
   GenesisHashError,
+  ImproperlyFormattedDidError,
   ImproperOperationError,
   InvalidSignatureError,
   LateRecoveryError,
@@ -129,6 +130,10 @@ export const assureValidCreationOp = async (
   const normalized = normalizeOp(op)
   await assureValidSig(normalized.rotationKeys, op)
   const expectedDid = await didForCreateOp(op, 64)
+  // id must be >=24 chars & prefix is 8chars
+  if (did.length < 32) {
+    throw new ImproperlyFormattedDidError('too short')
+  }
   if (!expectedDid.startsWith(did)) {
     throw new GenesisHashError(expectedDid)
   }

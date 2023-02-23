@@ -19,6 +19,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
     res.send({ version })
   })
 
+  // @TODO paginate & test this
   router.get('/export', async function (req, res) {
     const fullExport = await ctx.db.fullExport()
     res.setHeader('content-type', 'application/jsonlines')
@@ -65,7 +66,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
     res.json({ log })
   })
 
-  // Get operation log for a DID
+  // Get the most recent operation in the log for a DID
   router.get('/last/:did', async function (req, res) {
     const { did } = req.params
     const log = await ctx.db.opsForDid(did)
