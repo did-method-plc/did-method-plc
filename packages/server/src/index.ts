@@ -8,12 +8,12 @@ import express from 'express'
 import cors from 'cors'
 import http from 'http'
 import events from 'events'
-import { Database } from './db'
 import * as error from './error'
 import createRouter from './routes'
 import { loggerMiddleware } from './logger'
 import AppContext from './context'
 import { createHttpTerminator, HttpTerminator } from 'http-terminator'
+import { PlcDatabase } from './db/types'
 
 export * from './db'
 export * from './context'
@@ -30,7 +30,7 @@ export class PlcServer {
   }
 
   static create(opts: {
-    db: Database
+    db: PlcDatabase
     port?: number
     version?: string
   }): PlcServer {

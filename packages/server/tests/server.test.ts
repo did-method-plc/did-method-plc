@@ -25,7 +25,7 @@ describe('PLC server', () => {
       dbPostgresSchema: 'server',
     })
 
-    db = server.ctx.db
+    db = server.db
     close = server.close
     client = new plc.Client(server.url)
     signingKey = await EcdsaKeypair.create()

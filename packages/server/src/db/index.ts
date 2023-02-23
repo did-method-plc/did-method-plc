@@ -1,19 +1,19 @@
-import { Kysely, Migrator, PostgresDialect, SqliteDialect } from 'kysely'
-import SqliteDB from 'better-sqlite3'
+import { Kysely, Migrator, PostgresDialect, sql } from 'kysely'
 import { Pool as PgPool, types as pgTypes } from 'pg'
 import { CID } from 'multiformats/cid'
 import { cidForCbor, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { ServerError } from './error'
-import * as migrations from './migrations'
+import { ServerError } from '../error'
+import * as migrations from '../migrations'
+import { OpLogExport, PlcDatabase } from './types'
+import MockDatabase from './mock'
 
-export class Database {
+export * from './mock'
+export * from './types'
+
+export class Database implements PlcDatabase {
   migrator: Migrator
-  constructor(
-    public db: Kysely<DatabaseSchema>,
-    public dialect: Dialect,
-    public schema?: string,
-  ) {
+  constructor(public db: Kysely<DatabaseSchema>, public schema?: string) {
     this.migrator = new Migrator({
       db,
       migrationTableSchema: schema,
@@ -23,15 +23,6 @@ export class Database {
         },
       },
     })
-  }
-
-  static sqlite(location: string): Database {
-    const db = new Kysely<DatabaseSchema>({
-      dialect: new SqliteDialect({
-        database: new SqliteDB(location),
-      }),
-    })
-    return new Database(db, 'sqlite')
   }
 
   static postgres(opts: { url: string; schema?: string }): Database {
@@ -58,15 +49,19 @@ export class Database {
       dialect: new PostgresDialect({ pool }),
     })
 
-    return new Database(db, 'pg', schema)
+    return new Database(db, schema)
   }
 
-  static memory(): Database {
-    return Database.sqlite(':memory:')
+  static mock(): MockDatabase {
+    return new MockDatabase()
   }
 
   async close(): Promise<void> {
     await this.db.destroy()
+  }
+
+  async healthCheck(): Promise<void> {
+    await sql`select 1`.execute(this.db)
   }
 
   async migrateToLatestOrThrow() {
@@ -199,8 +194,6 @@ export class Database {
 
 export default Database
 
-export type Dialect = 'pg' | 'sqlite'
-
 interface OperationsTable {
   did: string
   operation: string
@@ -211,12 +204,4 @@ interface OperationsTable {
 
 interface DatabaseSchema {
   operations: OperationsTable
-}
-
-type OpLogExport = OpExport[]
-
-type OpExport = {
-  op: Record<string, unknown>
-  nullified: boolean
-  createdAt: string
 }

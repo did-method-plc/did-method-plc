@@ -1,9 +1,9 @@
-import { Database } from './db'
+import { PlcDatabase } from './db'
 
 export class AppContext {
   constructor(
     private opts: {
-      db: Database
+      db: PlcDatabase
       version: string
       port?: number
     },

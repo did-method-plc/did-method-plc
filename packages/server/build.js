@@ -16,7 +16,7 @@ require('esbuild').build({
   entryPoints: [
     'src/index.ts',
     'src/bin.ts',
-    'src/db.ts',
+    'src/db/index.ts',
   ],
   bundle: true,
   sourcemap: true,
@@ -26,7 +26,6 @@ require('esbuild').build({
   assetNames: 'src/static',
   plugins: buildShallow ? [nodeExternalsPlugin()] : [],
   external: [
-    'better-sqlite3',
     // Referenced in pg driver, but optional and we don't use it
     'pg-native',
   ],
