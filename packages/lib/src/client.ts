@@ -1,7 +1,7 @@
-import { cidForCbor } from '@atproto/common'
+import { check, cidForCbor } from '@atproto/common'
 import { Keypair } from '@atproto/crypto'
 import axios from 'axios'
-import { didForCreateOp, signOperation } from './operations'
+import { didForCreateOp, normalizeOp, signOperation } from './operations'
 import * as t from './types'
 
 export class Client {
@@ -20,7 +20,7 @@ export class Client {
   async getOperationLog(
     did: string,
     includeNull = false,
-  ): Promise<t.Operation[]> {
+  ): Promise<t.CompatibleOpOrTombstone[]> {
     let url = `${this.url}/${encodeURIComponent(did)}/log`
     if (includeNull) {
       url += '?includeNull=true'
@@ -33,7 +33,7 @@ export class Client {
     return `${this.url}/${encodeURIComponent(did)}`
   }
 
-  async getLastOp(did: string): Promise<t.Operation> {
+  async getLastOp(did: string): Promise<t.CompatibleOpOrTombstone> {
     const res = await axios.get(`${this.url}/${encodeURIComponent(did)}/last`)
     return res.data
   }
@@ -44,8 +44,11 @@ export class Client {
     key: Keypair,
   ) {
     const lastOp = await this.getLastOp(did)
+    if (check.is(lastOp, t.def.tombstone)) {
+      throw new Error('Cannot apply op to tombstone')
+    }
     const prev = await cidForCbor(lastOp)
-    const { signingKey, rotationKeys, handles, services } = lastOp
+    const { signingKey, rotationKeys, handles, services } = normalizeOp(lastOp)
     const op = await signOperation(
       {
         signingKey,
@@ -76,8 +79,14 @@ export class Client {
     return did
   }
 
-  async sendOperation(did: string, op: t.Operation) {
+  async sendOperation(did: string, op: t.OpOrTombstone) {
     await axios.post(this.postOpUrl(did), op)
+  }
+
+  async export(): Promise<t.ExportedOp[]> {
+    const res = await axios.get(`${this.url}/export`)
+    const lines = res.data.split('\n')
+    return lines.map((l) => JSON.parse(l))
   }
 
   async health() {

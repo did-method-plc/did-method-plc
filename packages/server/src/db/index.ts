@@ -1,11 +1,11 @@
-import { Kysely, Migrator, PostgresDialect, Selectable, sql } from 'kysely'
+import { Kysely, Migrator, PostgresDialect, sql } from 'kysely'
 import { Pool as PgPool, types as pgTypes } from 'pg'
 import { CID } from 'multiformats/cid'
 import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from '../error'
 import * as migrations from '../migrations'
-import { DatabaseSchema, OperationsTable, PlcDatabase } from './types'
+import { DatabaseSchema, PlcDatabase } from './types'
 import MockDatabase from './mock'
 
 export * from './mock'
@@ -197,10 +197,7 @@ export class Database implements PlcDatabase {
     return res?.operation ?? null
   }
 
-  async exportOps(
-    count: number,
-    after?: Date,
-  ): Promise<Selectable<OperationsTable>[]> {
+  async exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]> {
     let builder = this.db
       .selectFrom('operations')
       .selectAll()

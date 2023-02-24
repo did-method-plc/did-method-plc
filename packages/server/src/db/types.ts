@@ -1,5 +1,5 @@
 import * as plc from '@did-plc/lib'
-import { Generated, Selectable } from 'kysely'
+import { Generated } from 'kysely'
 
 export interface PlcDatabase {
   close(): Promise<void>
@@ -11,7 +11,7 @@ export interface PlcDatabase {
     includeNull?: boolean,
   ): Promise<plc.IndexedOperation[]>
   lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null>
-  exportOps(count: number, after?: Date): Promise<Selectable<OperationsTable>[]>
+  exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]>
 }
 
 export interface OperationsTable {

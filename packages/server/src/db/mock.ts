@@ -1,8 +1,7 @@
 import { cidForCbor, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { Selectable } from 'kysely'
 import { ServerError } from '../error'
-import { OperationsTable, PlcDatabase } from './types'
+import { PlcDatabase } from './types'
 
 type Contents = Record<string, plc.IndexedOperation[]>
 
@@ -73,10 +72,7 @@ export class MockDatabase implements PlcDatabase {
   }
 
   // disabled in mocks
-  async exportOps(
-    _count: number,
-    _after?: Date,
-  ): Promise<Selectable<OperationsTable>[]> {
+  async exportOps(_count: number, _after?: Date): Promise<plc.ExportedOp[]> {
     return []
   }
 }

@@ -1,7 +1,7 @@
 import { EcdsaKeypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
-import { cidForCbor } from '@atproto/common'
+import { check, cidForCbor } from '@atproto/common'
 import { AxiosError } from 'axios'
 import { Database } from '../src'
 import { signOperation } from '@did-plc/lib'
@@ -133,7 +133,7 @@ describe('PLC server', () => {
     const newKey = await EcdsaKeypair.create()
     const ops = await client.getOperationLog(did)
     const forkPoint = ops.at(-2)
-    if (!forkPoint) {
+    if (!check.is(forkPoint, plc.def.operation)) {
       throw new Error('Could not find fork point')
     }
     const forkCid = await cidForCbor(forkPoint)
@@ -217,6 +217,10 @@ describe('PLC server', () => {
 
     const ops = await client.getOperationLog(did)
     await plc.validateOperationLog(did, ops)
+  })
+
+  it('exports the data set', async () => {
+    await client.export()
   })
 
   it('healthcheck succeeds when database is available.', async () => {

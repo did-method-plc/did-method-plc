@@ -26,10 +26,12 @@ export const createRouter = (ctx: AppContext): express.Router => {
     const ops = await ctx.db.exportOps(count, after)
     res.setHeader('content-type', 'application/jsonlines')
     res.status(200)
-    for (const op of ops) {
-      const line = JSON.stringify(op)
+    for (let i = 0; i < ops.length; i++) {
+      if (i > 0) {
+        res.write('\n')
+      }
+      const line = JSON.stringify(ops[i])
       res.write(line)
-      res.write('\n')
     }
     res.end()
   })
