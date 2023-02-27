@@ -155,7 +155,7 @@ describe('plc did data', () => {
 
   it('allows tombstoning a DID', async () => {
     const last = await data.getLastOpWithCid(ops)
-    const op = await operations.signTombstone(last.cid, rotationKey1)
+    const op = await operations.tombstoneOp(last.cid, rotationKey1)
     const doc = await data.validateOperationLog(did, [...ops, op])
     expect(doc).toBe(null)
   })
@@ -187,7 +187,7 @@ describe('plc did data', () => {
 
   it('does not allow a tombstone in the middle of the log', async () => {
     const prev = await cidForCbor(ops[ops.length - 2])
-    const tombstone = await operations.signTombstone(prev, rotationKey1)
+    const tombstone = await operations.tombstoneOp(prev, rotationKey1)
     expect(
       data.validateOperationLog(did, [
         ...ops.slice(0, ops.length - 1),

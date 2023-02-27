@@ -20,17 +20,8 @@ export const didForCreateOp = async (op: t.CompatibleOp, truncate = 24) => {
   return `did:plc:${truncated}`
 }
 
-export const addSignature = async <T extends Record<string, unknown>>(
-  object: T,
-  key: Keypair,
-): Promise<T & { sig: string }> => {
-  const data = new Uint8Array(cbor.encode(object))
-  const sig = await key.sign(data)
-  return {
-    ...object,
-    sig: uint8arrays.toString(sig, 'base64url'),
-  }
-}
+// Operations formatting
+// ---------------------------
 
 export const formatAtprotoOp = (opts: {
   signingKey: string
@@ -159,14 +150,7 @@ export const updateRotationKeysOp = async (
   })
 }
 
-export const signOperation = async (
-  op: t.UnsignedOperation,
-  signingKey: Keypair,
-): Promise<t.Operation> => {
-  return addSignature(op, signingKey)
-}
-
-export const signTombstone = async (
+export const tombstoneOp = async (
   prev: CID,
   key: Keypair,
 ): Promise<t.Tombstone> => {
@@ -178,6 +162,31 @@ export const signTombstone = async (
     key,
   )
 }
+
+// Signing operations
+// ---------------------------
+
+export const addSignature = async <T extends Record<string, unknown>>(
+  object: T,
+  key: Keypair,
+): Promise<T & { sig: string }> => {
+  const data = new Uint8Array(cbor.encode(object))
+  const sig = await key.sign(data)
+  return {
+    ...object,
+    sig: uint8arrays.toString(sig, 'base64url'),
+  }
+}
+
+export const signOperation = async (
+  op: t.UnsignedOperation,
+  signingKey: Keypair,
+): Promise<t.Operation> => {
+  return addSignature(op, signingKey)
+}
+
+// Backwards compatibility
+// ---------------------------
 
 export const deprecatedSignCreate = async (
   op: t.UnsignedCreateOpV1,
@@ -207,6 +216,9 @@ export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
     sig: op.sig,
   }
 }
+
+// Verifying operations/signatures
+// ---------------------------
 
 export const assureValidOp = async (op: t.OpOrTombstone) => {
   if (check.is(op, t.def.tombstone)) {
@@ -272,6 +284,9 @@ export const assureValidSig = async (
   }
   throw new InvalidSignatureError(op)
 }
+
+// Util
+// ---------------------------
 
 export const ensureHttpPrefix = (str: string): string => {
   if (str.startsWith('http://') || str.startsWith('https://')) {

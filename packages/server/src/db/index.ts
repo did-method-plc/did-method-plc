@@ -92,7 +92,10 @@ export class Database implements PlcDatabase {
     return results
   }
 
-  async validateAndAddOp(did: string, proposed: plc.Operation): Promise<void> {
+  async validateAndAddOp(
+    did: string,
+    proposed: plc.OpOrTombstone,
+  ): Promise<void> {
     const ops = await this.indexedOpsForDid(did)
     // throws if invalid
     const { nullified, prev } = await plc.assureValidNextOp(did, ops, proposed)

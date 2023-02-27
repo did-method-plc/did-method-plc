@@ -159,7 +159,7 @@ describe('plc recovery', () => {
   })
 
   it('allows recovery from a tombstoned DID', async () => {
-    const tombstone = await operations.signTombstone(createCid, rotationKey2)
+    const tombstone = await operations.tombstoneOp(createCid, rotationKey2)
     const cid = await cidForCbor(tombstone)
     const tombstoneOps = [
       log[0],

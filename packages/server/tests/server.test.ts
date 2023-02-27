@@ -202,10 +202,19 @@ describe('PLC server', () => {
     await plc.validateOperationLog(did, ops)
   })
 
+  it('tombstones the did', async () => {
+    await client.tombstone(did, rotationKey1)
+
+    const promise = client.getDocument(did)
+    await expect(promise).rejects.toThrow(AxiosError)
+    const promise2 = client.getDocumentData(did)
+    await expect(promise2).rejects.toThrow(AxiosError)
+  })
+
   it('exports the data set', async () => {
     const data = await client.export()
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
-    expect(data.length).toBe(58)
+    expect(data.length).toBe(59)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
     }

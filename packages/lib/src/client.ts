@@ -1,10 +1,11 @@
-import { check } from '@atproto/common'
+import { check, cidForCbor } from '@atproto/common'
 import { Keypair } from '@atproto/crypto'
 import axios from 'axios'
 import {
   atprotoOp,
   createUpdateOp,
   didForCreateOp,
+  tombstoneOp,
   updateAtprotoKeyOp,
   updateHandleOp,
   updatePdsOp,
@@ -115,6 +116,13 @@ export class Client {
   async updateRotationKeys(did: string, signer: Keypair, keys: string[]) {
     const lastOp = await this.ensureLastOp(did)
     const op = await updateRotationKeysOp(lastOp, signer, keys)
+    await this.sendOperation(did, op)
+  }
+
+  async tombstone(did: string, signer: Keypair) {
+    const lastOp = await this.ensureLastOp(did)
+    const prev = await cidForCbor(lastOp)
+    const op = await tombstoneOp(prev, signer)
     await this.sendOperation(did, op)
   }
 

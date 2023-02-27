@@ -11,7 +11,10 @@ export class MockDatabase implements PlcDatabase {
   async close(): Promise<void> {}
   async healthCheck(): Promise<void> {}
 
-  async validateAndAddOp(did: string, proposed: plc.Operation): Promise<void> {
+  async validateAndAddOp(
+    did: string,
+    proposed: plc.OpOrTombstone,
+  ): Promise<void> {
     this.contents[did] ??= []
     const opsBefore = this.contents[did]
     // throws if invalid
