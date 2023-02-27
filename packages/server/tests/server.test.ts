@@ -22,7 +22,7 @@ describe('PLC server', () => {
 
   beforeAll(async () => {
     const server = await runTestServer({
-      dbPostgresSchema: 'server',
+      dbSchema: 'server',
     })
 
     db = server.db

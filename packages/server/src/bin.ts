@@ -3,11 +3,11 @@ import { Database, PlcDatabase } from './db'
 import PlcServer from '.'
 
 const run = async () => {
-  const dbPostgresUrl = process.env.DB_POSTGRES_URL
+  const dbUrl = process.env.DATABASE_URL
 
   let db: PlcDatabase
-  if (dbPostgresUrl) {
-    const pgDb = Database.postgres({ url: dbPostgresUrl })
+  if (dbUrl) {
+    const pgDb = Database.postgres({ url: dbUrl })
     await pgDb.migrateToLatestOrThrow()
     db = pgDb
   } else {

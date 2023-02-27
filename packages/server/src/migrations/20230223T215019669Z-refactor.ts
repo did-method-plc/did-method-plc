@@ -8,7 +8,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('cid', 'text', (col) => col.notNull())
     .addColumn('nullified', 'boolean', (col) => col.notNull())
     .addColumn('createdAt', 'timestamptz', (col) =>
-      col.defaultTo(sql`current_timestamp`),
+      col.notNull().defaultTo(sql`current_timestamp`),
     )
     .addPrimaryKeyConstraint('operations_primary_key', ['did', 'cid'])
     .execute()

@@ -9,12 +9,12 @@ describe('refactor migration', () => {
   let rawDb: Kysely<any>
 
   beforeAll(async () => {
-    const dbPostgresUrl = process.env.DB_POSTGRES_URL
-    if (!dbPostgresUrl) {
+    const dbUrl = process.env.DATABASE_URL
+    if (!dbUrl) {
       throw new Error('No postgres url provided')
     }
     db = Database.postgres({
-      url: dbPostgresUrl,
+      url: dbUrl,
       schema: 'migration_refactor',
     })
 

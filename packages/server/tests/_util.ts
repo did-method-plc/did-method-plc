@@ -11,17 +11,17 @@ export type TestServerInfo = {
 }
 
 export const runTestServer = async (opts: {
-  dbPostgresSchema: string
+  dbSchema: string
 }): Promise<TestServerInfo> => {
-  const { dbPostgresSchema } = opts
-  const dbPostgresUrl = process.env.DB_POSTGRES_URL
-  if (!dbPostgresUrl) {
+  const { dbSchema } = opts
+  const dbUrl = process.env.DATABASE_URL
+  if (!dbUrl) {
     throw new Error('No postgres url provided')
   }
 
   const db = Database.postgres({
-    url: dbPostgresUrl,
-    schema: dbPostgresSchema,
+    url: dbUrl,
+    schema: dbSchema,
   })
   await db.migrateToLatestOrThrow()
 
