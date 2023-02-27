@@ -45,7 +45,6 @@ export const assureValidNextOp = async (
   }
   const lastOpNormalized = normalizeOp(lastOp.operation)
   const firstNullified = nullified[0]
-  // const firstNullifiedNormalized = normalizeCreateOp(firstNullified.operation)
 
   // if this does not involve nullification
   if (!firstNullified) {
