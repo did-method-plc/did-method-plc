@@ -69,16 +69,27 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Get operation log for a DID
   router.get('/:did/log', async function (req, res) {
     const { did } = req.params
-    const includeNull = req.query.includeNull === 'true'
-
-    const log = includeNull
-      ? await ctx.db.indexedOpsForDid(did, includeNull)
-      : await ctx.db.opsForDid(did)
-
+    const log = await ctx.db.opsForDid(did)
     if (log.length === 0) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
-    res.json({ log })
+    res.json(log)
+  })
+
+  // Get operation log for a DID
+  router.get('/:did/auditable', async function (req, res) {
+    const { did } = req.params
+    const ops = await ctx.db.indexedOpsForDid(did, true)
+    if (ops.length === 0) {
+      throw new ServerError(404, `DID not registered: ${did}`)
+    }
+    const log = ops.map((op) => ({
+      ...op,
+      cid: op.cid.toString(),
+      createdAt: op.createdAt.toISOString(),
+    }))
+
+    res.json(log)
   })
 
   // Get the most recent operation in the log for a DID

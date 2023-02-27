@@ -78,6 +78,6 @@ describe('compatibility', () => {
 
     const result = await assureValidNextOp(did, [indexedLegacy], nextOp)
     expect(result.nullified.length).toBe(0)
-    expect(result.prev?.equals(legacyCid))
+    expect(result.prev?.equals(legacyCid)).toBeTruthy()
   })
 })

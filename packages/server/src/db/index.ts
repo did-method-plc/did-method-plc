@@ -201,12 +201,16 @@ export class Database implements PlcDatabase {
     let builder = this.db
       .selectFrom('operations')
       .selectAll()
-      .orderBy('createdAt', 'desc')
+      .orderBy('createdAt', 'asc')
       .limit(count)
     if (after) {
       builder = builder.where('createdAt', '>', after)
     }
-    return builder.execute()
+    const res = await builder.execute()
+    return res.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+    }))
   }
 }
 

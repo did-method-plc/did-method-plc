@@ -68,13 +68,14 @@ export const indexedOperation = z.object({
 })
 export type IndexedOperation = z.infer<typeof indexedOperation>
 
-export type ExportedOp = {
-  did: string
-  operation: CompatibleOpOrTombstone
-  cid: string
-  nullified: boolean
-  createdAt: Date
-}
+export const exportedOp = z.object({
+  did: z.string(),
+  operation: compatibleOpOrTombstone,
+  cid: z.string(),
+  nullified: z.boolean(),
+  createdAt: z.string(),
+})
+export type ExportedOp = z.infer<typeof exportedOp>
 
 export const didDocVerificationMethod = z.object({
   id: z.string(),
@@ -110,5 +111,7 @@ export const def = {
   opOrTombstone,
   compatibleOp,
   compatibleOpOrTombstone,
+  indexedOperation,
+  exportedOp,
   didDocument,
 }

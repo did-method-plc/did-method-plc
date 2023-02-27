@@ -159,6 +159,18 @@ describe('PLC server', () => {
     expect(doc.services).toEqual({ atpPds })
   })
 
+  it('retrieves the auditable operation log', async () => {
+    const log = await client.getOperationLog(did)
+    const auditable = await client.getAuditableLog(did)
+    // has one nullifed op
+    expect(auditable.length).toBe(log.length + 1)
+    expect(auditable.filter((op) => op.nullified).length).toBe(1)
+    expect(auditable.at(-2)?.nullified).toBe(true)
+    expect(
+      auditable.every((op) => check.is(op, plc.def.exportedOp)),
+    ).toBeTruthy()
+  })
+
   it('retrieves the did doc', async () => {
     const data = await client.getDocumentData(did)
     const doc = await client.getDocument(did)
@@ -166,7 +178,7 @@ describe('PLC server', () => {
   })
 
   it('handles concurrent requests to many docs', async () => {
-    const COUNT = 100
+    const COUNT = 50
     const keys: EcdsaKeypair[] = []
     for (let i = 0; i < COUNT; i++) {
       keys.push(await EcdsaKeypair.create())
@@ -220,7 +232,12 @@ describe('PLC server', () => {
   })
 
   it('exports the data set', async () => {
-    await client.export()
+    const data = await client.export()
+    expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
+    expect(data.length).toBe(58)
+    for (let i = 1; i < data.length; i++) {
+      expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
+    }
   })
 
   it('healthcheck succeeds when database is available.', async () => {

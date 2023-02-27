@@ -17,16 +17,16 @@ export class Client {
     return res.data
   }
 
-  async getOperationLog(
-    did: string,
-    includeNull = false,
-  ): Promise<t.CompatibleOpOrTombstone[]> {
-    let url = `${this.url}/${encodeURIComponent(did)}/log`
-    if (includeNull) {
-      url += '?includeNull=true'
-    }
-    const res = await axios.get(url)
-    return res.data.log
+  async getOperationLog(did: string): Promise<t.CompatibleOpOrTombstone[]> {
+    const res = await axios.get(`${this.url}/${encodeURIComponent(did)}/log`)
+    return res.data
+  }
+
+  async getAuditableLog(did: string): Promise<t.ExportedOp[]> {
+    const res = await axios.get(
+      `${this.url}/${encodeURIComponent(did)}/auditable`,
+    )
+    return res.data
   }
 
   postOpUrl(did: string): string {
@@ -83,8 +83,15 @@ export class Client {
     await axios.post(this.postOpUrl(did), op)
   }
 
-  async export(): Promise<t.ExportedOp[]> {
-    const res = await axios.get(`${this.url}/export`)
+  async export(after?: string, count?: number): Promise<t.ExportedOp[]> {
+    const url = new URL(`${this.url}/export`)
+    if (after) {
+      url.searchParams.append('after', after)
+    }
+    if (count !== undefined) {
+      url.searchParams.append('count', count.toString(10))
+    }
+    const res = await axios.get(url.toString())
     const lines = res.data.split('\n')
     return lines.map((l) => JSON.parse(l))
   }
