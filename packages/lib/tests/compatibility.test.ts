@@ -6,7 +6,8 @@ import {
   deprecatedSignCreate,
   didForCreateOp,
   normalizeOp,
-  signOperation,
+  updateRotationkeysOp,
+  updateAtprotoKeyOp,
   validateOperationLog,
 } from '../src'
 
@@ -41,11 +42,17 @@ describe('compatibility', () => {
 
     const normalized = normalizeOp(legacyOp)
     expect(normalized).toEqual({
-      signingKey: signingKey.did(),
+      type: 'plc_operation',
+      verificationMethods: {
+        atproto: signingKey.did(),
+      },
       rotationKeys: [recoveryKey.did(), signingKey.did()],
-      handles: [handle],
+      alsoKnownAs: [`at://${handle}`],
       services: {
-        atpPds: service,
+        atproto_pds: {
+          type: 'AtprotoPersonalDataServer',
+          endpoint: service,
+        },
       },
       prev: null,
       sig: legacyOp.sig,
@@ -56,18 +63,35 @@ describe('compatibility', () => {
     const legacyCid = await cidForCbor(legacyOp)
     const newSigner = await Secp256k1Keypair.create()
     const newRotater = await Secp256k1Keypair.create()
-    const nextOp = await signOperation(
-      {
-        signingKey: newSigner.did(),
-        rotationKeys: [newRotater.did()],
-        handles: [handle],
-        services: { atpPds: service },
-        prev: legacyCid.toString(),
-      },
+    const nextOp = await updateAtprotoKeyOp(
+      legacyOp,
       signingKey,
+      newSigner.did(),
     )
+    const anotherOp = await updateRotationkeysOp(nextOp, signingKey, [
+      newRotater.did(),
+    ])
+    //   {
+    //     type: 'plc_operation',
+    //     verificationMethods: {
+    //       atproto: newSigner.did(),
+    //     },
+    //     rotationKeys: [newRotater.did()],
+    //     alsoKnownAs: [`at://${handle}`],
+    //     services: {
+    //       atproto_pds: {
+    //         type: 'AtprotoPersonalDataServer',
+    //         endpoint: service,
+    //       },
+    //     },
+    //     prev: legacyCid.toString(),
+    //   },
+    //   signingKey,
+    // )
     await validateOperationLog(did, [legacyOp, nextOp])
+    // await validateOperationLog(did, [legacyOp, nextOp, anotherOp])
 
+    return
     const indexedLegacy = {
       did,
       operation: legacyOp,

@@ -39,9 +39,10 @@ describe('plc did data', () => {
     const prev = await cidForCbor(lastOp)
     return operations.signOperation(
       {
-        signingKey: lastOp.signingKey,
+        type: 'plc_operation',
+        verificationMethods: lastOp.verificationMethods,
         rotationKeys: lastOp.rotationKeys,
-        handles: lastOp.handles,
+        alsoKnownAs: lastOp.alsoKnownAs,
         services: lastOp.services,
         prev: prev.toString(),
         ...changes,
@@ -53,9 +54,12 @@ describe('plc did data', () => {
   it('creates a valid create op', async () => {
     const createOp = await operations.signOperation(
       {
-        signingKey: signingKey.did(),
+        type: 'plc_operation',
+        verificationMethods: {
+          atproto: signingKey.did(),
+        },
         rotationKeys: [rotationKey1.did(), rotationKey2.did()],
-        handles: [handle],
+        alsoKnownAs: [handle],
         services: {
           atpPds,
         },
@@ -76,15 +80,15 @@ describe('plc did data', () => {
       throw new Error('expected doc')
     }
     expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
+    expect(doc.verificationMethods).toEqual({ atproto: signingKey.did() })
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.handles).toEqual([handle])
+    expect(doc.alsoKnownAs).toEqual([handle])
     expect(doc.services).toEqual({ atpPds })
   })
 
   it('updates handle', async () => {
     handle = 'ali.example2.com'
-    const op = await makeNextOp({ handles: [handle] }, rotationKey1)
+    const op = await makeNextOp({ alsoKnownAs: [handle] }, rotationKey1)
     ops.push(op)
 
     const doc = await data.validateOperationLog(did, ops)
@@ -92,9 +96,9 @@ describe('plc did data', () => {
       throw new Error('expected doc')
     }
     expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
+    expect(doc.verificationMethods).toEqual({ atproto: signingKey.did() })
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.handles).toEqual([handle])
+    expect(doc.alsoKnownAs).toEqual([handle])
     expect(doc.services).toEqual({ atpPds })
   })
 
@@ -115,9 +119,9 @@ describe('plc did data', () => {
       throw new Error('expected doc')
     }
     expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
+    expect(doc.verificationMethods).toEqual({ atproto: signingKey.did() })
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.handles).toEqual([handle])
+    expect(doc.alsoKnownAs).toEqual([handle])
     expect(doc.services).toEqual({ atpPds })
   })
 
@@ -125,7 +129,9 @@ describe('plc did data', () => {
     const newSigningKey = await Secp256k1Keypair.create()
     const op = await makeNextOp(
       {
-        signingKey: newSigningKey.did(),
+        verificationMethods: {
+          atproto: newSigningKey.did(),
+        },
       },
       rotationKey1,
     )
@@ -138,9 +144,9 @@ describe('plc did data', () => {
       throw new Error('expected doc')
     }
     expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
+    expect(doc.verificationMethods).toEqual({ atproto: signingKey.did() })
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.handles).toEqual([handle])
+    expect(doc.alsoKnownAs).toEqual([handle])
     expect(doc.services).toEqual({ atpPds })
   })
 
@@ -163,16 +169,16 @@ describe('plc did data', () => {
     }
 
     expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
+    expect(doc.verificationMethods).toEqual({ atproto: signingKey.did() })
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.handles).toEqual([handle])
+    expect(doc.alsoKnownAs).toEqual([handle])
     expect(doc.services).toEqual({ atpPds })
   })
 
   it('no longer allows operations from old rotation key', async () => {
     const op = await makeNextOp(
       {
-        handles: ['bob'],
+        alsoKnownAs: ['bob'],
       },
       oldRotationKey1,
     )
@@ -184,7 +190,7 @@ describe('plc did data', () => {
   it('does not allow operations from the signingKey', async () => {
     const op = await makeNextOp(
       {
-        handles: ['bob'],
+        alsoKnownAs: ['bob'],
       },
       signingKey,
     )
@@ -197,7 +203,7 @@ describe('plc did data', () => {
     const newHandle = 'ali.example.com'
     const op = await makeNextOp(
       {
-        handles: [newHandle],
+        alsoKnownAs: [newHandle],
       },
       rotationKey2,
     )
@@ -208,9 +214,9 @@ describe('plc did data', () => {
       throw new Error('expected doc')
     }
     expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
+    expect(doc.verificationMethods).toEqual({ atproto: signingKey.did() })
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.handles).toEqual([handle])
+    expect(doc.alsoKnownAs).toEqual([handle])
     expect(doc.services).toEqual({ atpPds })
   })
 
@@ -225,7 +231,7 @@ describe('plc did data', () => {
     const prev = await cidForCbor(ops[ops.length - 2])
     const op = await makeNextOp(
       {
-        handles: ['bob.test'],
+        alsoKnownAs: ['bob.test'],
         prev: prev.toString(),
       },
       rotationKey1,
@@ -238,7 +244,7 @@ describe('plc did data', () => {
   it('does not allow a create operation in the middle of the log', async () => {
     const op = await makeNextOp(
       {
-        handles: ['bob.test'],
+        alsoKnownAs: ['bob.test'],
         prev: null,
       },
       rotationKey1,

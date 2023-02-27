@@ -2,7 +2,7 @@ import * as cbor from '@ipld/dag-cbor'
 import { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
 import { Keypair, parseDidKey, sha256, verifySignature } from '@atproto/crypto'
-import { check } from '@atproto/common'
+import { check, cidForCbor } from '@atproto/common'
 import * as t from './types'
 import {
   GenesisHashError,
@@ -32,6 +32,136 @@ export const addSignature = async <T extends Record<string, unknown>>(
   }
 }
 
+export const formatAtprotoOp = (opts: {
+  signingKey: string
+  handle: string
+  pds: string
+  rotationKeys: string[]
+  prev: CID | null
+}): t.UnsignedOperation => {
+  return {
+    type: 'plc_operation',
+    verificationMethods: {
+      atproto: opts.signingKey,
+    },
+    rotationKeys: opts.rotationKeys,
+    alsoKnownAs: [ensureAtprotoPrefix(opts.handle)],
+    services: {
+      atproto_pds: {
+        type: 'AtprotoPersonalDataServer',
+        endpoint: ensureHttpPrefix(opts.pds),
+      },
+    },
+    prev: opts.prev?.toString() ?? null,
+  }
+}
+
+export const atprotoOp = async (opts: {
+  signingKey: string
+  handle: string
+  pds: string
+  rotationKeys: string[]
+  prev: CID | null
+  signer: Keypair
+}) => {
+  return addSignature(formatAtprotoOp(opts), opts.signer)
+}
+
+export const createUpdateOp = async (
+  lastOp: t.CompatibleOp,
+  signer: Keypair,
+  fn: (
+    normalized: t.UnsignedOperation,
+    prev: CID,
+  ) => Omit<t.UnsignedOperation, 'prev'>,
+): Promise<t.Operation> => {
+  const prev = await cidForCbor(lastOp)
+  // omit sig so it doesn't accidentally make its way into the next operation
+  const { sig, ...normalized } = normalizeOp(lastOp)
+  const unsigned = await fn(normalized, prev)
+  return addSignature(
+    {
+      ...unsigned,
+      prev: prev.toString(),
+    },
+    signer,
+  )
+}
+
+export const updateAtprotoKeyOp = async (
+  lastOp: t.CompatibleOp,
+  signer: Keypair,
+  atprotoKey: string,
+): Promise<t.Operation> => {
+  return createUpdateOp(lastOp, signer, (normalized) => ({
+    ...normalized,
+    verificationMethods: {
+      ...normalized.verificationMethods,
+      atproto: atprotoKey,
+    },
+  }))
+}
+
+export const updateHandleOp = async (
+  lastOp: t.CompatibleOp,
+  signer: Keypair,
+  handle: string,
+): Promise<t.Operation> => {
+  const formatted = ensureAtprotoPrefix(handle)
+  return createUpdateOp(lastOp, signer, (normalized) => {
+    const handleI = normalized.alsoKnownAs.findIndex((h) =>
+      h.startsWith('at://'),
+    )
+    let aka: string[]
+    if (handleI < 0) {
+      aka = [formatted, ...normalized.alsoKnownAs]
+    } else {
+      aka = [
+        ...normalized.alsoKnownAs.slice(0, handleI),
+        formatted,
+        ...normalized.alsoKnownAs.slice(handleI + 1),
+      ]
+    }
+    return {
+      ...normalized,
+      alsoKnownAs: aka,
+    }
+  })
+}
+
+export const updatePdsOp = async (
+  lastOp: t.CompatibleOp,
+  signer: Keypair,
+  endpoint: string,
+): Promise<t.Operation> => {
+  const formatted = ensureHttpPrefix(endpoint)
+  return createUpdateOp(lastOp, signer, (normalized) => {
+    return {
+      ...normalized,
+      services: {
+        ...normalized.services,
+        atproto_pds: {
+          type: 'AtprotoPersonalDataServer',
+          endpoint: formatted,
+        },
+      },
+    }
+  })
+}
+
+export const updateRotationkeysOp = async (
+  lastOp: t.CompatibleOp,
+  signer: Keypair,
+  rotationKeys: string[],
+): Promise<t.Operation> => {
+  return createUpdateOp(lastOp, signer, (normalized) => {
+    return {
+      ...normalized,
+      rotationKeys,
+    }
+  })
+}
+
 export const signOperation = async (
   op: t.UnsignedOperation,
   signingKey: Keypair,
@@ -45,7 +175,7 @@ export const signTombstone = async (
 ): Promise<t.Tombstone> => {
   return addSignature(
     {
-      tombstone: true,
+      type: 'plc_tombstone',
       prev: prev.toString(),
     },
     key,
@@ -64,11 +194,17 @@ export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
     return op
   }
   return {
-    signingKey: op.signingKey,
+    type: 'plc_operation',
+    verificationMethods: {
+      atproto: op.signingKey,
+    },
     rotationKeys: [op.recoveryKey, op.signingKey],
-    handles: [op.handle],
+    alsoKnownAs: [ensureAtprotoPrefix(op.handle)],
     services: {
-      atpPds: op.service,
+      atproto_pds: {
+        type: 'AtprotoPersonalDataServer',
+        endpoint: ensureHttpPrefix(op.service),
+      },
     },
     prev: op.prev,
     sig: op.sig,
@@ -80,7 +216,7 @@ export const assureValidOp = async (op: t.OpOrTombstone) => {
     return true
   }
   // ensure we support the op's keys
-  const keys = [op.signingKey, ...op.rotationKeys]
+  const keys = [...Object.values(op.verificationMethods), ...op.rotationKeys]
   await Promise.all(
     keys.map(async (k) => {
       try {
@@ -118,8 +254,9 @@ export const assureValidCreationOp = async (
   if (op.prev !== null) {
     throw new ImproperOperationError('expected null prev on create', op)
   }
-  const { signingKey, rotationKeys, handles, services } = normalized
-  return { did, signingKey, rotationKeys, handles, services }
+  const { verificationMethods, rotationKeys, alsoKnownAs, services } =
+    normalized
+  return { did, verificationMethods, rotationKeys, alsoKnownAs, services }
 }
 
 export const assureValidSig = async (
@@ -137,4 +274,19 @@ export const assureValidSig = async (
     }
   }
   throw new InvalidSignatureError(op)
+}
+
+export const ensureHttpPrefix = (str: string): string => {
+  if (str.startsWith('http://') || str.startsWith('https://')) {
+    return str
+  }
+  return `https://${str}`
+}
+
+export const ensureAtprotoPrefix = (str: string): string => {
+  if (str.startsWith('at://')) {
+    return str
+  }
+  const stripped = str.replace('http://', '').replace('https://', '')
+  return `at://${stripped}`
 }

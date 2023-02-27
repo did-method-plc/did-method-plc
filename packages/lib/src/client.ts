@@ -1,6 +1,7 @@
 import { check, cidForCbor } from '@atproto/common'
 import { Keypair } from '@atproto/crypto'
 import axios from 'axios'
+import { CID } from 'multiformats/cid'
 import { didForCreateOp, normalizeOp, signOperation } from './operations'
 import * as t from './types'
 
@@ -38,29 +39,36 @@ export class Client {
     return res.data
   }
 
-  async applyPartialOp(
+  async updateData(
     did: string,
-    delta: Partial<t.UnsignedOperation>,
     key: Keypair,
+    fn: (lastOp: t.Operation, prev: CID) => Promise<t.UnsignedOperation>,
   ) {
     const lastOp = await this.getLastOp(did)
     if (check.is(lastOp, t.def.tombstone)) {
       throw new Error('Cannot apply op to tombstone')
     }
+    const normalized = normalizeOp(lastOp)
     const prev = await cidForCbor(lastOp)
-    const { signingKey, rotationKeys, handles, services } = normalizeOp(lastOp)
-    const op = await signOperation(
-      {
-        signingKey,
-        rotationKeys,
-        handles,
-        services,
-        prev: prev.toString(),
-        ...delta,
-      },
-      key,
-    )
+    const unsigned = await fn(normalized, prev)
+    const op = await signOperation(unsigned, key)
     await this.sendOperation(did, op)
+  }
+
+  async applyPartialOp(
+    did: string,
+    delta: Partial<t.UnsignedOperation>,
+    key: Keypair,
+  ) {
+    await this.updateData(did, key, async (lastOp, prev) => ({
+      type: 'plc_operation',
+      verificationMethods: lastOp.verificationMethods,
+      rotationKeys: lastOp.rotationKeys,
+      alsoKnownAs: lastOp.alsoKnownAs,
+      services: lastOp.services,
+      prev: prev.toString(),
+      ...delta,
+    }))
   }
 
   async create(
