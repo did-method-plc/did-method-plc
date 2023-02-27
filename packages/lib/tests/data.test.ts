@@ -73,8 +73,9 @@ describe('plc did data', () => {
   })
 
   it('updates handle', async () => {
-    handle = 'at://ali.example2.com'
-    const op = await operations.updateHandleOp(lastOp(), rotationKey1, handle)
+    const noPrefix = 'ali.exampl2.com'
+    handle = `at://${noPrefix}`
+    const op = await operations.updateHandleOp(lastOp(), rotationKey1, noPrefix)
     ops.push(op)
 
     const doc = await data.validateOperationLog(did, ops)
@@ -82,8 +83,9 @@ describe('plc did data', () => {
   })
 
   it('updates atpPds', async () => {
-    atpPds = 'https://example2.com'
-    const op = await operations.updatePdsOp(lastOp(), rotationKey1, atpPds)
+    const noPrefix = 'example2.com'
+    atpPds = `https://${noPrefix}`
+    const op = await operations.updatePdsOp(lastOp(), rotationKey1, noPrefix)
     ops.push(op)
 
     const doc = await data.validateOperationLog(did, ops)
@@ -107,7 +109,7 @@ describe('plc did data', () => {
 
   it('rotates rotation keys', async () => {
     const newRotationKey = await Secp256k1Keypair.create()
-    const op = await operations.updateRotationkeysOp(lastOp(), rotationKey1, [
+    const op = await operations.updateRotationKeysOp(lastOp(), rotationKey1, [
       newRotationKey.did(),
       rotationKey2.did(),
     ])

@@ -70,15 +70,12 @@ export const atprotoOp = async (opts: {
 export const createUpdateOp = async (
   lastOp: t.CompatibleOp,
   signer: Keypair,
-  fn: (
-    normalized: t.UnsignedOperation,
-    prev: CID,
-  ) => Omit<t.UnsignedOperation, 'prev'>,
+  fn: (normalized: t.UnsignedOperation) => Omit<t.UnsignedOperation, 'prev'>,
 ): Promise<t.Operation> => {
   const prev = await cidForCbor(lastOp)
   // omit sig so it doesn't accidentally make its way into the next operation
   const { sig, ...normalized } = normalizeOp(lastOp)
-  const unsigned = await fn(normalized, prev)
+  const unsigned = await fn(normalized)
   return addSignature(
     {
       ...unsigned,
@@ -149,7 +146,7 @@ export const updatePdsOp = async (
   })
 }
 
-export const updateRotationkeysOp = async (
+export const updateRotationKeysOp = async (
   lastOp: t.CompatibleOp,
   signer: Keypair,
   rotationKeys: string[],

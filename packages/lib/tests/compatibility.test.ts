@@ -6,7 +6,7 @@ import {
   deprecatedSignCreate,
   didForCreateOp,
   normalizeOp,
-  updateRotationkeysOp,
+  updateRotationKeysOp,
   updateAtprotoKeyOp,
   validateOperationLog,
 } from '../src'
@@ -68,30 +68,12 @@ describe('compatibility', () => {
       signingKey,
       newSigner.did(),
     )
-    const anotherOp = await updateRotationkeysOp(nextOp, signingKey, [
+    const anotherOp = await updateRotationKeysOp(nextOp, signingKey, [
       newRotater.did(),
     ])
-    //   {
-    //     type: 'plc_operation',
-    //     verificationMethods: {
-    //       atproto: newSigner.did(),
-    //     },
-    //     rotationKeys: [newRotater.did()],
-    //     alsoKnownAs: [`at://${handle}`],
-    //     services: {
-    //       atproto_pds: {
-    //         type: 'AtprotoPersonalDataServer',
-    //         endpoint: service,
-    //       },
-    //     },
-    //     prev: legacyCid.toString(),
-    //   },
-    //   signingKey,
-    // )
     await validateOperationLog(did, [legacyOp, nextOp])
-    // await validateOperationLog(did, [legacyOp, nextOp, anotherOp])
+    await validateOperationLog(did, [legacyOp, nextOp, anotherOp])
 
-    return
     const indexedLegacy = {
       did,
       operation: legacyOp,
