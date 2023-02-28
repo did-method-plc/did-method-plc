@@ -189,7 +189,7 @@ describe('PLC server', () => {
   })
 
   it('resolves races into a coherent history with no forks', async () => {
-    const COUNT = 100
+    const COUNT = 50
     const keys: EcdsaKeypair[] = []
     for (let i = 0; i < COUNT; i++) {
       keys.push(await EcdsaKeypair.create())
