@@ -2,6 +2,8 @@
 
 DID Placeholder is a cryptographic, strongly-consistent, and recoverable [DID](https://www.w3.org/TR/did-core/) method.
 
+### ⚠ README️ out of date ⚠️
+
 ## Motivation
 
 We introduced DID Placeholder because we weren't totally satisfied with any of the existing DID methods.
