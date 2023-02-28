@@ -58,6 +58,18 @@ export const atprotoOp = async (opts: {
   return addSignature(formatAtprotoOp(opts), opts.signer)
 }
 
+export const createOp = async (opts: {
+  signingKey: string
+  handle: string
+  pds: string
+  rotationKeys: string[]
+  signer: Keypair
+}): Promise<{ op: t.Operation; did: string }> => {
+  const op = await atprotoOp({ ...opts, prev: null })
+  const did = await didForCreateOp(op)
+  return { op, did }
+}
+
 export const createUpdateOp = async (
   lastOp: t.CompatibleOp,
   signer: Keypair,
