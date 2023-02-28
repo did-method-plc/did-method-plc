@@ -20,8 +20,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
 
   // Export ops in the form of paginated json lines
   router.get('/export', async function (req, res) {
-    const { count } = req.query
-    const parsedCount = count ? parseInt(count, 10) : 1000
+    const parsedCount = req.count ? parseInt(req.count, 10) : 1000
     if (isNaN(parsedCount) || parsedCount < 1) {
       throw new ServerError(400, 'Invalid count parameter')
     }
@@ -81,7 +80,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get operation log for a DID
-  router.get('/:did/auditable', async function (req, res) {
+  router.get('/:did/log/audit', async function (req, res) {
     const { did } = req.params
     const ops = await ctx.db.indexedOpsForDid(did, true)
     if (ops.length === 0) {
@@ -97,7 +96,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get the most recent operation in the log for a DID
-  router.get('/:did/last', async function (req, res) {
+  router.get('/:did/log/last', async function (req, res) {
     const { did } = req.params
     const last = await ctx.db.lastOpForDid(did)
     if (!last) {

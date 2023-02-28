@@ -24,7 +24,7 @@ export class Client {
 
   async getAuditableLog(did: string): Promise<t.ExportedOp[]> {
     const res = await axios.get(
-      `${this.url}/${encodeURIComponent(did)}/auditable`,
+      `${this.url}/${encodeURIComponent(did)}/log/audit`,
     )
     return res.data
   }
@@ -34,7 +34,9 @@ export class Client {
   }
 
   async getLastOp(did: string): Promise<t.CompatibleOpOrTombstone> {
-    const res = await axios.get(`${this.url}/${encodeURIComponent(did)}/last`)
+    const res = await axios.get(
+      `${this.url}/${encodeURIComponent(did)}/log/last`,
+    )
     return res.data
   }
 
