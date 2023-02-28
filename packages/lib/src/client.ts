@@ -1,6 +1,6 @@
 import { check, cidForCbor } from '@atproto/common'
 import { Keypair } from '@atproto/crypto'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import {
   atprotoOp,
   createUpdateOp,
@@ -16,26 +16,34 @@ import * as t from './types'
 export class Client {
   constructor(public url: string) {}
 
+  private async makeGetReq(url: string) {
+    try {
+      const res = await axios.get(url)
+      return res.data
+    } catch (err) {
+      if (!axios.isAxiosError(err)) {
+        throw err
+      }
+      throw PlcClientError.fromAxiosError(err)
+    }
+  }
+
   async getDocument(did: string): Promise<t.DidDocument> {
-    const res = await axios.get(`${this.url}/${encodeURIComponent(did)}`)
-    return res.data
+    return await this.makeGetReq(`${this.url}/${encodeURIComponent(did)}`)
   }
 
   async getDocumentData(did: string): Promise<t.DocumentData> {
-    const res = await axios.get(`${this.url}/${encodeURIComponent(did)}/data`)
-    return res.data
+    return await this.makeGetReq(`${this.url}/${encodeURIComponent(did)}/data`)
   }
 
   async getOperationLog(did: string): Promise<t.CompatibleOpOrTombstone[]> {
-    const res = await axios.get(`${this.url}/${encodeURIComponent(did)}/log`)
-    return res.data
+    return await this.makeGetReq(`${this.url}/${encodeURIComponent(did)}/log`)
   }
 
   async getAuditableLog(did: string): Promise<t.ExportedOp[]> {
-    const res = await axios.get(
+    return await this.makeGetReq(
       `${this.url}/${encodeURIComponent(did)}/log/audit`,
     )
-    return res.data
   }
 
   postOpUrl(did: string): string {
@@ -43,14 +51,20 @@ export class Client {
   }
 
   async getLastOp(did: string): Promise<t.CompatibleOpOrTombstone> {
-    const res = await axios.get(
+    return await this.makeGetReq(
       `${this.url}/${encodeURIComponent(did)}/log/last`,
     )
-    return res.data
   }
 
   async sendOperation(did: string, op: t.OpOrTombstone) {
-    await axios.post(this.postOpUrl(did), op)
+    try {
+      await axios.post(this.postOpUrl(did), op)
+    } catch (err) {
+      if (!axios.isAxiosError(err)) {
+        throw err
+      }
+      throw PlcClientError.fromAxiosError(err)
+    }
   }
 
   async export(after?: string, count?: number): Promise<t.ExportedOp[]> {
@@ -129,7 +143,25 @@ export class Client {
   }
 
   async health() {
-    return await axios.get(`${this.url}/_health`)
+    return await this.makeGetReq(`${this.url}/_health`)
+  }
+}
+
+export class PlcClientError extends Error {
+  constructor(
+    public status: number,
+    public data: unknown,
+    public message: string,
+  ) {
+    super(message)
+  }
+
+  static fromAxiosError(err: AxiosError) {
+    return new PlcClientError(
+      err.response?.status || 500,
+      err.response?.data,
+      err.message,
+    )
   }
 }
 

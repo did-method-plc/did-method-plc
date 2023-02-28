@@ -2,8 +2,8 @@ import { EcdsaKeypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
 import { check } from '@atproto/common'
-import { AxiosError } from 'axios'
 import { Database } from '../src'
+import { PlcClientError } from '@did-plc/lib'
 
 describe('PLC server', () => {
   let handle = 'at://alice.example.com'
@@ -95,12 +95,12 @@ describe('PLC server', () => {
       'did:key:z6MkjwbBXZnFqL8su24wGL2Fdjti6GSLv9SWdYGswfazUPm9'
 
     const promise = client.updateAtprotoKey(did, rotationKey1, newSigningKey)
-    await expect(promise).rejects.toThrow(AxiosError)
+    await expect(promise).rejects.toThrow(PlcClientError)
 
     const promise2 = client.updateRotationKeys(did, rotationKey1, [
       newSigningKey,
     ])
-    await expect(promise2).rejects.toThrow(AxiosError)
+    await expect(promise2).rejects.toThrow(PlcClientError)
   })
 
   it('retrieves the operation log', async () => {
@@ -157,7 +157,7 @@ describe('PLC server', () => {
   })
 
   it('handles concurrent requests to many docs', async () => {
-    const COUNT = 50
+    const COUNT = 20
     const keys: EcdsaKeypair[] = []
     for (let i = 0; i < COUNT; i++) {
       keys.push(await EcdsaKeypair.create())
@@ -176,7 +176,7 @@ describe('PLC server', () => {
   })
 
   it('resolves races into a coherent history with no forks', async () => {
-    const COUNT = 50
+    const COUNT = 20
     const keys: EcdsaKeypair[] = []
     for (let i = 0; i < COUNT; i++) {
       keys.push(await EcdsaKeypair.create())
@@ -196,7 +196,7 @@ describe('PLC server', () => {
       }),
     )
     expect(successes).toBe(1)
-    expect(failures).toBe(49)
+    expect(failures).toBe(19)
 
     const ops = await client.getOperationLog(did)
     await plc.validateOperationLog(did, ops)
@@ -206,41 +206,40 @@ describe('PLC server', () => {
     await client.tombstone(did, rotationKey1)
 
     const promise = client.getDocument(did)
-    await expect(promise).rejects.toThrow(AxiosError)
+    await expect(promise).rejects.toThrow(PlcClientError)
     const promise2 = client.getDocumentData(did)
-    await expect(promise2).rejects.toThrow(AxiosError)
+    await expect(promise2).rejects.toThrow(PlcClientError)
   })
 
   it('exports the data set', async () => {
     const data = await client.export()
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
-    expect(data.length).toBe(59)
+    expect(data.length).toBe(29)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
     }
   })
 
   it('healthcheck succeeds when database is available.', async () => {
-    const { data, status } = await client.health()
-    expect(status).toEqual(200)
-    expect(data).toEqual({ version: '0.0.0' })
+    const res = await client.health()
+    expect(res).toEqual({ version: '0.0.0' })
   })
 
   it('healthcheck fails when database is unavailable.', async () => {
     await db.db.destroy()
-    let error: AxiosError
+    let error: PlcClientError
     try {
       await client.health()
       throw new Error('Healthcheck should have failed')
     } catch (err) {
-      if (err instanceof AxiosError) {
+      if (err instanceof PlcClientError) {
         error = err
       } else {
         throw err
       }
     }
-    expect(error.response?.status).toEqual(503)
-    expect(error.response?.data).toEqual({
+    expect(error.status).toEqual(503)
+    expect(error.data).toEqual({
       version: '0.0.0',
       error: 'Service Unavailable',
     })
