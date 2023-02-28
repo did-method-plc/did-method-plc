@@ -32,7 +32,7 @@ describe('document', () => {
       },
     }
     const doc = await document.formatDidDoc(data)
-    // only epxected keys
+    // only expected keys
     expect(Object.keys(doc).sort()).toEqual(
       ['@context', 'id', 'alsoKnownAs', 'verificationMethod', 'service'].sort(),
     )
