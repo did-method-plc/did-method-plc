@@ -86,11 +86,7 @@ export class Database {
   async validateAndAddOp(did: string, proposed: plc.Operation): Promise<void> {
     const ops = await this._opsForDid(did)
     // throws if invalid
-    const { nullified, prev } = await plc.document.assureValidNextOp(
-      did,
-      ops,
-      proposed,
-    )
+    const { nullified, prev } = await plc.assureValidNextOp(did, ops, proposed)
     const cid = await cidForCbor(proposed)
 
     await this.db
@@ -156,7 +152,7 @@ export class Database {
 
   async opsForDid(did: string): Promise<plc.Operation[]> {
     const ops = await this._opsForDid(did)
-    return ops.map((op) => op.operation)
+    return ops.map((op) => plc.normalizeOp(op.operation))
   }
 
   async _opsForDid(did: string): Promise<plc.IndexedOperation[]> {
@@ -176,6 +172,24 @@ export class Database {
       createdAt: new Date(row.createdAt),
     }))
   }
+
+  async fullExport(): Promise<Record<string, OpLogExport>> {
+    const res = await this.db
+      .selectFrom('operations')
+      .selectAll()
+      .orderBy('did')
+      .orderBy('createdAt')
+      .execute()
+    return res.reduce((acc, cur) => {
+      acc[cur.did] ??= []
+      acc[cur.did].push({
+        op: JSON.parse(cur.operation),
+        nullified: cur.nullified === 1,
+        createdAt: cur.createdAt,
+      })
+      return acc
+    }, {} as Record<string, OpLogExport>)
+  }
 }
 
 export default Database
@@ -192,4 +206,12 @@ interface OperationsTable {
 
 interface DatabaseSchema {
   operations: OperationsTable
+}
+
+type OpLogExport = OpExport[]
+
+type OpExport = {
+  op: Record<string, unknown>
+  nullified: boolean
+  createdAt: string
 }

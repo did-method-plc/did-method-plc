@@ -1,6 +1,12 @@
+import { PlcError } from '@did-plc/lib'
 import { ErrorRequestHandler } from 'express'
 
 export const handler: ErrorRequestHandler = (err, req, res, next) => {
+  // normalize our PLC errors to server errors
+  if (PlcError.is(err)) {
+    err = ServerError.fromPlcError(err)
+  }
+
   req.log.info(
     err,
     ServerError.is(err)
@@ -31,5 +37,9 @@ export class ServerError extends Error {
       typeof (obj as Record<string, unknown>).message === 'string' &&
       typeof (obj as Record<string, unknown>).status === 'number'
     )
+  }
+
+  static fromPlcError(err: PlcError): ServerError {
+    return new ServerError(400, err.message)
   }
 }
