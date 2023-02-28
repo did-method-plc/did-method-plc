@@ -112,8 +112,8 @@ export const validateOperationLog = async (
         throw new MisorderedOperationError()
       }
     }
-    const { signingKey, rotationKeys, handles, services } = op
-    doc = { did, signingKey, rotationKeys, handles, services }
+    const { verificationMethods, rotationKeys, alsoKnownAs, services } = op
+    doc = { did, verificationMethods, rotationKeys, alsoKnownAs, services }
     prev = await cidForCbor(op)
   }
 

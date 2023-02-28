@@ -7,38 +7,43 @@ import { ParsedDidKey } from '@atproto/crypto'
 export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
   const context = ['https://www.w3.org/ns/did/v1']
 
-  const signingKeyInfo = formatKeyAndContext(data.signingKey)
-  if (!context.includes(signingKeyInfo.context)) {
-    context.push(signingKeyInfo.context)
+  const verificationMethods: VerificationMethod[] = []
+  for (const [keyid, key] of Object.entries(data.verificationMethods)) {
+    const info = formatKeyAndContext(key)
+    if (!context.includes(info.context)) {
+      context.push(info.context)
+    }
+    verificationMethods.push({
+      id: `#${keyid}`,
+      type: info.type,
+      controller: data.did,
+      publicKeyMultibase: info.publicKeyMultibase,
+    })
   }
 
-  const alsoKnownAs = data.handles.map((h) => ensureHttpPrefix(h))
   const services: Service[] = []
-  if (data.services.atpPds) {
+  for (const [serviceId, service] of Object.entries(data.services)) {
     services.push({
-      id: `#atpPds`,
-      type: 'AtpPersonalDataServer',
-      serviceEndpoint: ensureHttpPrefix(data.services.atpPds),
+      id: `#${serviceId}`,
+      type: service.type,
+      serviceEndpoint: service.endpoint,
     })
   }
 
   return {
     '@context': context,
     id: data.did,
-    alsoKnownAs: alsoKnownAs,
-    verificationMethod: [
-      {
-        id: `#signingKey`,
-        type: signingKeyInfo.type,
-        controller: data.did,
-        publicKeyMultibase: signingKeyInfo.publicKeyMultibase,
-      },
-    ],
-    assertionMethod: [`#signingKey`],
-    capabilityInvocation: [`#signingKey`],
-    capabilityDelegation: [`#signingKey`],
+    alsoKnownAs: data.alsoKnownAs,
+    verificationMethod: verificationMethods,
     service: services,
   }
+}
+
+type VerificationMethod = {
+  id: string
+  type: string
+  controller: string
+  publicKeyMultibase: string
 }
 
 type Service = {
@@ -76,11 +81,4 @@ const formatKeyAndContext = (key: string): KeyAndContext => {
     }
   }
   throw new UnsupportedKeyError(key, `Unsupported key type: ${jwtAlg}`)
-}
-
-export const ensureHttpPrefix = (str: string): string => {
-  if (str.startsWith('http://') || str.startsWith('https://')) {
-    return str
-  }
-  return `https://${str}`
 }

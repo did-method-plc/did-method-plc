@@ -8,14 +8,17 @@ const cid = z
   })
   .transform((obj: unknown) => mf.CID.asCID(obj) as mf.CID)
 
+const service = z.object({
+  type: z.string(),
+  endpoint: z.string(),
+})
+
 const documentData = z.object({
   did: z.string(),
-  signingKey: z.string(),
   rotationKeys: z.array(z.string()),
-  handles: z.array(z.string()),
-  services: z.object({
-    atpPds: z.string().optional(),
-  }),
+  verificationMethods: z.record(z.string()),
+  alsoKnownAs: z.array(z.string()),
+  services: z.record(service),
 })
 export type DocumentData = z.infer<typeof documentData>
 
@@ -32,12 +35,11 @@ const createOpV1 = unsignedCreateOpV1.extend({ sig: z.string() })
 export type CreateOpV1 = z.infer<typeof createOpV1>
 
 const unsignedOperation = z.object({
-  signingKey: z.string(),
+  type: z.literal('plc_operation'),
   rotationKeys: z.array(z.string()),
-  handles: z.array(z.string()),
-  services: z.object({
-    atpPds: z.string().optional(),
-  }),
+  verificationMethods: z.record(z.string()),
+  alsoKnownAs: z.array(z.string()),
+  services: z.record(service),
   prev: z.string().nullable(),
 })
 export type UnsignedOperation = z.infer<typeof unsignedOperation>
@@ -45,7 +47,7 @@ const operation = unsignedOperation.extend({ sig: z.string() })
 export type Operation = z.infer<typeof operation>
 
 const unsignedTombstone = z.object({
-  tombstone: z.literal(true),
+  type: z.literal('plc_tombstone'),
   prev: z.string(),
 })
 export type UnsignedTombstone = z.infer<typeof unsignedTombstone>
@@ -95,9 +97,6 @@ export const didDocument = z.object({
   id: z.string(),
   alsoKnownAs: z.array(z.string()),
   verificationMethod: z.array(didDocVerificationMethod),
-  assertionMethod: z.array(z.string()),
-  capabilityInvocation: z.array(z.string()),
-  capabilityDelegation: z.array(z.string()),
   service: z.array(didDocService),
 })
 export type DidDocument = z.infer<typeof didDocument>

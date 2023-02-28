@@ -4,7 +4,7 @@ import { Generated } from 'kysely'
 export interface PlcDatabase {
   close(): Promise<void>
   healthCheck(): Promise<void>
-  validateAndAddOp(did: string, proposed: plc.Operation): Promise<void>
+  validateAndAddOp(did: string, proposed: plc.OpOrTombstone): Promise<void>
   opsForDid(did: string): Promise<plc.CompatibleOpOrTombstone[]>
   indexedOpsForDid(
     did: string,

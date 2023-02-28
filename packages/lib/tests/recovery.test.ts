@@ -46,19 +46,17 @@ describe('plc recovery', () => {
     signer: Keypair,
     otherChanges: Partial<t.Operation> = {},
   ) => {
-    const op = await operations.signOperation(
-      {
+    const unsigned = {
+      ...operations.formatAtprotoOp({
         signingKey: signingKey.did(),
         rotationKeys: keys.map((k) => k.did()),
-        handles: [handle],
-        services: {
-          atpPds,
-        },
-        prev: prev ? prev.toString() : null,
-        ...otherChanges,
-      },
-      signer,
-    )
+        handle,
+        pds: atpPds,
+        prev,
+      }),
+      ...otherChanges,
+    }
+    const op = await operations.addSignature(unsigned, signer)
     const indexed = await formatIndexed(op)
     return { op, indexed }
   }
@@ -89,7 +87,7 @@ describe('plc recovery', () => {
       [rotationKey3],
       rotate.indexed.cid,
       rotationKey3,
-      { handles: ['newhandle.test'] },
+      { alsoKnownAs: ['newhandle.test'] },
     )
 
     log.push({
@@ -161,7 +159,7 @@ describe('plc recovery', () => {
   })
 
   it('allows recovery from a tombstoned DID', async () => {
-    const tombstone = await operations.signTombstone(createCid, rotationKey2)
+    const tombstone = await operations.tombstoneOp(createCid, rotationKey2)
     const cid = await cidForCbor(tombstone)
     const tombstoneOps = [
       log[0],

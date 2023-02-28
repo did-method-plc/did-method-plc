@@ -1,7 +1,16 @@
 import { check, cidForCbor } from '@atproto/common'
 import { Keypair } from '@atproto/crypto'
 import axios from 'axios'
-import { didForCreateOp, normalizeOp, signOperation } from './operations'
+import {
+  atprotoOp,
+  createUpdateOp,
+  didForCreateOp,
+  tombstoneOp,
+  updateAtprotoKeyOp,
+  updateHandleOp,
+  updatePdsOp,
+  updateRotationKeysOp,
+} from './operations'
 import * as t from './types'
 
 export class Client {
@@ -40,47 +49,6 @@ export class Client {
     return res.data
   }
 
-  async applyPartialOp(
-    did: string,
-    delta: Partial<t.UnsignedOperation>,
-    key: Keypair,
-  ) {
-    const lastOp = await this.getLastOp(did)
-    if (check.is(lastOp, t.def.tombstone)) {
-      throw new Error('Cannot apply op to tombstone')
-    }
-    const prev = await cidForCbor(lastOp)
-    const { signingKey, rotationKeys, handles, services } = normalizeOp(lastOp)
-    const op = await signOperation(
-      {
-        signingKey,
-        rotationKeys,
-        handles,
-        services,
-        prev: prev.toString(),
-        ...delta,
-      },
-      key,
-    )
-    await this.sendOperation(did, op)
-  }
-
-  async create(
-    op: Omit<t.UnsignedOperation, 'prev'>,
-    key: Keypair,
-  ): Promise<string> {
-    const createOp = await signOperation(
-      {
-        ...op,
-        prev: null,
-      },
-      key,
-    )
-    const did = await didForCreateOp(createOp)
-    await this.sendOperation(did, createOp)
-    return did
-  }
-
   async sendOperation(did: string, op: t.OpOrTombstone) {
     await axios.post(this.postOpUrl(did), op)
   }
@@ -96,6 +64,68 @@ export class Client {
     const res = await axios.get(url.toString())
     const lines = res.data.split('\n')
     return lines.map((l) => JSON.parse(l))
+  }
+
+  async createDid(opts: {
+    signingKey: string
+    handle: string
+    pds: string
+    rotationKeys: string[]
+    signer: Keypair
+  }): Promise<string> {
+    const op = await atprotoOp({ ...opts, prev: null })
+    const did = await didForCreateOp(op)
+    await this.sendOperation(did, op)
+    return did
+  }
+
+  private async ensureLastOp(did) {
+    const lastOp = await this.getLastOp(did)
+    if (check.is(lastOp, t.def.tombstone)) {
+      throw new Error('Cannot apply op to tombstone')
+    }
+    return lastOp
+  }
+
+  async updateData(
+    did: string,
+    signer: Keypair,
+    fn: (lastOp: t.UnsignedOperation) => Omit<t.UnsignedOperation, 'prev'>,
+  ) {
+    const lastOp = await this.ensureLastOp(did)
+    const op = await createUpdateOp(lastOp, signer, fn)
+    await this.sendOperation(did, op)
+  }
+
+  async updateAtprotoKey(did: string, signer: Keypair, atprotoKey: string) {
+    const lastOp = await this.ensureLastOp(did)
+    const op = await updateAtprotoKeyOp(lastOp, signer, atprotoKey)
+    await this.sendOperation(did, op)
+  }
+
+  async updateHandle(did: string, signer: Keypair, handle: string) {
+    const lastOp = await this.ensureLastOp(did)
+    const op = await updateHandleOp(lastOp, signer, handle)
+    await this.sendOperation(did, op)
+  }
+
+  async updatePds(did: string, signer: Keypair, endpoint: string) {
+    const lastOp = await this.ensureLastOp(did)
+    const op = await updatePdsOp(lastOp, signer, endpoint)
+    await this.sendOperation(did, op)
+  }
+
+  async updateRotationKeys(did: string, signer: Keypair, keys: string[]) {
+    const lastOp = await this.ensureLastOp(did)
+    const op = await updateRotationKeysOp(lastOp, signer, keys)
+    await this.sendOperation(did, op)
+  }
+
+  async tombstone(did: string, signer: Keypair) {
+    const lastOp = await this.ensureLastOp(did)
+    const prev = await cidForCbor(lastOp)
+    const op = await tombstoneOp(prev, signer)
+    await this.sendOperation(did, op)
   }
 
   async health() {

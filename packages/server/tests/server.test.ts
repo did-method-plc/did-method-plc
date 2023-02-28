@@ -1,14 +1,13 @@
 import { EcdsaKeypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
-import { check, cidForCbor } from '@atproto/common'
+import { check } from '@atproto/common'
 import { AxiosError } from 'axios'
 import { Database } from '../src'
-import { signOperation } from '@did-plc/lib'
 
 describe('PLC server', () => {
-  let handle = 'alice.example.com'
-  let atpPds = 'example.com'
+  let handle = 'at://alice.example.com'
+  let atpPds = 'https://example.com'
 
   let close: CloseFn
   let db: Database
@@ -39,57 +38,55 @@ describe('PLC server', () => {
     }
   })
 
-  it('registers a did', async () => {
-    did = await client.create(
-      {
-        signingKey: signingKey.did(),
-        rotationKeys: [rotationKey1.did(), rotationKey2.did()],
-        handles: [handle],
-        services: {
-          atpPds,
-        },
+  const verifyDoc = (doc: plc.DocumentData | null) => {
+    if (!doc) {
+      throw new Error('expected doc')
+    }
+    expect(doc.did).toEqual(did)
+    expect(doc.verificationMethods).toEqual({ atproto: signingKey.did() })
+    expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
+    expect(doc.alsoKnownAs).toEqual([handle])
+    expect(doc.services).toEqual({
+      atproto_pds: {
+        type: 'AtprotoPersonalDataServer',
+        endpoint: atpPds,
       },
-      rotationKey1,
-    )
+    })
+  }
+
+  it('registers a did', async () => {
+    did = await client.createDid({
+      signingKey: signingKey.did(),
+      rotationKeys: [rotationKey1.did(), rotationKey2.did()],
+      handle,
+      pds: atpPds,
+      signer: rotationKey1,
+    })
   })
 
   it('retrieves did doc data', async () => {
     const doc = await client.getDocumentData(did)
-    expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
-    expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.handles).toEqual([handle])
-    expect(doc.services).toEqual({ atpPds })
+    verifyDoc(doc)
   })
 
   it('can perform some updates', async () => {
     const newRotationKey = await EcdsaKeypair.create()
     signingKey = await EcdsaKeypair.create()
-    handle = 'ali.example2.com'
-    atpPds = 'example2.com'
+    handle = 'at://ali.example2.com'
+    atpPds = 'https://example2.com'
 
-    await client.applyPartialOp(
-      did,
-      { signingKey: signingKey.did() },
-      rotationKey1,
-    )
-
-    await client.applyPartialOp(
-      did,
-      { rotationKeys: [newRotationKey.did(), rotationKey2.did()] },
-      rotationKey1,
-    )
+    await client.updateAtprotoKey(did, rotationKey1, signingKey.did())
+    await client.updateRotationKeys(did, rotationKey1, [
+      newRotationKey.did(),
+      rotationKey2.did(),
+    ])
     rotationKey1 = newRotationKey
 
-    await client.applyPartialOp(did, { handles: [handle] }, rotationKey1)
-    await client.applyPartialOp(did, { services: { atpPds } }, rotationKey1)
+    await client.updateHandle(did, rotationKey1, handle)
+    await client.updatePds(did, rotationKey1, atpPds)
 
     const doc = await client.getDocumentData(did)
-    expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
-    expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.handles).toEqual([handle])
-    expect(doc.services).toEqual({ atpPds })
+    verifyDoc(doc)
   })
 
   it('does not allow key types that we do not support', async () => {
@@ -97,12 +94,13 @@ describe('PLC server', () => {
     const newSigningKey =
       'did:key:z6MkjwbBXZnFqL8su24wGL2Fdjti6GSLv9SWdYGswfazUPm9'
 
-    const promise = client.applyPartialOp(
-      did,
-      { signingKey: newSigningKey },
-      rotationKey1,
-    )
+    const promise = client.updateAtprotoKey(did, rotationKey1, newSigningKey)
     await expect(promise).rejects.toThrow(AxiosError)
+
+    const promise2 = client.updateRotationKeys(did, rotationKey1, [
+      newSigningKey,
+    ])
+    await expect(promise2).rejects.toThrow(AxiosError)
   })
 
   it('retrieves the operation log', async () => {
@@ -114,21 +112,13 @@ describe('PLC server', () => {
 
   it('rejects on bad updates', async () => {
     const newKey = await EcdsaKeypair.create()
-    const operation = client.applyPartialOp(
-      did,
-      { signingKey: newKey.did() },
-      newKey,
-    )
+    const operation = client.updateAtprotoKey(did, newKey, newKey.did())
     await expect(operation).rejects.toThrow()
   })
 
   it('allows for recovery through a forked history', async () => {
     const attackerKey = await EcdsaKeypair.create()
-    await client.applyPartialOp(
-      did,
-      { signingKey: attackerKey.did(), rotationKeys: [attackerKey.did()] },
-      rotationKey2,
-    )
+    await client.updateRotationKeys(did, rotationKey2, [attackerKey.did()])
 
     const newKey = await EcdsaKeypair.create()
     const ops = await client.getOperationLog(did)
@@ -136,27 +126,16 @@ describe('PLC server', () => {
     if (!check.is(forkPoint, plc.def.operation)) {
       throw new Error('Could not find fork point')
     }
-    const forkCid = await cidForCbor(forkPoint)
-    const op = await signOperation(
-      {
-        signingKey: signingKey.did(),
-        rotationKeys: [newKey.did()],
-        handles: forkPoint.handles,
-        services: forkPoint.services,
-        prev: forkCid.toString(),
-      },
-      rotationKey1,
-    )
+    const op = await plc.updateRotationKeysOp(forkPoint, rotationKey1, [
+      rotationKey1.did(),
+      newKey.did(),
+    ])
     await client.sendOperation(did, op)
 
-    rotationKey1 = newKey
+    rotationKey2 = newKey
 
     const doc = await client.getDocumentData(did)
-    expect(doc.did).toEqual(did)
-    expect(doc.signingKey).toEqual(signingKey.did())
-    expect(doc.rotationKeys).toEqual([newKey.did()])
-    expect(doc.handles).toEqual([handle])
-    expect(doc.services).toEqual({ atpPds })
+    verifyDoc(doc)
   })
 
   it('retrieves the auditable operation log', async () => {
@@ -185,17 +164,13 @@ describe('PLC server', () => {
     }
     await Promise.all(
       keys.map(async (key, index) => {
-        await client.create(
-          {
-            signingKey: key.did(),
-            rotationKeys: [key.did()],
-            handles: [`user${index}`],
-            services: {
-              atpPds: `example.com`,
-            },
-          },
-          key,
-        )
+        await client.createDid({
+          signingKey: key.did(),
+          rotationKeys: [key.did()],
+          handle: `user${index}`,
+          pds: `example.com`,
+          signer: key,
+        })
       }),
     )
   })
@@ -213,11 +188,7 @@ describe('PLC server', () => {
     await Promise.all(
       keys.map(async (key) => {
         try {
-          await client.applyPartialOp(
-            did,
-            { signingKey: key.did() },
-            rotationKey1,
-          )
+          await client.updateAtprotoKey(did, rotationKey1, key.did())
           successes++
         } catch (err) {
           failures++
@@ -231,10 +202,19 @@ describe('PLC server', () => {
     await plc.validateOperationLog(did, ops)
   })
 
+  it('tombstones the did', async () => {
+    await client.tombstone(did, rotationKey1)
+
+    const promise = client.getDocument(did)
+    await expect(promise).rejects.toThrow(AxiosError)
+    const promise2 = client.getDocumentData(did)
+    await expect(promise2).rejects.toThrow(AxiosError)
+  })
+
   it('exports the data set', async () => {
     const data = await client.export()
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
-    expect(data.length).toBe(58)
+    expect(data.length).toBe(59)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
     }
