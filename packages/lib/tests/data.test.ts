@@ -72,6 +72,9 @@ describe('plc did data', () => {
   it('parses an operation log with no updates', async () => {
     const doc = await data.validateOperationLog(did, ops)
 
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -85,6 +88,9 @@ describe('plc did data', () => {
     ops.push(op)
 
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -105,6 +111,9 @@ describe('plc did data', () => {
     ops.push(op)
 
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -125,6 +134,9 @@ describe('plc did data', () => {
     signingKey = newSigningKey
 
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -146,6 +158,10 @@ describe('plc did data', () => {
     rotationKey1 = newRotationKey
 
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
+
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
@@ -188,11 +204,21 @@ describe('plc did data', () => {
     ops.push(op)
     handle = newHandle
     const doc = await data.validateOperationLog(did, ops)
+    if (!doc) {
+      throw new Error('expected doc')
+    }
     expect(doc.did).toEqual(did)
     expect(doc.signingKey).toEqual(signingKey.did())
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
     expect(doc.handles).toEqual([handle])
     expect(doc.services).toEqual({ atpPds })
+  })
+
+  it('allows tombstoning a DID', async () => {
+    const last = await data.getLastOpWithCid(ops)
+    const op = await operations.signTombstone(last.cid, rotationKey1)
+    const doc = await data.validateOperationLog(did, [...ops, op])
+    expect(doc).toBe(null)
   })
 
   it('requires operations to be in order', async () => {
@@ -220,6 +246,18 @@ describe('plc did data', () => {
     expect(data.validateOperationLog(did, [...ops, op])).rejects.toThrow(
       MisorderedOperationError,
     )
+  })
+
+  it('does not allow a tombstone in the middle of the log', async () => {
+    const prev = await cidForCbor(ops[ops.length - 2])
+    const tombstone = await operations.signTombstone(prev, rotationKey1)
+    expect(
+      data.validateOperationLog(did, [
+        ...ops.slice(0, ops.length - 1),
+        tombstone,
+        ops[ops.length - 1],
+      ]),
+    ).rejects.toThrow(MisorderedOperationError)
   })
 
   it('requires that the did is the hash of the genesis op', async () => {

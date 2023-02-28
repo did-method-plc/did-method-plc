@@ -1,13 +1,15 @@
 import * as cbor from '@ipld/dag-cbor'
+import { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
 import { Keypair, parseDidKey, sha256, verifySignature } from '@atproto/crypto'
-import * as t from './types'
 import { check } from '@atproto/common'
+import * as t from './types'
 import {
   GenesisHashError,
   ImproperlyFormattedDidError,
   ImproperOperationError,
   InvalidSignatureError,
+  MisorderedOperationError,
   UnsupportedKeyError,
 } from './error'
 
@@ -18,28 +20,43 @@ export const didForCreateOp = async (op: t.CompatibleOp, truncate = 24) => {
   return `did:plc:${truncated}`
 }
 
+export const addSignature = async <T extends Record<string, unknown>>(
+  object: T,
+  key: Keypair,
+): Promise<T & { sig: string }> => {
+  const data = new Uint8Array(cbor.encode(object))
+  const sig = await key.sign(data)
+  return {
+    ...object,
+    sig: uint8arrays.toString(sig, 'base64url'),
+  }
+}
+
 export const signOperation = async (
   op: t.UnsignedOperation,
   signingKey: Keypair,
 ): Promise<t.Operation> => {
-  const data = new Uint8Array(cbor.encode(op))
-  const sig = await signingKey.sign(data)
-  return {
-    ...op,
-    sig: uint8arrays.toString(sig, 'base64url'),
-  }
+  return addSignature(op, signingKey)
+}
+
+export const signTombstone = async (
+  prev: CID,
+  key: Keypair,
+): Promise<t.Tombstone> => {
+  return addSignature(
+    {
+      tombstone: true,
+      prev: prev.toString(),
+    },
+    key,
+  )
 }
 
 export const deprecatedSignCreate = async (
   op: t.UnsignedCreateOpV1,
   signingKey: Keypair,
 ): Promise<t.CreateOpV1> => {
-  const data = new Uint8Array(cbor.encode(op))
-  const sig = await signingKey.sign(data)
-  return {
-    ...op,
-    sig: uint8arrays.toString(sig, 'base64url'),
-  }
+  return addSignature(op, signingKey)
 }
 
 export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
@@ -58,7 +75,10 @@ export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
   }
 }
 
-export const assureValidOp = async (op: t.Operation) => {
+export const assureValidOp = async (op: t.OpOrTombstone) => {
+  if (check.is(op, t.def.tombstone)) {
+    return true
+  }
   // ensure we support the op's keys
   const keys = [op.signingKey, ...op.rotationKeys]
   await Promise.all(
@@ -79,8 +99,11 @@ export const assureValidOp = async (op: t.Operation) => {
 
 export const assureValidCreationOp = async (
   did: string,
-  op: t.CompatibleOp,
+  op: t.CompatibleOpOrTombstone,
 ): Promise<t.DocumentData> => {
+  if (check.is(op, t.def.tombstone)) {
+    throw new MisorderedOperationError()
+  }
   const normalized = normalizeOp(op)
   await assureValidOp(normalized)
   await assureValidSig(normalized.rotationKeys, op)
@@ -101,7 +124,7 @@ export const assureValidCreationOp = async (
 
 export const assureValidSig = async (
   allowedDids: string[],
-  op: t.CompatibleOp,
+  op: t.CompatibleOpOrTombstone,
 ): Promise<string> => {
   const { sig, ...opData } = op
   const sigBytes = uint8arrays.fromString(sig, 'base64url')

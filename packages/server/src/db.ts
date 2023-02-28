@@ -2,7 +2,7 @@ import { Kysely, Migrator, PostgresDialect, SqliteDialect } from 'kysely'
 import SqliteDB from 'better-sqlite3'
 import { Pool as PgPool, types as pgTypes } from 'pg'
 import { CID } from 'multiformats/cid'
-import { cidForCbor } from '@atproto/common'
+import { cidForCbor, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import * as migrations from './migrations'
@@ -150,9 +150,14 @@ export class Database {
     return found ? CID.parse(found.cid) : null
   }
 
-  async opsForDid(did: string): Promise<plc.Operation[]> {
+  async opsForDid(did: string): Promise<plc.OpOrTombstone[]> {
     const ops = await this._opsForDid(did)
-    return ops.map((op) => plc.normalizeOp(op.operation))
+    return ops.map((op) => {
+      if (check.is(op.operation, plc.def.createOpV1)) {
+        return plc.normalizeOp(op.operation)
+      }
+      return op.operation
+    })
   }
 
   async _opsForDid(did: string): Promise<plc.IndexedOperation[]> {

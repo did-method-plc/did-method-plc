@@ -44,11 +44,24 @@ export type UnsignedOperation = z.infer<typeof unsignedOperation>
 const operation = unsignedOperation.extend({ sig: z.string() })
 export type Operation = z.infer<typeof operation>
 
+const unsignedTombstone = z.object({
+  tombstone: z.literal(true),
+  prev: z.string(),
+})
+export type UnsignedTombstone = z.infer<typeof unsignedTombstone>
+const tombstone = unsignedTombstone.extend({ sig: z.string() })
+export type Tombstone = z.infer<typeof tombstone>
+
+const opOrTombstone = z.union([operation, tombstone])
+export type OpOrTombstone = z.infer<typeof opOrTombstone>
 const compatibleOp = z.union([createOpV1, operation])
 export type CompatibleOp = z.infer<typeof compatibleOp>
+const compatibleOpOrTombstone = z.union([createOpV1, operation, tombstone])
+export type CompatibleOpOrTombstone = z.infer<typeof compatibleOpOrTombstone>
+
 export const indexedOperation = z.object({
   did: z.string(),
-  operation: compatibleOp,
+  operation: compatibleOpOrTombstone,
   cid: cid,
   nullified: z.boolean(),
   createdAt: z.date(),
@@ -85,6 +98,9 @@ export const def = {
   createOpV1,
   unsignedOperation,
   operation,
+  tombstone,
+  opOrTombstone,
   compatibleOp,
+  compatibleOpOrTombstone,
   didDocument,
 }
