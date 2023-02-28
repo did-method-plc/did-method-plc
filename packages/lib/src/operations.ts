@@ -129,9 +129,8 @@ export const assureValidSig = async (
   const { sig, ...opData } = op
   const sigBytes = uint8arrays.fromString(sig, 'base64url')
   const dataBytes = new Uint8Array(cbor.encode(opData))
-  let isValid = true
   for (const did of allowedDids) {
-    isValid = await verifySignature(did, dataBytes, sigBytes)
+    const isValid = await verifySignature(did, dataBytes, sigBytes)
     if (isValid) {
       return did
     }
