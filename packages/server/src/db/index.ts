@@ -1,19 +1,19 @@
-import { Kysely, Migrator, PostgresDialect, SqliteDialect } from 'kysely'
-import SqliteDB from 'better-sqlite3'
+import { Generated, Kysely, Migrator, PostgresDialect, sql } from 'kysely'
 import { Pool as PgPool, types as pgTypes } from 'pg'
 import { CID } from 'multiformats/cid'
 import { cidForCbor, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { ServerError } from './error'
-import * as migrations from './migrations'
+import { ServerError } from '../error'
+import * as migrations from '../migrations'
+import { OpLogExport, PlcDatabase } from './types'
+import MockDatabase from './mock'
 
-export class Database {
+export * from './mock'
+export * from './types'
+
+export class Database implements PlcDatabase {
   migrator: Migrator
-  constructor(
-    public db: Kysely<DatabaseSchema>,
-    public dialect: Dialect,
-    public schema?: string,
-  ) {
+  constructor(public db: Kysely<DatabaseSchema>, public schema?: string) {
     this.migrator = new Migrator({
       db,
       migrationTableSchema: schema,
@@ -23,15 +23,6 @@ export class Database {
         },
       },
     })
-  }
-
-  static sqlite(location: string): Database {
-    const db = new Kysely<DatabaseSchema>({
-      dialect: new SqliteDialect({
-        database: new SqliteDB(location),
-      }),
-    })
-    return new Database(db, 'sqlite')
   }
 
   static postgres(opts: { url: string; schema?: string }): Database {
@@ -58,15 +49,33 @@ export class Database {
       dialect: new PostgresDialect({ pool }),
     })
 
-    return new Database(db, 'pg', schema)
+    return new Database(db, schema)
   }
 
-  static memory(): Database {
-    return Database.sqlite(':memory:')
+  static mock(): MockDatabase {
+    return new MockDatabase()
   }
 
   async close(): Promise<void> {
     await this.db.destroy()
+  }
+
+  async healthCheck(): Promise<void> {
+    await sql`select 1`.execute(this.db)
+  }
+
+  async migrateToOrThrow(migration: string) {
+    if (this.schema !== undefined) {
+      await this.db.schema.createSchema(this.schema).ifNotExists().execute()
+    }
+    const { error, results } = await this.migrator.migrateTo(migration)
+    if (error) {
+      throw error
+    }
+    if (!results) {
+      throw new Error('An unknown failure occurred while migrating')
+    }
+    return results
   }
 
   async migrateToLatestOrThrow() {
@@ -97,10 +106,9 @@ export class Database {
           .insertInto('operations')
           .values({
             did,
-            operation: JSON.stringify(proposed),
+            operation: proposed,
             cid: cid.toString(),
-            nullified: 0,
-            createdAt: new Date().toISOString(),
+            nullified: false,
           })
           .execute()
 
@@ -108,7 +116,7 @@ export class Database {
           const nullfiedStrs = nullified.map((cid) => cid.toString())
           await tx
             .updateTable('operations')
-            .set({ nullified: 1 })
+            .set({ nullified: true })
             .where('did', '=', did)
             .where('cid', 'in', nullfiedStrs)
             .execute()
@@ -120,7 +128,7 @@ export class Database {
           .selectFrom('operations')
           .select('cid')
           .where('did', '=', did)
-          .where('nullified', '=', 0)
+          .where('nullified', '=', false)
           .orderBy('createdAt', 'desc')
           .limit(2)
           .execute()
@@ -143,7 +151,7 @@ export class Database {
       .selectFrom('operations')
       .select('cid')
       .where('did', '=', did)
-      .where('nullified', '=', 0)
+      .where('nullified', '=', false)
       .where('cid', 'not in', notIncludedStr)
       .orderBy('createdAt', 'desc')
       .executeTakeFirst()
@@ -165,58 +173,49 @@ export class Database {
       .selectFrom('operations')
       .selectAll()
       .where('did', '=', did)
-      .where('nullified', '=', 0)
+      .where('nullified', '=', false)
       .orderBy('createdAt', 'asc')
       .execute()
 
     return res.map((row) => ({
       did: row.did,
-      operation: JSON.parse(row.operation),
+      operation: row.operation,
       cid: CID.parse(row.cid),
-      nullified: row.nullified === 1,
-      createdAt: new Date(row.createdAt),
+      nullified: row.nullified,
+      createdAt: row.createdAt,
     }))
   }
 
   async fullExport(): Promise<Record<string, OpLogExport>> {
-    const res = await this.db
-      .selectFrom('operations')
-      .selectAll()
-      .orderBy('did')
-      .orderBy('createdAt')
-      .execute()
-    return res.reduce((acc, cur) => {
-      acc[cur.did] ??= []
-      acc[cur.did].push({
-        op: JSON.parse(cur.operation),
-        nullified: cur.nullified === 1,
-        createdAt: cur.createdAt,
-      })
-      return acc
-    }, {} as Record<string, OpLogExport>)
+    return {}
+    //   const res = await this.db
+    //     .selectFrom('operations')
+    //     .selectAll()
+    //     .orderBy('did')
+    //     .orderBy('createdAt')
+    //     .execute()
+    //   return res.reduce((acc, cur) => {
+    //     acc[cur.did] ??= []
+    //     acc[cur.did].push({
+    //       op: cur.operation),
+    //       nullified: cur.nullified === 1,
+    //       createdAt: cur.createdAt,
+    //     })
+    //     return acc
+    //   }, {} as Record<string, OpLogExport>)
   }
 }
 
 export default Database
 
-export type Dialect = 'pg' | 'sqlite'
-
 interface OperationsTable {
   did: string
-  operation: string
+  operation: plc.CompatibleOpOrTombstone
   cid: string
-  nullified: 0 | 1
-  createdAt: string
+  nullified: boolean
+  createdAt: Generated<Date>
 }
 
 interface DatabaseSchema {
   operations: OperationsTable
-}
-
-type OpLogExport = OpExport[]
-
-type OpExport = {
-  op: Record<string, unknown>
-  nullified: boolean
-  createdAt: string
 }

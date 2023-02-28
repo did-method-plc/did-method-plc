@@ -1,5 +1,4 @@
 import express from 'express'
-import { sql } from 'kysely'
 import { check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
@@ -11,7 +10,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   router.get('/_health', async function (req, res) {
     const { db, version } = ctx
     try {
-      await sql`select 1`.execute(db.db)
+      await db.healthCheck()
     } catch (err) {
       req.log.error(err, 'failed health check')
       return res.status(503).send({ version, error: 'Service Unavailable' })

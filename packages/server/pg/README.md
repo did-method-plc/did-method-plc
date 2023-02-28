@@ -8,7 +8,7 @@ Helpers for working with postgres
 
 This script allows you to run any command with a fresh, ephemeral/single-use postgres database available. When the script starts a Dockerized postgres container starts-up, and when the script completes that container is removed.
 
-The environment variable `DB_POSTGRES_URL` will be set with a connection string that can be used to connect to the database. The [`PG*` environment variables](https://www.postgresql.org/docs/current/libpq-envars.html) that are recognized by libpq (i.e. used by the `psql` client) are also set.
+The environment variable `DATABASE_URL` will be set with a connection string that can be used to connect to the database. The [`PG*` environment variables](https://www.postgresql.org/docs/current/libpq-envars.html) that are recognized by libpq (i.e. used by the `psql` client) are also set.
 
 **Example**
 

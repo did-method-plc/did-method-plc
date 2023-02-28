@@ -22,7 +22,7 @@ export PGHOST=localhost
 export PGUSER=pg
 export PGPASSWORD=password
 export PGDATABASE=postgres
-export DB_POSTGRES_URL="postgresql://pg:password@localhost:5433/postgres"
+export DATABASE_URL="postgresql://pg:password@localhost:5433/postgres"
 "$@"
 code=$?
 

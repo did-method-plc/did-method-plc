@@ -5,8 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node dist/bin.js",
-    "test": "jest",
-    "test:pg": "./pg/with-test-db.sh jest",
+    "test": "./pg/with-test-db.sh jest",
     "test:log": "cat test.log | pino-pretty",
     "prettier": "prettier --check src/",
     "prettier:fix": "prettier --write src/",
@@ -28,7 +27,6 @@
     "@atproto/crypto": "0.1.0",
     "@did-plc/lib": "*",
     "axios": "^0.27.2",
-    "better-sqlite3": "^8.1.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-async-errors": "^3.1.1",

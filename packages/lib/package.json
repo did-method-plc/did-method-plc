@@ -27,7 +27,6 @@
     "zod": "^3.14.2"
   },
   "devDependencies": {
-    "@types/pg": "^8.6.5",
     "eslint-plugin-prettier": "^4.2.1"
   }
 }

@@ -1,21 +1,18 @@
 import './env'
-import { Database } from './db'
+import { Database, PlcDatabase } from './db'
 import PlcServer from '.'
 
 const run = async () => {
-  const dbLoc = process.env.DATABASE_LOC
-  const dbPostgresUrl = process.env.DB_POSTGRES_URL
+  const dbUrl = process.env.DATABASE_URL
 
-  let db: Database
-  if (dbPostgresUrl) {
-    db = Database.postgres({ url: dbPostgresUrl })
-  } else if (dbLoc) {
-    db = Database.sqlite(dbLoc)
+  let db: PlcDatabase
+  if (dbUrl) {
+    const pgDb = Database.postgres({ url: dbUrl })
+    await pgDb.migrateToLatestOrThrow()
+    db = pgDb
   } else {
-    db = Database.memory()
+    db = Database.mock()
   }
-
-  await db.migrateToLatestOrThrow()
 
   const envPort = parseInt(process.env.PORT || '')
   const port = isNaN(envPort) ? 2582 : envPort

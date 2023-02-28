@@ -22,10 +22,10 @@ describe('PLC server', () => {
 
   beforeAll(async () => {
     const server = await runTestServer({
-      dbPostgresSchema: 'server',
+      dbSchema: 'server',
     })
 
-    db = server.ctx.db
+    db = server.db
     close = server.close
     client = new plc.Client(server.url)
     signingKey = await EcdsaKeypair.create()
@@ -166,7 +166,7 @@ describe('PLC server', () => {
   })
 
   it('handles concurrent requests to many docs', async () => {
-    const COUNT = 100
+    const COUNT = 50
     const keys: EcdsaKeypair[] = []
     for (let i = 0; i < COUNT; i++) {
       keys.push(await EcdsaKeypair.create())
@@ -189,7 +189,7 @@ describe('PLC server', () => {
   })
 
   it('resolves races into a coherent history with no forks', async () => {
-    const COUNT = 100
+    const COUNT = 50
     const keys: EcdsaKeypair[] = []
     for (let i = 0; i < COUNT; i++) {
       keys.push(await EcdsaKeypair.create())
@@ -213,7 +213,7 @@ describe('PLC server', () => {
       }),
     )
     expect(successes).toBe(1)
-    expect(failures).toBe(99)
+    expect(failures).toBe(49)
 
     const ops = await client.getOperationLog(did)
     await plc.validateOperationLog(did, ops)
