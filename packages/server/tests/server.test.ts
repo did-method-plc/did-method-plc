@@ -1,7 +1,7 @@
 import { EcdsaKeypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
-import { cidForCbor } from '@atproto/common'
+import { check, cidForCbor } from '@atproto/common'
 import { AxiosError } from 'axios'
 import { Database } from '../src'
 import { signOperation } from '@did-plc/lib'
@@ -133,7 +133,7 @@ describe('PLC server', () => {
     const newKey = await EcdsaKeypair.create()
     const ops = await client.getOperationLog(did)
     const forkPoint = ops.at(-2)
-    if (!forkPoint) {
+    if (!check.is(forkPoint, plc.def.operation)) {
       throw new Error('Could not find fork point')
     }
     const forkCid = await cidForCbor(forkPoint)
@@ -157,6 +157,18 @@ describe('PLC server', () => {
     expect(doc.rotationKeys).toEqual([newKey.did()])
     expect(doc.handles).toEqual([handle])
     expect(doc.services).toEqual({ atpPds })
+  })
+
+  it('retrieves the auditable operation log', async () => {
+    const log = await client.getOperationLog(did)
+    const auditable = await client.getAuditableLog(did)
+    // has one nullifed op
+    expect(auditable.length).toBe(log.length + 1)
+    expect(auditable.filter((op) => op.nullified).length).toBe(1)
+    expect(auditable.at(-2)?.nullified).toBe(true)
+    expect(
+      auditable.every((op) => check.is(op, plc.def.exportedOp)),
+    ).toBeTruthy()
   })
 
   it('retrieves the did doc', async () => {
@@ -217,6 +229,15 @@ describe('PLC server', () => {
 
     const ops = await client.getOperationLog(did)
     await plc.validateOperationLog(did, ops)
+  })
+
+  it('exports the data set', async () => {
+    const data = await client.export()
+    expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
+    expect(data.length).toBe(58)
+    for (let i = 1; i < data.length; i++) {
+      expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
+    }
   })
 
   it('healthcheck succeeds when database is available.', async () => {

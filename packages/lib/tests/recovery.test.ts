@@ -106,7 +106,7 @@ describe('plc recovery', () => {
     expect(res.nullified.length).toBe(2)
     expect(res.nullified[0].equals(log[1].cid))
     expect(res.nullified[1].equals(log[2].cid))
-    expect(res.prev?.equals(createCid))
+    expect(res.prev?.equals(createCid)).toBeTruthy()
 
     log = [log[0], rotate.indexed]
   })
@@ -124,7 +124,7 @@ describe('plc recovery', () => {
     const res = await data.assureValidNextOp(did, log, rotate.op)
     expect(res.nullified.length).toBe(1)
     expect(res.nullified[0].equals(log[1].cid))
-    expect(res.prev?.equals(createCid))
+    expect(res.prev?.equals(createCid)).toBeTruthy()
 
     log = [log[0], rotate.indexed]
   })
@@ -185,6 +185,6 @@ describe('plc recovery', () => {
     )
     expect(result.nullified.length).toBe(1)
     expect(result.nullified[0].equals(cid))
-    expect(result.prev?.equals(createCid))
+    expect(result.prev?.equals(createCid)).toBeTruthy()
   })
 })

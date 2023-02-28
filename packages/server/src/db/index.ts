@@ -1,11 +1,11 @@
-import { Generated, Kysely, Migrator, PostgresDialect, sql } from 'kysely'
+import { Kysely, Migrator, PostgresDialect, sql } from 'kysely'
 import { Pool as PgPool, types as pgTypes } from 'pg'
 import { CID } from 'multiformats/cid'
-import { cidForCbor, check } from '@atproto/common'
+import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from '../error'
 import * as migrations from '../migrations'
-import { OpLogExport, PlcDatabase } from './types'
+import { DatabaseSchema, PlcDatabase } from './types'
 import MockDatabase from './mock'
 
 export * from './mock'
@@ -93,7 +93,7 @@ export class Database implements PlcDatabase {
   }
 
   async validateAndAddOp(did: string, proposed: plc.Operation): Promise<void> {
-    const ops = await this._opsForDid(did)
+    const ops = await this.indexedOpsForDid(did)
     // throws if invalid
     const { nullified, prev } = await plc.assureValidNextOp(did, ops, proposed)
     const cid = await cidForCbor(proposed)
@@ -158,25 +158,24 @@ export class Database implements PlcDatabase {
     return found ? CID.parse(found.cid) : null
   }
 
-  async opsForDid(did: string): Promise<plc.OpOrTombstone[]> {
-    const ops = await this._opsForDid(did)
-    return ops.map((op) => {
-      if (check.is(op.operation, plc.def.createOpV1)) {
-        return plc.normalizeOp(op.operation)
-      }
-      return op.operation
-    })
+  async opsForDid(did: string): Promise<plc.CompatibleOpOrTombstone[]> {
+    const ops = await this.indexedOpsForDid(did)
+    return ops.map((op) => op.operation)
   }
 
-  async _opsForDid(did: string): Promise<plc.IndexedOperation[]> {
-    const res = await this.db
+  async indexedOpsForDid(
+    did: string,
+    includeNullified = false,
+  ): Promise<plc.IndexedOperation[]> {
+    let builder = this.db
       .selectFrom('operations')
       .selectAll()
       .where('did', '=', did)
-      .where('nullified', '=', false)
       .orderBy('createdAt', 'asc')
-      .execute()
-
+    if (!includeNullified) {
+      builder = builder.where('nullified', '=', false)
+    }
+    const res = await builder.execute()
     return res.map((row) => ({
       did: row.did,
       operation: row.operation,
@@ -186,36 +185,33 @@ export class Database implements PlcDatabase {
     }))
   }
 
-  async fullExport(): Promise<Record<string, OpLogExport>> {
-    return {}
-    //   const res = await this.db
-    //     .selectFrom('operations')
-    //     .selectAll()
-    //     .orderBy('did')
-    //     .orderBy('createdAt')
-    //     .execute()
-    //   return res.reduce((acc, cur) => {
-    //     acc[cur.did] ??= []
-    //     acc[cur.did].push({
-    //       op: cur.operation),
-    //       nullified: cur.nullified === 1,
-    //       createdAt: cur.createdAt,
-    //     })
-    //     return acc
-    //   }, {} as Record<string, OpLogExport>)
+  async lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null> {
+    const res = await this.db
+      .selectFrom('operations')
+      .selectAll()
+      .where('did', '=', did)
+      .where('nullified', '=', false)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .executeTakeFirst()
+    return res?.operation ?? null
+  }
+
+  async exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]> {
+    let builder = this.db
+      .selectFrom('operations')
+      .selectAll()
+      .orderBy('createdAt', 'asc')
+      .limit(count)
+    if (after) {
+      builder = builder.where('createdAt', '>', after)
+    }
+    const res = await builder.execute()
+    return res.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+    }))
   }
 }
 
 export default Database
-
-interface OperationsTable {
-  did: string
-  operation: plc.CompatibleOpOrTombstone
-  cid: string
-  nullified: boolean
-  createdAt: Generated<Date>
-}
-
-interface DatabaseSchema {
-  operations: OperationsTable
-}
