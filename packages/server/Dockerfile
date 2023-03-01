@@ -5,6 +5,7 @@ WORKDIR /app
 COPY ./*.* ./
 # NOTE plc's transitive dependencies go here: if that changes, this needs to be updated.
 COPY ./packages/lib ./packages/lib
+COPY ./packages/server ./packages/server
 RUN PLC_BUILD_SHALLOW=true yarn install --frozen-lockfile > /dev/null
 RUN yarn workspaces run build --update-main-to-dist > /dev/null
 # Remove non-prod deps
