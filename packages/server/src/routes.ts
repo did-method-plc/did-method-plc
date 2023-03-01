@@ -109,7 +109,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   router.post('/:did', async function (req, res) {
     const { did } = req.params
     const op = req.body
-    if (!check.is(op, plc.def.opOrTombstone)) {
+    if (!check.is(op, plc.def.compatibleOpOrTombstone)) {
       throw new ServerError(400, `Not a valid operation: ${JSON.stringify(op)}`)
     }
     await ctx.db.validateAndAddOp(did, op)

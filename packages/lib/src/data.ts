@@ -16,9 +16,14 @@ import {
 export const assureValidNextOp = async (
   did: string,
   ops: t.IndexedOperation[],
-  proposed: t.OpOrTombstone,
+  proposed: t.CompatibleOpOrTombstone,
 ): Promise<{ nullified: CID[]; prev: CID | null }> => {
-  await assureValidOp(proposed)
+  if (check.is(proposed, t.def.createOpV1)) {
+    const normalized = normalizeOp(proposed)
+    await assureValidOp(normalized)
+  } else {
+    await assureValidOp(proposed)
+  }
 
   // special case if account creation
   if (ops.length === 0) {

@@ -94,7 +94,7 @@ export class Database implements PlcDatabase {
 
   async validateAndAddOp(
     did: string,
-    proposed: plc.OpOrTombstone,
+    proposed: plc.CompatibleOpOrTombstone,
   ): Promise<void> {
     const ops = await this.indexedOpsForDid(did)
     // throws if invalid

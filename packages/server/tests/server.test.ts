@@ -3,7 +3,7 @@ import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
 import { check } from '@atproto/common'
 import { Database } from '../src'
-import { PlcClientError } from '@did-plc/lib'
+import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
 describe('PLC server', () => {
   let handle = 'at://alice.example.com'
@@ -218,6 +218,22 @@ describe('PLC server', () => {
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
     }
+  })
+
+  it('still allows create v1s', async () => {
+    const createV1 = await plc.deprecatedSignCreate(
+      {
+        type: 'create',
+        signingKey: signingKey.did(),
+        recoveryKey: rotationKey1.did(),
+        handle,
+        service: atpPds,
+        prev: null,
+      },
+      signingKey,
+    )
+    const did = await didForCreateOp(createV1)
+    await client.sendOperation(did, createV1 as any)
   })
 
   it('healthcheck succeeds when database is available.', async () => {
