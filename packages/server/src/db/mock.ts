@@ -1,4 +1,4 @@
-import { cidForCbor, check } from '@atproto/common'
+import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from '../error'
 import { PlcDatabase } from './types'
@@ -48,12 +48,7 @@ export class MockDatabase implements PlcDatabase {
 
   async opsForDid(did: string): Promise<plc.CompatibleOpOrTombstone[]> {
     const ops = await this.indexedOpsForDid(did)
-    return ops.map((op) => {
-      if (check.is(op.operation, plc.def.createOpV1)) {
-        return plc.normalizeOp(op.operation)
-      }
-      return op.operation
-    })
+    return ops.map((op) => op.operation)
   }
 
   async indexedOpsForDid(
