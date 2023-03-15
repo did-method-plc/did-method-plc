@@ -20,7 +20,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
 
   // Export ops in the form of paginated json lines
   router.get('/export', async function (req, res) {
-    const parsedCount = req.count ? parseInt(req.count, 10) : 1000
+    const parsedCount = req.query.count ? parseInt(req.query.count, 10) : 1000
     if (isNaN(parsedCount) || parsedCount < 1) {
       throw new ServerError(400, 'Invalid count parameter')
     }
