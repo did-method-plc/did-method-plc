@@ -7,7 +7,7 @@ env:
   IMAGE_NAME: plc
 
 jobs:
-  pds-container-mirror:
+  plc-container-mirror:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -44,7 +44,7 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          file: ./packages/pds/Dockerfile
+          file: ./packages/server/Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
