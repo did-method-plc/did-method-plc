@@ -1,14 +1,17 @@
-name: build-and-push
-on: [push]
+name: build-and-push-aws
+on:
+  push:
+    branches:
+      - main
+      - jake/container-build-aws
 env:
-  REGISTRY: ghcr.io
-  USERNAME: ${{ github.actor }}
-  PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+  REGISTRY: ${{ secrets.AWS_ECR_REGISTRY_USEAST2_PACKAGES_REGISTRY }}
+  USERNAME: ${{ secrets.AWS_ECR_REGISTRY_USEAST2_PACKAGES_USERNAME }}
+  PASSWORD: ${{ secrets.AWS_ECR_REGISTRY_USEAST2_PACKAGES_PASSWORD }}
+  IMAGE_NAME: plc
 
 jobs:
-  build:
+  plc-container-mirror:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,7 +39,7 @@ jobs:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,enable=true,priority=100,prefix=plc:,suffix=,format=long
+            type=sha,enable=true,priority=100,prefix=,suffix=,format=long
 
       - name: Build and push Docker image
         id: build-and-push
