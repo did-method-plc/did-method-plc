@@ -11,7 +11,7 @@ env:
   IMAGE_NAME: plc
 
 jobs:
-  plc-container-mirror:
+  plc-container-aws:
     runs-on: ubuntu-latest
     permissions:
       contents: read
