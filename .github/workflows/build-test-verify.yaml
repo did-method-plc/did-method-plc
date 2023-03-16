@@ -1,4 +1,4 @@
-name: repo
+name: build-test-verify
 on: [push]
 jobs:
   build:

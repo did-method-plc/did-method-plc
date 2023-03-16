@@ -1,5 +1,8 @@
-name: build-and-push-mirror
-on: [push]
+name: build-and-push-aws
+on:
+  push:
+    branches:
+      - main
 env:
   REGISTRY: ${{ secrets.AWS_ECR_REGISTRY_USEAST2_PACKAGES_REGISTRY }}
   USERNAME: ${{ secrets.AWS_ECR_REGISTRY_USEAST2_PACKAGES_USERNAME }}
@@ -7,7 +10,7 @@ env:
   IMAGE_NAME: plc
 
 jobs:
-  plc-container-mirror:
+  plc-container-aws:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -27,7 +30,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ env.USERNAME }}
           password: ${{ env.PASSWORD }}
-          ecr: false # Disable ECR mode since we're using standard Docker auth.
 
       - name: Extract Docker metadata
         id: meta

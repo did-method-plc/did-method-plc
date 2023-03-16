@@ -1,5 +1,8 @@
-name: build-and-push
-on: [push]
+name: build-and-push-ghcr
+on:
+  push:
+    branches:
+      - main
 env:
   REGISTRY: ghcr.io
   USERNAME: ${{ github.actor }}
@@ -8,7 +11,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  plc-container-ghcr:
     runs-on: ubuntu-latest
     permissions:
       contents: read
