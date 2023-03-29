@@ -88,18 +88,62 @@ export const createUpdateOp = async (
   )
 }
 
+export const createAtprotoUpdateOp = async (
+  lastOp: t.CompatibleOp,
+  signer: Keypair,
+  opts: Partial<{
+    signingKey: string
+    handle: string
+    pds: string
+    rotationKeys: string[]
+  }>,
+) => {
+  return createUpdateOp(lastOp, signer, (normalized) => {
+    const updated = { ...normalized }
+    if (opts.signingKey) {
+      updated.verificationMethods = {
+        ...normalized.verificationMethods,
+        atproto: opts.signingKey,
+      }
+    }
+    if (opts.handle) {
+      const formatted = ensureAtprotoPrefix(opts.handle)
+      const handleI = normalized.alsoKnownAs.findIndex((h) =>
+        h.startsWith('at://'),
+      )
+      if (handleI < 0) {
+        updated.alsoKnownAs = [formatted, ...normalized.alsoKnownAs]
+      } else {
+        updated.alsoKnownAs = [
+          ...normalized.alsoKnownAs.slice(0, handleI),
+          formatted,
+          ...normalized.alsoKnownAs.slice(handleI + 1),
+        ]
+      }
+    }
+    if (opts.pds) {
+      const formatted = ensureHttpPrefix(opts.pds)
+      updated.services = {
+        ...normalized.services,
+        atproto_pds: {
+          type: 'AtprotoPersonalDataServer',
+          endpoint: formatted,
+        },
+      }
+    }
+    if (opts.rotationKeys) {
+      updated.rotationKeys = opts.rotationKeys
+    }
+    return updated
+  })
+}
+
 export const updateAtprotoKeyOp = async (
   lastOp: t.CompatibleOp,
   signer: Keypair,
-  atprotoKey: string,
+  signingKey: string,
 ): Promise<t.Operation> => {
-  return createUpdateOp(lastOp, signer, (normalized) => ({
-    ...normalized,
-    verificationMethods: {
-      ...normalized.verificationMethods,
-      atproto: atprotoKey,
-    },
-  }))
+  return createAtprotoUpdateOp(lastOp, signer, { signingKey })
 }
 
 export const updateHandleOp = async (
@@ -107,46 +151,15 @@ export const updateHandleOp = async (
   signer: Keypair,
   handle: string,
 ): Promise<t.Operation> => {
-  const formatted = ensureAtprotoPrefix(handle)
-  return createUpdateOp(lastOp, signer, (normalized) => {
-    const handleI = normalized.alsoKnownAs.findIndex((h) =>
-      h.startsWith('at://'),
-    )
-    let aka: string[]
-    if (handleI < 0) {
-      aka = [formatted, ...normalized.alsoKnownAs]
-    } else {
-      aka = [
-        ...normalized.alsoKnownAs.slice(0, handleI),
-        formatted,
-        ...normalized.alsoKnownAs.slice(handleI + 1),
-      ]
-    }
-    return {
-      ...normalized,
-      alsoKnownAs: aka,
-    }
-  })
+  return createAtprotoUpdateOp(lastOp, signer, { handle })
 }
 
 export const updatePdsOp = async (
   lastOp: t.CompatibleOp,
   signer: Keypair,
-  endpoint: string,
+  pds: string,
 ): Promise<t.Operation> => {
-  const formatted = ensureHttpPrefix(endpoint)
-  return createUpdateOp(lastOp, signer, (normalized) => {
-    return {
-      ...normalized,
-      services: {
-        ...normalized.services,
-        atproto_pds: {
-          type: 'AtprotoPersonalDataServer',
-          endpoint: formatted,
-        },
-      },
-    }
-  })
+  return createAtprotoUpdateOp(lastOp, signer, { pds })
 }
 
 export const updateRotationKeysOp = async (
@@ -154,12 +167,7 @@ export const updateRotationKeysOp = async (
   signer: Keypair,
   rotationKeys: string[],
 ): Promise<t.Operation> => {
-  return createUpdateOp(lastOp, signer, (normalized) => {
-    return {
-      ...normalized,
-      rotationKeys,
-    }
-  })
+  return createAtprotoUpdateOp(lastOp, signer, { rotationKeys })
 }
 
 export const tombstoneOp = async (
