@@ -101,50 +101,59 @@ export class Database implements PlcDatabase {
     const { nullified, prev } = await plc.assureValidNextOp(did, ops, proposed)
     const cid = await cidForCbor(proposed)
 
-    await this.db
-      .transaction()
-      .setIsolationLevel('serializable')
-      .execute(async (tx) => {
+    await this.db.transaction().execute(async (tx) => {
+      // grab a row lock on user table
+      const userLock = await tx
+        .selectFrom('dids')
+        .forUpdate()
+        .selectAll()
+        .where('did', '=', did)
+        .executeTakeFirst()
+
+      if (!userLock) {
+        await tx.insertInto('dids').values({ did }).execute()
+      }
+
+      await tx
+        .insertInto('operations')
+        .values({
+          did,
+          operation: proposed,
+          cid: cid.toString(),
+          nullified: false,
+        })
+        .execute()
+
+      if (nullified.length > 0) {
+        const nullfiedStrs = nullified.map((cid) => cid.toString())
         await tx
-          .insertInto('operations')
-          .values({
-            did,
-            operation: proposed,
-            cid: cid.toString(),
-            nullified: false,
-          })
-          .execute()
-
-        if (nullified.length > 0) {
-          const nullfiedStrs = nullified.map((cid) => cid.toString())
-          await tx
-            .updateTable('operations')
-            .set({ nullified: true })
-            .where('did', '=', did)
-            .where('cid', 'in', nullfiedStrs)
-            .execute()
-        }
-
-        // verify that the 2nd to last tx matches the proposed prev
-        // otherwise rollback to prevent forks in history
-        const mostRecent = await tx
-          .selectFrom('operations')
-          .select('cid')
+          .updateTable('operations')
+          .set({ nullified: true })
           .where('did', '=', did)
-          .where('nullified', '=', false)
-          .orderBy('createdAt', 'desc')
-          .limit(2)
+          .where('cid', 'in', nullfiedStrs)
           .execute()
-        const isMatch =
-          (prev === null && !mostRecent[1]) ||
-          (prev && prev.equals(CID.parse(mostRecent[1].cid)))
-        if (!isMatch) {
-          throw new ServerError(
-            409,
-            `Proposed prev does not match the most recent operation: ${mostRecent?.toString()}`,
-          )
-        }
-      })
+      }
+
+      // verify that the 2nd to last tx matches the proposed prev
+      // otherwise rollback to prevent forks in history
+      const mostRecent = await tx
+        .selectFrom('operations')
+        .select('cid')
+        .where('did', '=', did)
+        .where('nullified', '=', false)
+        .orderBy('createdAt', 'desc')
+        .limit(2)
+        .execute()
+      const isMatch =
+        (prev === null && !mostRecent[1]) ||
+        (prev && prev.equals(CID.parse(mostRecent[1].cid)))
+      if (!isMatch) {
+        throw new ServerError(
+          409,
+          `Proposed prev does not match the most recent operation: ${mostRecent?.toString()}`,
+        )
+      }
+    })
   }
 
   async mostRecentCid(did: string, notIncluded: CID[]): Promise<CID | null> {

@@ -17,6 +17,10 @@ export interface PlcDatabase {
   exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]>
 }
 
+export interface DidsTable {
+  did: string
+}
+
 export interface OperationsTable {
   did: string
   operation: plc.CompatibleOpOrTombstone
@@ -26,5 +30,6 @@ export interface OperationsTable {
 }
 
 export interface DatabaseSchema {
+  dids: DidsTable
   operations: OperationsTable
 }
