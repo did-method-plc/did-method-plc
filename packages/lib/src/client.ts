@@ -93,7 +93,7 @@ export class Client {
     return did
   }
 
-  private async ensureLastOp(did) {
+  async ensureLastOp(did) {
     const lastOp = await this.getLastOp(did)
     if (check.is(lastOp, t.def.tombstone)) {
       throw new Error('Cannot apply op to tombstone')
