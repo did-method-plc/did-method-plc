@@ -42,11 +42,11 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Get data for a DID document
   router.get('/:did', async function (req, res) {
     const { did } = req.params
-    const log = await ctx.db.opsForDid(did)
-    if (log.length === 0) {
+    const last = await ctx.db.lastOpForDid(did)
+    if (!last) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
-    const data = await plc.validateOperationLog(did, log)
+    const data = plc.opToData(did, last)
     if (data === null) {
       throw new ServerError(404, `DID not available: ${did}`)
     }
@@ -58,11 +58,11 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Get data for a DID document
   router.get('/:did/data', async function (req, res) {
     const { did } = req.params
-    const log = await ctx.db.opsForDid(did)
-    if (log.length === 0) {
+    const last = await ctx.db.lastOpForDid(did)
+    if (!last) {
       throw new ServerError(404, `DID not registered: ${did}`)
     }
-    const data = await plc.validateOperationLog(did, log)
+    const data = plc.opToData(did, last)
     if (data === null) {
       throw new ServerError(404, `DID not available: ${did}`)
     }

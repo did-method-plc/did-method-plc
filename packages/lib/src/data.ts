@@ -110,19 +110,32 @@ export const validateOperationLog = async (
       throw new MisorderedOperationError()
     }
     await assureValidSig(doc.rotationKeys, op)
-    if (check.is(op, t.def.tombstone)) {
+    const data = opToData(did, op)
+    // if tombstone & last op, return null. else throw
+    if (data === null) {
       if (i === rest.length - 1) {
         return null
       } else {
         throw new MisorderedOperationError()
       }
     }
-    const { verificationMethods, rotationKeys, alsoKnownAs, services } = op
-    doc = { did, verificationMethods, rotationKeys, alsoKnownAs, services }
+    doc = data
     prev = await cidForCbor(op)
   }
 
   return doc
+}
+
+export const opToData = (
+  did: string,
+  op: t.CompatibleOpOrTombstone,
+): t.DocumentData | null => {
+  if (check.is(op, t.def.tombstone)) {
+    return null
+  }
+  const { verificationMethods, rotationKeys, alsoKnownAs, services } =
+    normalizeOp(op)
+  return { did, verificationMethods, rotationKeys, alsoKnownAs, services }
 }
 
 export const getLastOpWithCid = async (
