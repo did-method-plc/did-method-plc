@@ -26,8 +26,8 @@ ENTRYPOINT ["dumb-init", "--"]
 WORKDIR /app/packages/server/service
 COPY --from=build /app /app
 
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 2582
+ENV PORT=2582
 ENV NODE_ENV=production
 
 # https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md#non-root-user
