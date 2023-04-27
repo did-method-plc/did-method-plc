@@ -39,6 +39,10 @@ type Operation = {
 
 Each operation contains a reference the the immediately preceding operation in the log and is signed by either the `signingKey` or the `recoveryKey`.
 
+### Method Syntax
+
+See [did-core/#method-syntax](https://www.w3.org/TR/did-core/#method-syntax).
+
 The DID itself is derived from the sha256 hash of the first operation in the log.
 It is then base32 encoded and truncated to 24 chars.
 
@@ -53,6 +57,38 @@ The operation logs are fully self-certifying, with the exception of their orderi
 Therefore, the PLC server's attacks are limited to:
 - Denial of service: rejecting valid operations, or refusing to serve some information about the DID
 - Misordering: In the event of a fork in DID document history, the server could choose to serve the "wrong" fork
+
+### Method Operations
+
+See [did-core/#method-operations](https://www.w3.org/TR/did-core/#method-operations)
+
+#### Create 
+
+TODO: describe if did:plc supports this operation, and how it is performed
+
+#### Resolve 
+
+TODO: describe if did:plc supports this operation, and how it is performed
+
+#### Update 
+
+TODO: describe if did:plc supports this operation, and how it is performed
+
+#### Deactivate 
+
+TODO: describe if did:plc supports this operation, and how it is performed
+
+### Security Considerations
+
+See [did-core/#security-requirements](https://www.w3.org/TR/did-core/#security-requirements)
+
+TODO: describe considerations relevant to did:plc
+
+### Privacy Considerations
+
+See [did-core/#privacy-requirements](https://www.w3.org/TR/did-core/#privacy-requirements)
+
+TODO: describe considerations relevant to did:plc
 
 ### Signing and Recovery Keys
 
