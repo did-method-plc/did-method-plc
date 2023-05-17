@@ -2,130 +2,214 @@
 
 DID Placeholder is a cryptographic, strongly-consistent, and recoverable [DID](https://www.w3.org/TR/did-core/) method.
 
-### ⚠ README️ out of date ⚠️
-
 ## Motivation
 
 We introduced DID Placeholder because we weren't totally satisfied with any of the existing DID methods.
 We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with cheap and fast propagation of updates.
 
-We cheekily titled the method "Placeholder", because we _don't_ want it to stick around. We're actively hoping to replace it with something less centralized. 
-We expect a method to emerge that fits the bill within the next few years, likely a permissioned DID consortium.
+We titled the method "Placeholder", because we _don't_ want it to stick around in its current form. We're actively hoping to replace it with or evolve it into something less centralized - likely a permissioned DID consortium.
 
 ## How it works
-This is not a fully-expressive DID format.
-Though it adheres to the DID spec, it is domain-specific and only allows for representing specific data types in a specific manner.
-There is the possibility that it could be extended to be more general in the future.
-
-Each DID document is made up of just four pieces of data (for now):
-- `signingKey`
-- `recoveryKey`
-- `handle`
-- `atpPds` (Personal Data Server for the related AT Protocol repository)
-
-DID documents are derived from a log of signed operations, ordered by the PLC server.
-
-There are 5 operations that can be found in each log: `create`, `rotate_signing_key`, `rotate_recovery_key`, `update_handle`, and `update_atp_pds`.
-
-Each operation is of the shape:
+Each DID document can be described by a JSON object of the following format:
 ```ts
-type Operation = {
-  type: string // operation type
-  prev: CID | null // pointer to the CID of the previous operation in the log
-  sig: string // base64url encoded signature of the operation
-  ... // other operation-specific data
+type DocumentData = {
+  did: string
+  rotationKeys: string[]
+  verificationMethods: Record<string, string>
+  alsoKnownAs: string[]
+  services: Record<string, Service>
+}
+
+type Service = {
+  type: string
+  endpoint: string
 }
 ```
 
-Each operation contains a reference the the immediately preceding operation in the log and is signed by either the `signingKey` or the `recoveryKey`.
+Keys are notated using [did:key](https://w3c-ccg.github.io/did-method-key/) and only secp256k1 and NIST P-256 are currently supported.
 
-The DID itself is derived from the sha256 hash of the first operation in the log.
-It is then base32 encoded and truncated to 24 chars.
+This data is a succinct format that can be directly translated to a valid DID document.
+
+Each operation fully attests the current state of the document data. It also includes a reference to the previous operation in the log using a sha256 [CID](https://github.com/multiformats/cid). Each operation also includes a `base64url` encoded signature of the cbor-encoded operation from a valid rotation key.
+
+An operation is of the shape:
+```ts
+type Operation = {
+  type: 'plc_operation',
+  rotationKeys: string[]
+  verificationMethods: Record<string, string>
+  alsoKnownAs: string[]
+  services: Record<string, Service>
+  prev: CID | null // null if genesis operation
+  sig: string
+}
+```
+
+The DID itself is derived from the sha256 hash of the first operation in the log. It is then base32 encoded and truncated to 24 chars.
 
 To illustrate: 
 `did:plc:${base32Encode(sha256(createOp)).slice(0,24)}`
 
 Operations are verified, ordered and made available by the PLC server.
 
-The PLC server is constrained in it's capabilities.
 The operation logs are fully self-certifying, with the exception of their ordering.
 
 Therefore, the PLC server's attacks are limited to:
 - Denial of service: rejecting valid operations, or refusing to serve some information about the DID
 - Misordering: In the event of a fork in DID document history, the server could choose to serve the "wrong" fork
 
-### Signing and Recovery Keys
+### DID Rotation & Account Recovery
 
-Both the `signingKey` and the `recoveryKey` are permissioned to make changes to the DID document.
-However, these keys are not equal.
+Any key specified in `rotationKeys` has the ability to sign operations for the DID document.
 
-As can be seen in the example document (below), only the `signingKey` is granted the ability to make assertions and invoke/delegate capabilities.
+These keys are solely a PLC concept and are _not_ included in the DID document.
 
-The recovery key on the other hand is capable of performing a "recovery operation"
+Keys are listed in the document data in order of descending authority. 
 
-### Account Recovery
+The PLC server provides a 72hr window during which a higher authority key can "rewrite" history.
 
-The PLC server provides a 72hr window during which the `recoveryKey` can "rewrite" history.
+To do so, that key must sign a new operation that points to the CID of the last "valid" operation - ie the fork point. This operation will be accepted as long as it was within 72hrs of the pointed to operation & the key that signed it is at a lower index in the `rotationKeys` array than the key that signed the to-be-invalidated operation
 
-This is to be used in adversarial situations in which a user's `signingKey` leaks or is being held by some custodian who turns out to be a bad actor.
 
-In a situation such as this, the `recoveryKey` may be used to rotate both the `signingKey` and `recoveryKey`.
+### Resolution
 
-If a user wishes to recover from this situation, they sign a new operation rotating the `signingKey` to a key that they hold and set the `prev` of that operation to point to the most recent pre-attack operation.
+Dids are resolved by making a GET request to `https://plc.directory/:did`
+
+In addition, you may resolve the constituent data by making a request to `https://plc.directory/:did/data`
+
+### Auditability
+
+As an additional check against the PLC server and to promote resiliency, the entire database of PLC is auditable.
+
+The audit history of a given DID (complete with timestamps & invalidated forked histories) can be found at: `https://plc.directory/:did/log/audit`
+
+The entire history of PLC operations may be downloaded as a paginated series of jsonlines at `https://plc.directory/export`
 
 ## Example
 
-Consider the following operation log:
 ```ts
-[
-  {
-    type: 'create',
-    signingKey: 'did:key:zDnaejYFhgFiVF89LhJ4UipACLKuqo6PteZf8eKDVKeExXUPk',
-    recoveryKey: 'did:key:zDnaeSezF2TgCD71b5DiiFyhHQwKAfsBVqTTHRMvP597Z5Ztn',
-    handle: 'alice.example.com',
-    service: 'https://example.com',
-    prev: null,
-    sig: 'vi6JAl5W4FfyViD5_BKL9p0rbI3MxTWuh0g_egTFAjtf7gwoSfSe1O3qMOEUPX6QH3H0Q9M4y7gOLGblWkEwfQ'
-  },
-  {
-    type: 'update_handle',
-    handle: 'ali.example2.com',
-    prev: 'bafyreih2gihqzgq5qd6uqktyfpyxqxvpdnrpu2qunnkaxugbyquxumisuq',
-    sig: 'KL98ORpGmAJTqDsC9mWAYbhoDIv_-eZ3Nv0YqiPkbgx0ra96gYa3fQhIpZVxXFyNbu_4Y3JhPCvyJb8yDMe9Sg'
-  },
-  {
-    type: 'update_atp_pds',
-    service: 'https://example2.com',
-    prev: 'bafyreickw7v7mwncrganw645agsmwjciolknt4f6f5an5wt3nrjepqaoiu',
-    sig: 'AS-APea3xxR5-sq2i5v9IOsgbM5G5qAnB92tExZ8Z4vEy_GQbV8jmfY7zTx76P88AVXInZsO6yWX4UO7_xAIfg'
-  },
-  {
-    type: 'rotate_signing_key',
-    key: 'did:key:zDnaeh9v2RmcMo13Du2d6pjUf5bZwtauYxj3n9dYjw4EZUAR7',
-    prev: 'bafyreictfsrkdt5azni355vapqka5a7erqjsa3vv7iaf52yjlqqbzkwgga',
-    sig: 'VvcCoYVDluLZghv3i6ARyk1r7m1M32BPryJlTma1HTOx2CdbmIOUkVUbFa2LWi571fe-2yjTWY0IEAKfRiPAZg'
-  },
-  {
-    type: 'rotate_recovery_key',
-    key: 'did:key:zDnaedvvAsDE6H3BDdBejpx9ve2Tz95cymyCAKF66JbyMh1Lt',
-    prev: 'bafyreiazzldal6642usrcowrpztb5gjb73qla343ifnt5dfbxz4swmf5vi',
-    sig: 'Um1GVZZT9JgB2SKEbwoF4_Sip05QjH7r_g-Hcx7lIY-OhIg88ZKcN_N4TgzljgBGwe6qZb0u_0Vaq0c-S2WSDg'
-  }
-]
-```
+// note: we use shorthand for keys for ease of reference, but consider them valid did:keys
 
-The log produces the following document data:
-```ts
-{
-  did: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
-  signingKey: 'did:key:zDnaeh9v2RmcMo13Du2d6pjUf5bZwtauYxj3n9dYjw4EZUAR7',
-  recoveryKey: 'did:key:zDnaedvvAsDE6H3BDdBejpx9ve2Tz95cymyCAKF66JbyMh1Lt',
-  handle: 'ali.example2.com',
-  atpPds: 'https://example2.com'
+// Genesis operation
+const genesisOp = {
+  type: 'plc_operation',
+  verificationMethods: {
+    atproto:"did:key:zSigningKey"
+  },
+  rotationKeys: [
+    "did:key:zRecoveryKey",
+    "did:key:zRotationKey"
+  ],
+  alsoKnownAs: [
+    "at://alice.test"
+  ],
+  services: {
+    atproto_pds: {
+      type: "AtprotoPersonalDataServer",
+      endpoint: "https://example.test"
+    }
+  },
+  prev: null,
+  sig: 'sig_from_did:key:zRotationKey'
+}
+
+// Operation to update recovery key
+const updateKeys = {
+  type: 'plc_operation',
+  verificationMethods: {
+    atproto:"did:key:zSigningKey"
+  },
+  rotationKeys: [
+    "did:key:zNewRecoveryKey",
+    "did:key:zRotationKey"
+  ],
+  alsoKnownAs: [
+    "at://alice.test"
+  ],
+  services: {
+    atproto_pds: {
+      type: "AtprotoPersonalDataServer",
+      endpoint: "https://example.test"
+    }
+  },
+  prev: CID(genesisOp),
+  sig: 'sig_from_did:key:zRotationKey'
+}
+
+// Invalid operation that will be rejected
+// because did:key:zAttackerKey is not listed in rotationKeys
+const invalidUpdate = {
+  type: 'plc_operation',
+  verificationMethods: {
+    atproto:"did:key:zAttackerKey"
+  },
+  rotationKeys: [
+    "did:key:zAttackerKey"
+  ],
+  alsoKnownAs: [
+    "at://bob.test"
+  ],
+  services: {
+    atproto_pds: {
+      type: "AtprotoPersonalDataServer",
+      endpoint: "https://example.test"
+    }
+  },
+  prev: CID(updateKeys),
+  sig: 'sig_from_did:key:zAttackerKey'
+}
+
+// Valid recovery operation that "undoes" updateKeys
+const recoveryOp = {
+  type: 'plc_operation',
+  verificationMethods: {
+    atproto:"did:key:zSigningKey"
+  },
+  rotationKeys: [
+    "did:key:zRecoveryKey"
+  ],
+  alsoKnownAs: [
+    "at://alice.test"
+  ],
+  services: {
+    atproto_pds: {
+      type: "AtprotoPersonalDataServer",
+      endpoint: "https://example.test"
+    }
+  },
+  prev: CID(genesisOp),
+  sig: 'sig_from_did:key:zRecoveryKey'
 }
 ```
 
-And the following DID document:
+## Presentation as DID Document 
+
+The following data:
+
+```ts
+{
+  did: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
+  verificationMethods: {
+    atproto: 'did:key:zDnaeh9v2RmcMo13Du2d6pjUf5bZwtauYxj3n9dYjw4EZUAR7'
+  },
+  rotationKeys: [
+    'did:key:zDnaedvvAsDE6H3BDdBejpx9ve2Tz95cymyCAKF66JbyMh1Lt',
+    'did:key:zDnaeh9v2RmcMo13Du2d6pjUf5bZwtauYxj3n9dYjw4EZUAR7'
+  ],
+  alsoKnownAs: [
+    'at://alice.test'
+  ],
+  services: {
+    atproto_pds: {
+      type: "AtprotoPersonalDataServer",
+      endpoint: "https://example.test"
+    }
+  }
+}
+```
+
+Will be presented as the following DID document:
+
 ```ts
 {
   '@context': [
@@ -133,28 +217,19 @@ And the following DID document:
     'https://w3id.org/security/suites/ecdsa-2019/v1'
   ],
   id: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
-  alsoKnownAs: [ 'https://ali.example2.com' ],
+  alsoKnownAs: [ 'at://alice.test' ],
   verificationMethod: [
     {
-      id: 'did:plc:7iza6de2dwap2sbkpav7c6c6#signingKey',
+      id: '#atproto',
       type: 'EcdsaSecp256r1VerificationKey2019',
       controller: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
       publicKeyMultibase: 'zSSa7w8s5aApu6td45gWTAAFkqCnaWY6ZsJ8DpyzDdYmVy4fARKqbn5F1UYBUMeVvYTBsoSoLvZnPdjd3pVHbmAHP'
-    },
-    {
-      id: 'did:plc:7iza6de2dwap2sbkpav7c6c6#recoveryKey',
-      type: 'EcdsaSecp256r1VerificationKey2019',
-      controller: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
-      publicKeyMultibase: 'zRV2EDDvop2r2aKWTcCtei3NvuNEnR5ucTVd9U4CSCnJEiha2QFyTjdxoFZ6629iHxhmTModThGQzX1495ZS6iD4V'
     }
   ],
-  assertionMethod: [ 'did:plc:7iza6de2dwap2sbkpav7c6c6#signingKey' ],
-  capabilityInvocation: [ 'did:plc:7iza6de2dwap2sbkpav7c6c6#signingKey' ],
-  capabilityDelegation: [ 'did:plc:7iza6de2dwap2sbkpav7c6c6#signingKey' ],
   service: [
     {
-      id: 'did:plc:7iza6de2dwap2sbkpav7c6c6#atpPds',
-      type: 'AtpPersonalDataServer',
+      id: '#atproto_pds',
+      type: 'AtprotoPersonalDataServer',
       serviceEndpoint: 'https://example2.com'
     }
   ]
