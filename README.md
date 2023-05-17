@@ -28,8 +28,6 @@ type Service = {
 
 Keys are notated using [did:key](https://w3c-ccg.github.io/did-method-key/) and only secp256k1 and NIST P-256 are currently supported.
 
-This data is a succinct format that can be directly translated to a valid DID document.
-
 Each operation fully attests the current state of the document data. It also includes a reference to the previous operation in the log using a sha256 [CID](https://github.com/multiformats/cid). Each operation also includes a `base64url` encoded signature of the cbor-encoded operation from a valid rotation key.
 
 An operation is of the shape:
@@ -52,7 +50,7 @@ To illustrate:
 
 Operations are verified, ordered and made available by the PLC server.
 
-The operation logs are fully self-certifying, with the exception of their ordering.
+The operation logs are fully self-certifying construction of the current state of the DID document, with the exception of their ordering.
 
 Therefore, the PLC server's attacks are limited to:
 - Denial of service: rejecting valid operations, or refusing to serve some information about the DID
