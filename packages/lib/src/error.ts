@@ -26,7 +26,7 @@ export class MisorderedOperationError extends PlcError {
 export class LateRecoveryError extends PlcError {
   constructor(public timeLapsed: number) {
     super(
-      `Recovery operation occured outside of the allowed 72 hr recovery window. Time lapsed: ${timeLapsed}`,
+      `Recovery operation occurred outside of the allowed 72 hr recovery window. Time lapsed: ${timeLapsed}`,
     )
   }
 }
