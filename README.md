@@ -56,9 +56,9 @@ For `prev` references, the SHA-256 of the previous operation's bytes are encoded
 
 Rotation keys are serialized as strings using [did:key](https://w3c-ccg.github.io/did-method-key/), and only `secp256k1` ("k256") and NIST P-256 ("p256") are currently supported.
 
-The signing keys (`verificationMethods`) are represented as objects, with the actual keys in multibase encoding, as required by the DID Core specification.
+The signing keys (`verificationMethods`) are also serialized using `did:key` in operations (and the DocumentData object). When rendered in a DID document, signing keys are represented as objects, with the actual keys in multibase encoding, as required by the DID Core specification.
 
-The DID itself is derived from the hash of the first operation in the log, call the "genesis" operation. The object is encoded an DAG-CBOR; the bytes are hashed with SHA-256; the hash bytes are `base32`-encoded (not hex encoded) as a string; and that string is truncated to 24 chars to yield the "identifier" segment of the DID.
+The DID itself is derived from the hash of the first operation in the log, call the "genesis" operation. The object is encoded in DAG-CBOR; the bytes are hashed with SHA-256; the hash bytes are `base32`-encoded (not hex encoded) as a string; and that string is truncated to 24 chars to yield the "identifier" segment of the DID.
 
 In pseudo-code: 
 `did:plc:${base32Encode(sha256(createOp)).slice(0,24)}`
@@ -87,7 +87,7 @@ The PLC server has a public endpoint to receive operation objects from any clien
 
 The operation log is self-certifying, and contains all the information needed to construct (or verify) the the current state of the DID document.
 
-Some trust is required in the PLC server. It's attacks are limited to:
+Some trust is required in the PLC server. Its attacks are limited to:
 
 - Denial of service: rejecting valid operations, or refusing to serve some information about the DID
 - Misordering: In the event of a fork in DID document history, the server could choose to serve the "wrong" fork
