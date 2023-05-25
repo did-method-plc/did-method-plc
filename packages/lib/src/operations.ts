@@ -289,16 +289,16 @@ export const assureValidCreationOp = async (
 }
 
 export const assureValidSig = async (
-  allowedDids: string[],
+  allowedDidKeys: string[],
   op: t.CompatibleOpOrTombstone,
 ): Promise<string> => {
   const { sig, ...opData } = op
   const sigBytes = uint8arrays.fromString(sig, 'base64url')
   const dataBytes = new Uint8Array(cbor.encode(opData))
-  for (const did of allowedDids) {
-    const isValid = await verifySignature(did, dataBytes, sigBytes)
+  for (const didKey of allowedDidKeys) {
+    const isValid = await verifySignature(didKey, dataBytes, sigBytes)
     if (isValid) {
-      return did
+      return didKey
     }
   }
   throw new InvalidSignatureError(op)
