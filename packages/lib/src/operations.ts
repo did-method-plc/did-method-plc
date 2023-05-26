@@ -77,6 +77,7 @@ export const createUpdateOp = async (
 ): Promise<t.Operation> => {
   const prev = await cidForCbor(lastOp)
   // omit sig so it doesn't accidentally make its way into the next operation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { sig, ...normalized } = normalizeOp(lastOp)
   const unsigned = await fn(normalized)
   return addSignature(
