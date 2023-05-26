@@ -2,6 +2,8 @@
 
 DID Placeholder is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
+An example DID is: `did:plc:yk4dd2qkboz2yv6tpubpc6co`
+
 Control over a `did:plc` identity rests in a set of re-configurable "rotation" keys pairs. These keys can sign update "operations" to mutate the identity (including key rotations), with each operation referencing a prior version of the identity state by hash. Each identity starts from an initial "genesis" operation, and the hash of this initial object is what defines the DID itself (that is, the DID URI "identifier" string). A central "directory" server collects and validates operations, and maintains a transparent log of operations for each DID.
 
 ## Motivation
@@ -94,6 +96,16 @@ The DID itself is derived from the hash of the first operation in the log, calle
 
 In pseudo-code: 
 `did:plc:${base32Encode(sha256(createOp)).slice(0,24)}`
+
+### Identifier Syntax
+
+The DID Placeholder method name is `plc`. The identifier part is 24 characters
+long, including only characters from the `base32` encoding set. An example is
+`did:plc:yk4dd2qkboz2yv6tpubpc6co`. This means:
+
+- the overall identifier length is 32 characters
+- the entire identifier is lower-case (and should be normalized to lower-case)
+- the entire identifier is ASCII, and includes only the characters `a-z`, `0-9`, and `:` (and does not even use digits `0189`)
 
 
 ### Key Rotation & Account Recovery
@@ -382,3 +394,5 @@ The size of the `verificationMethods`, `alsoKnownAs`, and `service` mappings/arr
 As an anti-abuse mechanisms, the PLC server load balancer restricts the number of HTTP requests per time window. The limits are generous, and operating large services or scraping the operation log should not run in to limits. Specific per-DID limits on operation rate may be introduced over time. For example, no more than N operations per DID per rotation key per 24 hour window.
 
 A "DID PLC history explorer" web interface would make the public nature of the DID audit log more publicly understandable.
+
+It is concievable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also concievable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
