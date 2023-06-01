@@ -6,17 +6,16 @@ import { check, cidForCbor } from '@atproto/common'
 import * as t from './types'
 import {
   GenesisHashError,
-  ImproperlyFormattedDidError,
   ImproperOperationError,
   InvalidSignatureError,
   MisorderedOperationError,
   UnsupportedKeyError,
 } from './error'
 
-export const didForCreateOp = async (op: t.CompatibleOp, truncate = 24) => {
+export const didForCreateOp = async (op: t.CompatibleOp) => {
   const hashOfGenesis = await sha256(cbor.encode(op))
   const hashB32 = uint8arrays.toString(hashOfGenesis, 'base32')
-  const truncated = hashB32.slice(0, truncate)
+  const truncated = hashB32.slice(0, 24)
   return `did:plc:${truncated}`
 }
 
@@ -273,12 +272,8 @@ export const assureValidCreationOp = async (
   const normalized = normalizeOp(op)
   await assureValidOp(normalized)
   await assureValidSig(normalized.rotationKeys, op)
-  const expectedDid = await didForCreateOp(op, 64)
-  // id must be >=24 chars & prefix is 8chars
-  if (did.length < 32) {
-    throw new ImproperlyFormattedDidError('too short')
-  }
-  if (!expectedDid.startsWith(did)) {
+  const expectedDid = await didForCreateOp(op)
+  if (expectedDid !== did) {
     throw new GenesisHashError(expectedDid)
   }
   if (op.prev !== null) {
