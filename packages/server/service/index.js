@@ -22,7 +22,8 @@ const main = async () => {
   })
   const port = parseInt(process.env.PORT)
   const plc = PlcServer.create({ db, port, version })
-  await plc.start()
+  const server = await plc.start()
+  server.keepAliveTimeout = 90000
   // Graceful shutdown (see also https://aws.amazon.com/blogs/containers/graceful-shutdowns-with-ecs/)
   process.on('SIGTERM', async () => {
     await plc.destroy()
