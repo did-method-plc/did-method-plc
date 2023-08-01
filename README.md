@@ -396,3 +396,12 @@ As an anti-abuse mechanisms, the PLC server load balancer restricts the number o
 A "DID PLC history explorer" web interface would make the public nature of the DID audit log more publicly understandable.
 
 It is concievable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also concievable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
+
+## License
+
+This project is dual-licensed under MIT and Apache 2.0 terms:
+
+- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/ipfs/kubo/blob/master/LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](https://github.com/ipfs/kubo/blob/master/LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+Downstream projects and users may chose either license, or both, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
