@@ -29,7 +29,7 @@ const main = async () => {
   })
 }
 
-const pgUrl = ({ username = "postgres", password = "postgres", host = "0.0.0.0", port = "5432", database = "postgres", sslmode }) => {
+const pgUrl = ({ username = "postgres", password = "postgres", host = "localhost", port = "5432", database = "postgres", sslmode }) => {
   const enc = encodeURIComponent
   return `postgresql://${username}:${enc(password)}@${host}:${port}/${database}${sslmode ? `?sslmode=${enc(sslmode)}` : ''}`
 }
