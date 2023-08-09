@@ -139,6 +139,10 @@ func serve(cctx *cli.Context) error {
 		return c.Redirect(http.StatusMovedPermanently, "/.well-known/security.txt")
 	})
 
+	// meta stuff
+	e.GET("/_health", server.WebHealth)
+	e.GET("/healthz", server.WebHealth)
+
 	// actual pages/views
 	e.GET("/", server.WebHome)
 	e.GET("/resolve", server.WebResolve)
@@ -221,6 +225,13 @@ func (srv *Server) WebSpecZeroOne(c echo.Context) error {
 	data["html_title"] = "did:plc Specification v0.1"
 	data["markdown_html"] = string(blackfriday.Run(specZeroOneMarkdown))
 	return c.Render(http.StatusOK, "templates/markdown.html", data)
+}
+
+func (srv *Server) WebHealth(c echo.Context) error {
+	resp := map[string]interface{}{
+		"status": "ok",
+	}
+	return c.JSON(http.StatusOK, resp)
 }
 
 func (srv *Server) WebOpenapiYaml(c echo.Context) error {
