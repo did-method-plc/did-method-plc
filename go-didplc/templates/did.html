@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block head_title %}
+{{ did }}
+{% endblock %}
+
+{% block main -%}
+<h3 style="font-family: monospace;">{{ did }}</h3>
+
+{% if result.StatusCode == 200 %}
+
+<h4>Names and Aliases</h4>
+<div style="width: 100%; overflow-x: auto;">
+<table style="width: 100%;">
+  <thead>
+    <tr>
+      <th>URI</th>
+    </tr>
+  </thead>
+  <tbody style="font-family: monospace;">
+  	{% for uri in result.Doc.AlsoKnownAs %}
+    <tr>
+      <td>{{ uri }}</td>
+    </tr>
+  	{% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h4>Services</h4>
+<div style="width: 100%; overflow-x: auto;">
+<table style="width: 100%;">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Type</th>
+      <th>URL</th>
+    </tr>
+  </thead>
+  <tbody style="font-family: monospace;">
+  	{% for vm in result.Doc.Service %}
+    <tr>
+    	<td>{{ vm.Id }}</td>
+    	<td>{{ vm.Type }}</td>
+    	<td>{{ vm.ServiceEndpoint }}</td>
+    </tr>
+  	{% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h4>Verification Methods</h4>
+<div style="width: 100%; overflow-x: auto;">
+<table style="width: 100%;">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Type</th>
+      <th>Public Key (multibase-encoded)</th>
+    </tr>
+  </thead>
+  <tbody style="font-family: monospace;">
+  	{% for vm in result.Doc.VerificationMethod %}
+    <tr>
+    	<td>{{ vm.Id }}</td>
+    	<td>{{ vm.Type }}</td>
+    	<td>{{ vm.PublicKeyMultibase }}</td>
+    </tr>
+  	{% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h4>DID Document JSON</h4>
+<pre><code>
+{{- result.DocJson -}}
+</code></pre>
+{% endif %}
+
+{%- endblock %}

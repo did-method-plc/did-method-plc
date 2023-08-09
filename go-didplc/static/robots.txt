@@ -1,0 +1,5 @@
+# Hello Friends!
+
+# By default, may crawl anything on this domain. HTTP 429 ("backoff") status codes are used for rate-limiting. Up to a handful of concurrent requests should be ok.
+User-Agent: *
+Allow: /

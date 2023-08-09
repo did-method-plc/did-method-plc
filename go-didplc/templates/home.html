@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block main -%}
+  <h2>Motivation</h2>
+  <p>Bluesky developed DID Placeholder when designing the AT Protocol ("atproto") because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.</p>
+
+  <p>We titled the method "Placeholder", because we don't want it to stick around forever in its current form. We are actively hoping to replace it with or evolve it into something less centralized - likely a permissioned DID consortium. That being said, we do intend to support did:plc in the current form until after any successor is deployed, with a reasonable grace period. We would also provide a migration route to allow continued use of existing did:plc identifiers.</p>
+{%- endblock %}

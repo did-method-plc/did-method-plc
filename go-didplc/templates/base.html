@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/simple.min.css">
+  <title>{%- block head_title -%}did:plc Directory{%- endblock -%}</title>
+  
+  <style>
+  </style>
+
+	<!--
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+  -->
+  {% block html_head_extra -%}{%- endblock %}
+  <meta name="application-name" name="did:plc Website">
+  <meta name="generator" name="webplc">
+</head>
+<body>
+{%- block body_all %}
+
+
+<header>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/resolve" >Lookup</a>
+    <a href="/spec/v0.1/did-plc" >Specification</a>
+    <a href="https://github.com/bluesky-social/did-method-plc">Source Code</a>
+  </nav>
+  <h1>did:plc Identifier Directory</h1>
+  <p>a self-authenticating Decentralized Identifier (DID) system which is strongly-consistent, recoverable, and allows for key rotation</p>
+</header>
+<main>
+  {% block main %}{% endblock %}
+</main>
+<footer>
+  <p>Developed by <a href="https://blueskyweb.xyz">Bluesky</a> for <a href="https://atproto.com">atproto</a>.</p>
+</footer>
+{% endblock -%}
+</body>
+</html>

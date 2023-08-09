@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block head_title %}
+Resolve did:plc
+{% endblock %}
+
+{% block main -%}
+<h2>Resolve a did:plc Identifier</h2>
+<form action="/resolve" method="get">
+  <p><label>DID</label>
+  <input type="text" name="did">
+  </p>
+  <input type="submit" value="Submit">
+</form>
+{%- endblock %}
