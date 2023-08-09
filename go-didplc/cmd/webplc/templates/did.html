@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 
-{% block head_title %}
+{% block head_title -%}
 {{ did }}
-{% endblock %}
+{%- endblock %}
 
 {% block main -%}
 <h3 style="font-family: monospace;">{{ did }}</h3>
 
 {% if result.StatusCode == 200 %}
 
-<h4>Names and Aliases</h4>
+<article>
+<h4 style="margin-bottom: 1em;">Names and Aliases</h4>
 <div style="width: 100%; overflow-x: auto;">
-<table style="width: 100%;">
+<table role="grid" style="width: 100%;">
   <thead>
     <tr>
       <th>URI</th>
@@ -26,10 +27,12 @@
   </tbody>
 </table>
 </div>
+</article>
 
-<h4>Services</h4>
+<article>
+<h4 style="margin-bottom: 1em;">Services</h4>
 <div style="width: 100%; overflow-x: auto;">
-<table style="width: 100%;">
+<table role="grid" style="width: 100%;">
   <thead>
     <tr>
       <th>ID</th>
@@ -48,10 +51,12 @@
   </tbody>
 </table>
 </div>
+</article>
 
-<h4>Verification Methods</h4>
+<article>
+<h4 style="margin-bottom: 1em;">Verification Methods</h4>
 <div style="width: 100%; overflow-x: auto;">
-<table style="width: 100%;">
+<table role="grid" style="width: 100%;">
   <thead>
     <tr>
       <th>ID</th>
@@ -70,11 +75,14 @@
   </tbody>
 </table>
 </div>
+</article>
 
+<article>
 <h4>DID Document JSON</h4>
 <pre><code>
 {{- result.DocJson -}}
 </code></pre>
+</article>
 {% endif %}
 
 {%- endblock %}

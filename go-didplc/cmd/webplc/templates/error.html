@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block head_title %}Error {{ statusCode }} - did:plc{% endblock %}
+
+{%- block main %}
+{% if statusCode == 404 %}
+  <h1>404: Not Found</h1>
+{% elif statusCode == 410 %}
+  <h1>404: Gone</h1>
+{% elif statusCode == 400 %}
+  <h1>400: Bad Request</h1>
+{% else %}
+  <h1>{{ statusCode }}: Server Error</h1>
+{% endif %}
+{% if errorMessage %}
+  <p>{{ errorMessage }}
+{% else %}
+  <p>Sorry about that! Our <a href="https://status.bsky.app/">Status Page</a> might have more context.
+{% endif %}
+{% endblock -%}

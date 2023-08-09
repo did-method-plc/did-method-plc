@@ -1,0 +1,130 @@
+openapi: 3.0.0
+info:
+  version: 0.1
+  title: DID PLC Directory API
+
+servers:
+  - url: https://plc.directory
+
+paths:
+  /{did}:
+    get:
+      description: "Fetch DID Document"
+      parameters:
+        - name: did
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Successfully returned DID Document"
+          content:
+            application/did+ld+json:
+              $ref: '#/components/schemas/DidDocument'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    post:
+  /{did}/data:
+    get:
+  /{did}/log:
+    get:
+  /{did}/log/audit:
+    get:
+  /{did}/log/last:
+    get:
+  /export:
+    get:
+
+components:
+  responses:
+    404NotFound:
+      description: "DID not found"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  schemas:
+    Operation:
+      oneOf:
+        - $ref: '#/components/schemas/PlcOp'
+        - $ref: '#/components/schemas/TombstoneOp'
+        - $ref: '#/components/schemas/LegacyCreateOp'
+      discriminator:
+        propertyName: type
+        mapping:
+          plc_operation: '#/components/schemas/PlcOp'
+          plc_tombstone: '#/components/schemas/TombstoneOp'
+          create: '#/components/schemas/LegacyCreateOp'
+    PlcOp:
+      type: object
+      required:
+        - type
+        - rotationKeys
+        - verificationMethods
+        - alsoKnownAs
+        - services
+        - prev
+        - sig
+      properties:
+        type:
+          type: string
+        rotationKeys:
+          type: array 
+          items:
+            type: string
+        verificationMethods:
+          type: object
+        alsoKnownAs:
+          type: array 
+          items:
+            type: string
+        prev:
+          type: string
+          nullable: true
+        sig:
+          type: string
+    TombstoneOp:
+      required:
+        - type
+        - prev
+        - sig
+      properties:
+        type:
+          type: string
+        prev:
+          type: string
+        sig:
+          type: string
+    LegacyCreateOp:
+      required:
+        - type
+        - signingKey
+        - recoveryKey
+        - handle
+        - service
+        - prev
+        - sig
+      properties:
+        type:
+          type: string
+        signingKey:
+          type: string
+        recoveryKey:
+          type: string
+        handle:
+          type: string
+        service:
+          type: string
+        prev:
+          type: string
+          nullable: true
+        sig:
+          type: string
+
+errors:
+  400: Not a valid operation
+  404: DID not registered

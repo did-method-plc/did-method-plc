@@ -1,35 +1,34 @@
-
 package main
 
 import (
-	"io"
-	"fmt"
-	"net/http"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 )
 
 type VerificationMethod struct {
-	Id string `json:"id"`
-	Type string `json:"type"`
-	Controller string `json:"controller"`
+	Id                 string `json:"id"`
+	Type               string `json:"type"`
+	Controller         string `json:"controller"`
 	PublicKeyMultibase string `json:"publicKeyMultibase"`
 }
 
 type DidService struct {
-	Id string `json:"id"`
-	Type string `json:"type"`
+	Id              string `json:"id"`
+	Type            string `json:"type"`
 	ServiceEndpoint string `json:"serviceEndpoint"`
 }
 
 type DidDoc struct {
-	AlsoKnownAs []string `json:"alsoKnownAs"`
+	AlsoKnownAs        []string             `json:"alsoKnownAs"`
 	VerificationMethod []VerificationMethod `json:"verificationMethod"`
-	Service []DidService `json:"service"`
+	Service            []DidService         `json:"service"`
 }
 
 type ResolutionResult struct {
-	Doc *DidDoc
-	DocJson *string
+	Doc        *DidDoc
+	DocJson    *string
 	StatusCode int
 }
 
@@ -43,8 +42,8 @@ func ResolveDidPlc(client *http.Client, plc_host, did string) (*ResolutionResult
 	log.Debugf("PLC resolution result status=%d did=%s", res.StatusCode, did)
 
 	result.StatusCode = res.StatusCode
-	if res.StatusCode == 404 {
-		return nil, fmt.Errorf("DID not found in PLC directory: %s", did)
+	if res.StatusCode == 404 || res.StatusCode == 410 {
+		return &result, nil
 	} else if res.StatusCode != 200 {
 		return &result, nil
 	}
@@ -57,7 +56,7 @@ func ResolveDidPlc(client *http.Client, plc_host, did string) (*ResolutionResult
 	doc := DidDoc{}
 	err = json.Unmarshal(respBytes, &doc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse DID Document JSON:", err)
+		return nil, fmt.Errorf("failed to parse DID Document JSON: %v", err)
 	}
 	result.Doc = &doc
 
@@ -65,11 +64,11 @@ func ResolveDidPlc(client *http.Client, plc_host, did string) (*ResolutionResult
 	var data map[string]interface{}
 	err = json.Unmarshal(respBytes, &data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse DID Document JSON:", err)
+		return nil, fmt.Errorf("failed to parse DID Document JSON: %v", err)
 	}
 	indentJson, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse DID Document JSON:", err)
+		return nil, fmt.Errorf("failed to parse DID Document JSON: %v", err)
 	}
 	s := string(indentJson)
 	result.DocJson = &s

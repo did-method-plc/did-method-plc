@@ -1,4 +1,4 @@
-./webplc
+/webplc
 /plan.txt
 !static/.well-known/
 !.gitignore

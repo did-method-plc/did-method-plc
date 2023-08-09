@@ -34,9 +34,9 @@ func run(args []string) {
 			Action: serve,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
-					Name:  "plc-host",
-					Usage: "method, hostname, and port of PLC instance",
-					Value: "https://plc.directory",
+					Name:    "plc-host",
+					Usage:   "method, hostname, and port of PLC instance",
+					Value:   "https://plc.directory",
 					EnvVars: []string{"ATP_PLC_HOST"},
 				},
 				&cli.StringFlag{

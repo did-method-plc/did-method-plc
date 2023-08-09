@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"errors"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -11,14 +12,13 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"fmt"
 
-	"github.com/russross/blackfriday/v2"
+	"github.com/flosch/pongo2/v6"
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/klauspost/compress/gzip"
-	"github.com/flosch/pongo2/v6"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/russross/blackfriday/v2"
 	"github.com/urfave/cli/v2"
 )
 
@@ -31,11 +31,14 @@ var StaticFS embed.FS
 //go:embed spec/v0.1/did-plc.md
 var specZeroOneMarkdown []byte
 
+//go:embed spec/plc-server-openapi3.yaml
+var apiOpenapiYaml []byte
+
 type Server struct {
-	echo     *echo.Echo
-	httpd    *http.Server
-	client   *http.Client
-	plcHost	 string
+	echo    *echo.Echo
+	httpd   *http.Server
+	client  *http.Client
+	plcHost string
 }
 
 func serve(cctx *cli.Context) error {
@@ -77,9 +80,9 @@ func serve(cctx *cli.Context) error {
 	}
 
 	server := &Server{
-		echo:     e,
-		client:   &client,
-		plcHost:  cctx.String("plc-host"),
+		echo:    e,
+		client:  &client,
+		plcHost: cctx.String("plc-host"),
 	}
 
 	server.httpd = &http.Server{
@@ -141,8 +144,8 @@ func serve(cctx *cli.Context) error {
 	e.GET("/resolve", server.WebResolve)
 	e.GET("/did/:did", server.WebDid)
 	e.GET("/spec/v0.1/did-plc", server.WebSpecZeroOne)
-	// TODO: e.GET("/api/redoc", server.WebSpecZeroOne)
-	// TODO: e.GET("/api/openapi3.json", server.WebSpecZeroOne)
+	e.GET("/api/redoc", server.WebRedoc)
+	e.GET("/api/plc-server-openapi3.yaml", server.WebOpenapiYaml)
 
 	// Start the server.
 	log.Infof("starting server address=%s", httpAddress)
@@ -191,14 +194,21 @@ func (srv *Server) Shutdown() error {
 
 func (srv *Server) errorHandler(err error, c echo.Context) {
 	code := http.StatusInternalServerError
+	errorMessage := ""
 	if he, ok := err.(*echo.HTTPError); ok {
 		code = he.Code
+		if he.Message != nil {
+			errorMessage = fmt.Sprintf("%s", he.Message)
+		}
 	}
 	c.Logger().Error(err)
 	data := pongo2.Context{
-		"statusCode": code,
+		"statusCode":   code,
+		"errorMessage": errorMessage,
 	}
-	c.Render(code, "error.html", data)
+	if err = c.Render(code, "templates/error.html", data); err != nil {
+		c.Logger().Error(err)
+	}
 }
 
 func (srv *Server) WebHome(c echo.Context) error {
@@ -213,11 +223,20 @@ func (srv *Server) WebSpecZeroOne(c echo.Context) error {
 	return c.Render(http.StatusOK, "templates/markdown.html", data)
 }
 
+func (srv *Server) WebOpenapiYaml(c echo.Context) error {
+	return c.Blob(http.StatusOK, "text/yaml", apiOpenapiYaml)
+}
+
+func (srv *Server) WebRedoc(c echo.Context) error {
+	data := pongo2.Context{}
+	return c.Render(http.StatusOK, "templates/redoc.html", data)
+}
+
 func (srv *Server) WebResolve(c echo.Context) error {
 	data := pongo2.Context{}
 	did := c.QueryParam("did")
 	if did != "" {
-		return c.Redirect(http.StatusMovedPermanently, "/did/" + did)
+		return c.Redirect(http.StatusMovedPermanently, "/did/"+did)
 	}
 	return c.Render(http.StatusOK, "templates/resolve.html", data)
 }
@@ -227,14 +246,18 @@ func (srv *Server) WebDid(c echo.Context) error {
 	did := c.Param("did")
 	data["did"] = did
 	if !strings.HasPrefix(did, "did:plc:") {
-		return fmt.Errorf("Not a valid DID PLC identifier: %s", did)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("Not a valid DID PLC identifier: %s", did))
 	}
 	res, err := ResolveDidPlc(srv.client, srv.plcHost, did)
 	if err != nil {
 		return err
 	}
+	if res.StatusCode == 404 {
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("DID not in PLC directory: %s", did))
+	}
+	if res.StatusCode == 410 {
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Errorf("DID has been permanently deleted: %s", did))
+	}
 	data["result"] = res
-	fmt.Println(res.Doc)
-	fmt.Println(res.Doc.VerificationMethod)
 	return c.Render(http.StatusOK, "templates/did.html", data)
 }

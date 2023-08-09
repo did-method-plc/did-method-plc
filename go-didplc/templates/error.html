@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-
-{% block head_title %}Error {{ statusCode }} - did:plc{% endblock %}
-
-{%- block body_all %}
-    <h1>{{ statusCode }}: Server Error</h1>
-    <p>Sorry about that! Our <a href="https://status.bsky.app/">Status Page</a> might have more context.
-  {% endif %}
-{% endblock -%}

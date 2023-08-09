@@ -7,9 +7,7 @@ Resolve did:plc
 {% block main -%}
 <h2>Resolve a did:plc Identifier</h2>
 <form action="/resolve" method="get">
-  <p><label>DID</label>
-  <input type="text" name="did">
-  </p>
-  <input type="submit" value="Submit">
+  <input type="search" name="did" placeholder="did:plc: [...]" style="width: 100%;">
 </form>
+<p>Example: <a href="/did/did:plc:ewvi7nxzyoun6zhxrhs64oiz"><code>did:plc:ewvi7nxzyoun6zhxrhs64oiz</code></a>
 {%- endblock %}

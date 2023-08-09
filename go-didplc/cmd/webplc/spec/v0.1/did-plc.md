@@ -1,19 +1,13 @@
 
-DID PLC Specification v0.1
-==========================
+# DID PLC Method Specification
+
+**Version:** v0.1 (May 2023)
 
 DID Placeholder is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
 An example DID is: `did:plc:yk4dd2qkboz2yv6tpubpc6co`
 
 Control over a `did:plc` identity rests in a set of re-configurable "rotation" keys pairs. These keys can sign update "operations" to mutate the identity (including key rotations), with each operation referencing a prior version of the identity state by hash. Each identity starts from an initial "genesis" operation, and the hash of this initial object is what defines the DID itself (that is, the DID URI "identifier" string). A central "directory" server collects and validates operations, and maintains a transparent log of operations for each DID.
-
-## Motivation
-
-[Bluesky](https://blueskyweb.xyz/) developed DID Placeholder when designing the [AT Protocol](https://atproto.com) ("atproto") because we were not satisfied with any of the existing DID methods.
-We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
-
-We titled the method "Placeholder", because we _don't_ want it to stick around forever in its current form. We are actively hoping to replace it with or evolve it into something less centralized - likely a permissioned DID consortium. That being said, we do intend to support `did:plc` in the current form until after any successor is deployed, with a reasonable grace period. We would also provide a migration route to allow continued use of existing `did:plc` identifiers.
 
 ## How it works
 
