@@ -1,5 +1,5 @@
 
-# DID PLC Method Specification
+# `did:plc` Method Specification
 
 **Version:** v0.1 (May 2023)
 
