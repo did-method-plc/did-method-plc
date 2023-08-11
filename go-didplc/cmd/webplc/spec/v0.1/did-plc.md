@@ -3,7 +3,7 @@
 
 **Version:** v0.1 (May 2023)
 
-DID Placeholder is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
+DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
 An example DID is: `did:plc:yk4dd2qkboz2yv6tpubpc6co`
 
@@ -95,9 +95,7 @@ In pseudo-code:
 
 ### Identifier Syntax
 
-The DID Placeholder method name is `plc`. The identifier part is 24 characters
-long, including only characters from the `base32` encoding set. An example is
-`did:plc:yk4dd2qkboz2yv6tpubpc6co`. This means:
+The DID PLC method name is `plc`. The identifier part is 24 characters long, including only characters from the `base32` encoding set. An example is `did:plc:yk4dd2qkboz2yv6tpubpc6co`. This means:
 
 - the overall identifier length is 32 characters
 - the entire identifier is lower-case (and should be normalized to lower-case)
