@@ -1,2 +1,2 @@
-# DID Placeholder Library
+# DID PLC Library
 

@@ -35,5 +35,5 @@ USER node
 CMD ["node", "--enable-source-maps", "index.js"]
 
 LABEL org.opencontainers.image.source=https://github.com/bluesky-social/did-method-plc
-LABEL org.opencontainers.image.description="DID Placeholder server"
+LABEL org.opencontainers.image.description="DID PLC server"
 LABEL org.opencontainers.image.licenses=MIT
