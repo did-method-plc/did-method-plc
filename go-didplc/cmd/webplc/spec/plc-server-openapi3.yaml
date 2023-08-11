@@ -1,15 +1,25 @@
 openapi: 3.0.0
 info:
+  title: "did:plc Directory Server API"
   version: 0.1
-  title: DID PLC Directory API
+  contact:
+    name: "Protocol Team at Bluesky"
+    email: "protocol@blueskyweb.xyz"
+    url: "https://web.plc.directory"
+  description: |
+    DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
+    The central directory server receives and persists self-signed operation logs for each DID, starting with a "genesis operation" which defined the DID identifier itself. This document describes the HTTP API for interacting with the directory server to resolve DID Document, fetch audit logs, and submit signed operations.
+
+    The HTTP API is permissionless, but only valid (correctly signed) operations are accepted. Reasonable rate-limits are applied, but they should not interfer with account recovery in most situations.
 servers:
   - url: https://plc.directory
 
 paths:
   /{did}:
     get:
-      description: "Fetch DID Document"
+      description: "Resolve DID Document for the indicated DID"
+      operationId: ResolveDid
       parameters:
         - name: did
           in: path
@@ -18,28 +28,165 @@ paths:
             type: string
       responses:
         '200':
-          description: "Successfully returned DID Document"
+          description: "Success, returned DID Document"
           content:
             application/did+ld+json:
-              $ref: '#/components/schemas/DidDocument'
+              schema:
+                $ref: '#/components/schemas/DidDocument'
         '404':
-          $ref: '#/components/responses/404NotFound'
+          $ref: '#/components/responses/404DidNotFound'
+        '410':
+          $ref: '#/components/responses/410DidNotAvailable'
+      x-codeSamples:
+        - lang: Shell
+          label: curl
+          source: |
+            curl -s https://plc.directory/did:plc:pyc2ihzpelxtg4cdkfzbhcv4 | jq .
+        - lang: Python
+          label: Python
+          source: |
+            import requests
+
+            did = "did:plc:pyc2ihzpelxtg4cdkfzbhcv4"
+            resp = requests.get(f"https://plc.directory/{did}")
+            resp.raise_for_status()
+            print(resp.json())
     post:
-  /{did}/data:
-    get:
+      description: "Create new PLC Operation for the indicated DID"
+      operationId: CreatePlcOp
+      parameters:
+        - name: did
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Operation'
+      responses:
+        '200':
+          description: "Success, operation validated and persisted"
+          # TODO: what is returned here?
+        '400':
+          $ref: '#/components/responses/400BadOperation'
+        '404':
+          $ref: '#/components/responses/404DidNotFound'
+        '410':
+          $ref: '#/components/responses/410DidNotAvailable'
   /{did}/log:
     get:
+      description: "Get Current PLC Operation Chain"
+      operationId: GetPlcOpLog
+      parameters:
+        - name: did
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Success, retured operation log"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Operation'
+        '404':
+          $ref: '#/components/responses/404DidNotFound'
   /{did}/log/audit:
     get:
+      description: "Get PLC Operation Audit Log"
+      operationId: GetPlcAuditLog
+      parameters:
+        - name: did
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Success, retured audit log"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LogEntry'
+        '404':
+          $ref: '#/components/responses/404DidNotFound'
   /{did}/log/last:
     get:
+      description: "Get Latest PLC Operation"
+      operationId: GetLastOp
+      parameters:
+        - name: did
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Success, returned latest operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogEntry'
+        '404':
+          $ref: '#/components/responses/404DidNotFound'
+  /{did}/data:
+    get:
+      description: "Get Current PLC Data for the indicated DID"
+      operationId: GetPlcData
+      parameters:
+        - name: did
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Success, retured current PLC data"
+          # TODO: basically just an op, but missing some fields? sigh.
+        '404':
+          $ref: '#/components/responses/404DidNotFound'
+        '410':
+          $ref: '#/components/responses/410DidNotAvailable'
   /export:
     get:
+      description: "Bulk fetch PLC Operations for all DIDs, with pagination, in JSON Lines format"
+      operationId: Export
+      parameters:
+        - name: count
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 1000
+        - name: after
+          in: query
+          schema:
+            type: string
+            format: date-time
+            description: "Return only operations after this indexed timestamp"
+      responses:
+        '200':
+          description: "Success, returned batch of operations"
+          content:
+            application/jsonlines:
+              description: "Newline-delimited JSON file, with a separate JSON object on each line"
+              schema:
+                $ref: '#/components/schemas/LogEntry'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
 
 components:
   responses:
-    404NotFound:
-      description: "DID not found"
+    404DidNotFound:
+      description: "DID Not Found"
       content:
         application/json:
           schema:
@@ -47,6 +194,41 @@ components:
             properties:
               message:
                 type: string
+            example:
+              message: "DID not registered: did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+    404DidNotAvailable:
+      description: "DID Not Available (Tombstone)"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            example:
+              message: "DID not available: did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+    400BadOperation:
+      description: "Invalid PLC Operation"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            example:
+              message: "Invalid Signature"
+    400BadRequest:
+      description: "Bad Request"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            example:
+              message: "Invalid Query Parameter"
   schemas:
     Operation:
       oneOf:
@@ -61,6 +243,7 @@ components:
           create: '#/components/schemas/LegacyCreateOp'
     PlcOp:
       type: object
+      description: "Regular PLC operation. Can be a genesis operation (create DID, no 'prev' field), or a data update."
       required:
         - type
         - rotationKeys
@@ -76,18 +259,42 @@ components:
           type: array 
           items:
             type: string
+          description: "Ordered set (no duplicates) of cryptographic public keys in did:key format"
         verificationMethods:
           type: object
+          description: "Map (object) of application-specific cryptographic public keys in did:key format"
         alsoKnownAs:
           type: array 
           items:
             type: string
+          description: "Ordered set (no duplicates) of aliases and names for this account, in the form of URIs"
+        services:
+          type: object
+          description: "Map (object) of application-specific service endpoints for this account"
         prev:
           type: string
           nullable: true
+          description: "Strong reference (hash) of preceeding operation for this DID, in string CID format. Null for genesis operation"
         sig:
           type: string
+          description: "Cryptographic signature of this object, with base64 string encoding"
+      example:
+        type: "plc_operation"
+        services:
+          atproto_pds:
+            type: "AtprotoPersonalDataServer"
+            endpoint: "https://bsky.social"
+        alsoKnownAs:
+          - "at://atproto.com"
+        rotationKeys:
+          - "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg"
+          - "did:key:zQ3shpKnbdPx3g3CmPf5cRVTPe1HtSwVn5ish3wSnDPQCbLJK"
+        verificationMethods:
+          atproto: "did:key:zQ3shXjHeiBuRCKmM36cuYnm7YEMzhGnCmCyW92sRJ9pribSF"
+
     TombstoneOp:
+      type: object
+      description: "Special operation which deactives (revokes) the DID. This is permanent once the recovery window expires."
       required:
         - type
         - prev
@@ -97,9 +304,18 @@ components:
           type: string
         prev:
           type: string
+          description: "Strong reference (hash) of preceeding operation for this DID, in string CID format"
         sig:
           type: string
+          description: "Cryptographic signature of this object, with base64 string encoding"
+      example:
+        type: "plc_tombstone"
+        prev: "bafyreid6awsb6lzc54zxaq2roijyvpbjp5d6mii2xyztn55yli7htyjgqy"
+        sig: "41iJmrPRUTIi24HBduzgoavjOibAx2yFJ2p1d7zTN6ZmMgjSaTF8dJf0HtdU4EBNUBTWq33PZyh5tyb1bJq3Fw"
+
     LegacyCreateOp:
+      type: object
+      description: "Obsolete PLC genesis operations, which must still be supported to ensure all did:plc identifiers can be resolved correctly."
       required:
         - type
         - signingKey
@@ -113,18 +329,130 @@ components:
           type: string
         signingKey:
           type: string
+          description: "atproto cryptographic public key in did:key format"
         recoveryKey:
           type: string
+          description: "PLC recovery cryptographic public key in did:key format"
         handle:
           type: string
+          description: "atproto handle as AT-URI (at://)"
         service:
           type: string
+          description: "atproto_pds service endpoint URL"
         prev:
           type: string
           nullable: true
+          description: "Strong reference (hash) of preceeding operation for this DID, in string CID format"
         sig:
           type: string
+          description: "Cryptographic signature of this object, with base64 string encoding"
+      example:
+        type: "create"
+        signingKey: "did:key:zQ3shP5TBe1sQfSttXty15FAEHV1DZgcxRZNxvEWnPfLFwLxJ"
+        recoveryKey: "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg"
+        handle: "first-post.bsky.social"
+        service: "https://bsky.social"
+        prev: null
+        sig: "yvN4nQYWTZTDl9nKSSyC5EC3nsF5g4S56OmRg9G6_-pM6FCItV2U2u14riiMGyHiCD86l6O-1xC5MPwf8vVsRw"
 
-errors:
-  400: Not a valid operation
-  404: DID not registered
+    LogEntry:
+      type: object
+      required:
+        - did
+        - operation
+        - cid
+        - nullified
+        - createdAt
+      properties:
+        did:
+          type: string
+          description: "DID that this operation applies to"
+        operation:
+          $ref: "#/components/schemas/Operation"
+        cid:
+          type: cid
+          description: "Hash of the operation, in string CID format"
+        nullified:
+          type: bool
+          description: "Whether this operation is included in the current operation chain, or has been overridden"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp when this operation was received by the directory server"
+      example:
+        did: "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+        operation:
+          sig: "lza4at_jCtGo_TYgL5PC1ZNP7lhF4DV8H50LWHhvdHcB143x1wEwqZ43xvV36Pws6OOnJLJrkibEUFDFqkhIhg"
+          prev: null
+          type: "plc_operation"
+          services:
+            atproto_pds:
+              type: "AtprotoPersonalDataServer"
+              endpoint: "https://bsky.social"
+          alsoKnownAs:
+            - "at://atprotocol.bsky.social"
+          rotationKeys:
+            - "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg"
+            - "did:key:zQ3shpKnbdPx3g3CmPf5cRVTPe1HtSwVn5ish3wSnDPQCbLJK"
+          verificationMethods:
+            atproto: "did:key:zQ3shXjHeiBuRCKmM36cuYnm7YEMzhGnCmCyW92sRJ9pribSF"
+        cid: "bafyreibfvkh3n6odvdpwj54j4xxdsgnn4zo5utbyf7z7nfbyikhtygzjcq"
+        nullified: false
+        createdAt: "2023-04-26T06:19:25.508Z"
+
+    DidDocument:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          example: "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+        alsoKnownAs:
+          type: array 
+          description: "Ordered set (no duplicates) of aliases and names for this account, in the form of URIs"
+          items:
+            type: string
+            example: "at://atproto.com"
+        verificationMethods:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - type
+              - controller
+              - publicKeyMultibase
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              controller:
+                type: string
+              publicKeyMultibase:
+                type: string
+            example:
+              id: "#atproto"
+              type: "EcdsaSecp256k1VerificationKey2019"
+              controller: "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+              publicKeyMultibase: "zQYEBzXeuTM9UR3rfvNag6L3RNAs5pQZyYPsomTsgQhsxLdEgCrPTLgFna8yqCnxPpNT7DBk6Ym3dgPKNu86vt9GR"
+        service:
+          type: array 
+          items:
+            type: object
+            required:
+              - id
+              - type
+              - serviceEndpoint
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              serviceEndpoint:
+                type: string
+            example:
+              id: "#atproto_pds"
+              type: "AtprotoPersonalDataServer"
+              serviceEndpoint: "https://bsky.social"
