@@ -1,4 +1,3 @@
-import * as uint8arrays from 'uint8arrays'
 import * as crypto from '@atproto/crypto'
 import * as t from './types'
 import { UnsupportedKeyError } from './error'
