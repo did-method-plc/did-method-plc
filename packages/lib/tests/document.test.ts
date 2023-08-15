@@ -38,6 +38,7 @@ describe('document', () => {
     )
     expect(doc['@context']).toEqual([
       'https://www.w3.org/ns/did/v1',
+      'https://w3id.org/security/multikey/v1',
       'https://w3id.org/security/suites/secp256k1-2019/v1',
       'https://w3id.org/security/suites/ecdsa-2019/v1',
     ])
@@ -46,26 +47,24 @@ describe('document', () => {
 
     expect(doc.verificationMethod.length).toBe(2)
 
-    expect(doc.verificationMethod[0].id).toEqual('#atproto')
+    expect(doc.verificationMethod[0].id).toEqual(data.did + '#atproto')
     expect(doc.verificationMethod[0].type).toEqual(
-      'EcdsaSecp256k1VerificationKey2019',
+      'Multikey',
     )
     expect(doc.verificationMethod[0].controller).toEqual(data.did)
     const parsedAtprotoKey = parseDidKey(atprotoKey.did())
-    const atprotoKeyMultibase =
-      'z' + uint8arrays.toString(parsedAtprotoKey.keyBytes, 'base58btc')
+    const atprotoKeyMultibase = atprotoKey.did().replace(/^(did:key:)/, '')
     expect(doc.verificationMethod[0].publicKeyMultibase).toEqual(
       atprotoKeyMultibase,
     )
 
-    expect(doc.verificationMethod[1].id).toEqual('#other')
+    expect(doc.verificationMethod[1].id).toEqual(data.did + '#other')
     expect(doc.verificationMethod[1].type).toEqual(
-      'EcdsaSecp256r1VerificationKey2019',
+      'Multikey',
     )
     expect(doc.verificationMethod[1].controller).toEqual(data.did)
     const parsedOtherKey = parseDidKey(otherKey.did())
-    const otherKeyMultibase =
-      'z' + uint8arrays.toString(parsedOtherKey.keyBytes, 'base58btc')
+    const otherKeyMultibase = otherKey.did().replace(/^(did:key:)/, '')
     expect(doc.verificationMethod[1].publicKeyMultibase).toEqual(
       otherKeyMultibase,
     )

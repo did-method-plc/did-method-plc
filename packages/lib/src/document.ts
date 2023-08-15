@@ -5,7 +5,10 @@ import { UnsupportedKeyError } from './error'
 import { ParsedDidKey } from '@atproto/crypto'
 
 export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
-  const context = ['https://www.w3.org/ns/did/v1']
+  const context = [
+    'https://www.w3.org/ns/did/v1',
+    'https://w3id.org/security/multikey/v1',
+  ]
 
   const verificationMethods: VerificationMethod[] = []
   for (const [keyid, key] of Object.entries(data.verificationMethods)) {
@@ -14,7 +17,7 @@ export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
       context.push(info.context)
     }
     verificationMethods.push({
-      id: `#${keyid}`,
+      id: `${data.did}#${keyid}`,
       type: info.type,
       controller: data.did,
       publicKeyMultibase: info.publicKeyMultibase,
@@ -65,19 +68,19 @@ const formatKeyAndContext = (key: string): KeyAndContext => {
   } catch (err) {
     throw new UnsupportedKeyError(key, err)
   }
-  const { jwtAlg, keyBytes } = keyInfo
+  const { jwtAlg } = keyInfo
 
   if (jwtAlg === crypto.P256_JWT_ALG) {
     return {
       context: 'https://w3id.org/security/suites/ecdsa-2019/v1',
-      type: 'EcdsaSecp256r1VerificationKey2019',
-      publicKeyMultibase: `z${uint8arrays.toString(keyBytes, 'base58btc')}`,
+      type: 'Multikey',
+      publicKeyMultibase: key.replace(/^(did:key:)/, ''),
     }
   } else if (jwtAlg === crypto.SECP256K1_JWT_ALG) {
     return {
       context: 'https://w3id.org/security/suites/secp256k1-2019/v1',
-      type: 'EcdsaSecp256k1VerificationKey2019',
-      publicKeyMultibase: `z${uint8arrays.toString(keyBytes, 'base58btc')}`,
+      type: 'Multikey',
+      publicKeyMultibase: key.replace(/^(did:key:)/, ''),
     }
   }
   throw new UnsupportedKeyError(key, `Unsupported key type: ${jwtAlg}`)
