@@ -115,9 +115,9 @@ export const createRouter = (ctx: AppContext): express.Router => {
   router.post('/:did', async function (req, res) {
     const { did } = req.params
     // TODO: Provide carve-out for big clients like Bluesky
-    await rateLimitPerHour(ctx, res, 'did-post-ip', req.ip, 1000)
-    await rateLimitPerDay(ctx, res, 'did-post-day', did, 30)
-    await rateLimitPerHour(ctx, res, 'did-post-hour', did, 10)
+    await rateLimitPerHour(ctx, req, res, 'did-post-ip', req.ip, 1000)
+    await rateLimitPerDay(ctx, req, res, 'did-post-day', did, 30)
+    await rateLimitPerHour(ctx, req, res, 'did-post-hour', did, 10)
     const op = req.body
     const byteLength = cborEncode(op).byteLength
     if (byteLength > 7500) {

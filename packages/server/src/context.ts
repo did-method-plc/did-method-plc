@@ -9,6 +9,7 @@ export class AppContext {
       port?: number
       redis?: Redis
       debug: boolean
+      rateLimitBypassToken?: string
     },
   ) {}
 
@@ -30,6 +31,10 @@ export class AppContext {
 
   get debug() {
     return this.opts.debug
+  }
+
+  get rateLimitBypassToken() {
+    return this.opts.rateLimitBypassToken
   }
 }
 

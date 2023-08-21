@@ -36,6 +36,7 @@ export class PlcServer {
     port?: number
     version?: string
     debug?: boolean
+    rateLimitBypassToken?: string
   }): PlcServer {
     const app = express()
     app.use(express.json({ limit: '100kb' }))
@@ -49,6 +50,7 @@ export class PlcServer {
       port: opts.port,
       redis: opts.redis,
       debug: !!opts.debug,
+      rateLimitBypassToken: opts.rateLimitBypassToken,
     })
 
     app.use('/', createRouter(ctx))
