@@ -3,6 +3,7 @@ import { cborEncode, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import { AppContext } from './context'
+import { rateLimit, rateLimitPerDay, rateLimitPerHour } from './rate-limit'
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
@@ -111,7 +112,11 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Update or create a DID doc
-  router.post('/:did', async function (req, res) {
+  const postRouter = express.Router()
+  postRouter.use(rateLimitPerDay(ctx, 1000, (req) => req.ip))
+  postRouter.use(rateLimitPerDay(ctx, 30, (req) => req.params.did))
+  postRouter.use(rateLimitPerHour(ctx, 10, (req) => req.params.did))
+  postRouter.post('/', async function (req, res) {
     const { did } = req.params
     const op = req.body
     const byteLength = cborEncode(op).byteLength
@@ -124,6 +129,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
     await ctx.db.validateAndAddOp(did, op)
     res.sendStatus(200)
   })
+  router.use('/:did', postRouter)
 
   return router
 }

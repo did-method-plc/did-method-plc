@@ -23,5 +23,16 @@ services:
       disable: true
     volumes:
       - plc_db:/var/lib/postgresql/data
+  # An ephermerally-stored redis cache for single-use test runs
+  redis_test: &redis_test
+    image: redis:7.0-alpine
+    ports:
+      - '6380:6379'
+    # Healthcheck ensures redis is queryable when `docker-compose up --wait` completes
+    healthcheck:
+      test: ['CMD-SHELL', '[ "$$(redis-cli ping)" = "PONG" ]']
+      interval: 500ms
+      timeout: 10s
+      retries: 20
 volumes:
   plc_db:

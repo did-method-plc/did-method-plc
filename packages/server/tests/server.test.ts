@@ -236,6 +236,30 @@ describe('PLC server', () => {
     await client.sendOperation(did, createV1 as any)
   })
 
+  it('rejects clients over the rate limit', async () => {
+    let signingKey = await EcdsaKeypair.create()
+    const did = await client.createDid({
+      signingKey: signingKey.did(),
+      rotationKeys: [rotationKey1.did(), rotationKey2.did()],
+      handle,
+      pds: atpPds,
+      signer: rotationKey1,
+    })
+    let failed = false
+    try {
+      for (let i = 0; i < 100; i++) {
+        await client.updateAtprotoKey(did, rotationKey1, signingKey.did())
+      }
+    } catch (rawErr) {
+      if (rawErr instanceof PlcClientError) {
+        const err = rawErr as PlcClientError
+        expect(err.status).toBe(429)
+        failed = true
+      }
+    }
+    expect(failed).toBe(true)
+  })
+
   it('healthcheck succeeds when database is available.', async () => {
     const res = await client.health()
     expect(res).toEqual({ version: '0.0.0' })

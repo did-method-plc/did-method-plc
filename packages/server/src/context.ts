@@ -1,4 +1,5 @@
 import { PlcDatabase } from './db'
+import { Redis } from 'ioredis'
 
 export class AppContext {
   constructor(
@@ -6,6 +7,9 @@ export class AppContext {
       db: PlcDatabase
       version: string
       port?: number
+      redis?: Redis
+      debug: boolean
+      rateLimitBypassToken?: string
     },
   ) {}
 
@@ -19,6 +23,18 @@ export class AppContext {
 
   get port() {
     return this.opts.port
+  }
+
+  get redis() {
+    return this.opts.redis
+  }
+
+  get debug() {
+    return this.opts.debug
+  }
+
+  get rateLimitBypassToken() {
+    return this.opts.rateLimitBypassToken
   }
 }
 
