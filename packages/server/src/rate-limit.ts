@@ -1,5 +1,10 @@
 import AppContext from './context'
-import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
+import {
+  RateLimiterAbstract,
+  RateLimiterMemory,
+  RateLimiterRedis,
+  RateLimiterRes,
+} from 'rate-limiter-flexible'
 import { ServerError } from './error'
 
 function setResponseHeaders(
@@ -17,22 +22,26 @@ function setResponseHeaders(
   response.setHeader('RateLimit-Policy', `${limit};w=${windowDurationSec}`)
 }
 
-let rateLimiters: Map<string, RateLimiterRedis> = new Map()
+let rateLimiters: Map<string, RateLimiterAbstract> = new Map()
 export async function rateLimit(
   ctx: AppContext,
   response: any,
   limiterName: string,
   key: string,
-  limit: number,
+  windowLimit: number,
   windowDurationSec: number,
-): Promise<undefined> {
+): Promise<void> {
   if (!ctx.redis) {
     return
+  }
+  if (ctx.debug) {
+    // Tests oftentimes run much faster than normal clients, so increase rate limit
+    windowLimit = windowLimit * 10
   }
   let limiter = rateLimiters.get(limiterName)
   if (!limiter) {
     limiter = new RateLimiterRedis({
-      points: limit,
+      points: windowLimit,
       duration: windowDurationSec,
       storeClient: ctx.redis,
       keyPrefix: 'rate-limit-' + limiterName,
@@ -42,10 +51,10 @@ export async function rateLimit(
   await limiter
     ?.consume(key, 1)
     .then((rateLimitRes) => {
-      setResponseHeaders(response, limit, windowDurationSec, rateLimitRes)
+      setResponseHeaders(response, windowLimit, windowDurationSec, rateLimitRes)
     })
     .catch((rateLimitRes) => {
-      setResponseHeaders(response, limit, windowDurationSec, rateLimitRes)
+      setResponseHeaders(response, windowLimit, windowDurationSec, rateLimitRes)
       throw new ServerError(429, 'Rate limit exceeded')
     })
 }
@@ -56,7 +65,7 @@ export function rateLimitPerDay(
   limiterName: string,
   key: string,
   limit: number,
-): Promise<undefined> {
+): Promise<void> {
   return rateLimit(ctx, response, limiterName, key, limit, 86400)
 }
 
@@ -66,7 +75,7 @@ export function rateLimitPerHour(
   limiterName: string,
   key: string,
   limit: number,
-): Promise<undefined> {
+): Promise<void> {
   return rateLimit(ctx, response, limiterName, key, limit, 3600)
 }
 
@@ -76,7 +85,7 @@ export function rateLimitPerMinute(
   limiterName: string,
   key: string,
   limit: number,
-): Promise<undefined> {
+): Promise<void> {
   return rateLimit(ctx, response, limiterName, key, limit, 60)
 }
 
@@ -86,6 +95,6 @@ export function rateLimitPerSecond(
   limiterName: string,
   key: string,
   limit: number,
-): Promise<undefined> {
+): Promise<void> {
   return rateLimit(ctx, response, limiterName, key, limit, 1)
 }

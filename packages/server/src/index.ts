@@ -14,7 +14,7 @@ import { loggerMiddleware } from './logger'
 import AppContext from './context'
 import { createHttpTerminator, HttpTerminator } from 'http-terminator'
 import { PlcDatabase } from './db/types'
-import { createClient } from 'redis'
+import { Redis } from 'ioredis'
 
 export * from './db'
 export * from './context'
@@ -32,8 +32,10 @@ export class PlcServer {
 
   static create(opts: {
     db: PlcDatabase
+    redis?: Redis
     port?: number
     version?: string
+    debug?: boolean
   }): PlcServer {
     const app = express()
     app.use(express.json({ limit: '100kb' }))
@@ -45,6 +47,8 @@ export class PlcServer {
       db: opts.db,
       version: opts.version || '0.0.0',
       port: opts.port,
+      redis: opts.redis,
+      debug: !!opts.debug,
     })
 
     app.use('/', createRouter(ctx))
@@ -67,6 +71,7 @@ export class PlcServer {
   async destroy() {
     await this.terminator?.terminate()
     await this.ctx.db.close()
+    await this.ctx.redis?.quit()
   }
 }
 

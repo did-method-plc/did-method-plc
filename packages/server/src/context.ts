@@ -1,5 +1,5 @@
 import { PlcDatabase } from './db'
-import { RedisClientType } from 'redis'
+import { Redis } from 'ioredis'
 
 export class AppContext {
   constructor(
@@ -7,7 +7,8 @@ export class AppContext {
       db: PlcDatabase
       version: string
       port?: number
-      redis?: RedisClientType
+      redis?: Redis
+      debug: boolean
     },
   ) {}
 
@@ -25,6 +26,10 @@ export class AppContext {
 
   get redis() {
     return this.opts.redis
+  }
+
+  get debug() {
+    return this.opts.debug
   }
 }
 

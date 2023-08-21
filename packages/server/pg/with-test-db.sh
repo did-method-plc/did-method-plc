@@ -9,6 +9,9 @@ compose_file="$dir/docker-compose.yaml"
 docker compose -f $compose_file up --wait --force-recreate db_test
 echo # newline
 
+docker compose -f $compose_file up --wait --force-recreate redis_test
+echo # newline
+
 trap on_sigint INT
 on_sigint() { 
   echo # newline
@@ -23,10 +26,15 @@ export PGUSER=pg
 export PGPASSWORD=password
 export PGDATABASE=postgres
 export DATABASE_URL="postgresql://pg:password@localhost:5433/postgres"
+export REDIS_HOST="127.0.0.1"
+export REDIS_PORT=6380
 "$@"
 code=$?
 
 echo # newline
 docker compose -f $compose_file rm -f --stop --volumes db_test
+
+echo # newline
+docker compose -f $compose_file rm -f --stop --volumes redis_test
 
 exit $code
