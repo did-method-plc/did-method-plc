@@ -14,6 +14,7 @@ import { loggerMiddleware } from './logger'
 import AppContext from './context'
 import { createHttpTerminator, HttpTerminator } from 'http-terminator'
 import { PlcDatabase } from './db/types'
+import { createClient } from 'redis'
 
 export * from './db'
 export * from './context'
