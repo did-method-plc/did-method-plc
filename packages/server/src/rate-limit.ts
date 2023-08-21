@@ -1,10 +1,5 @@
 import AppContext from './context'
-import {
-  RateLimiterAbstract,
-  RateLimiterMemory,
-  RateLimiterRedis,
-  RateLimiterRes,
-} from 'rate-limiter-flexible'
+import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
 import { ServerError } from './error'
 
 function setResponseHeaders(
@@ -22,93 +17,87 @@ function setResponseHeaders(
   response.setHeader('RateLimit-Policy', `${limit};w=${windowDurationSec}`)
 }
 
-let rateLimiters: Map<string, RateLimiterAbstract> = new Map()
-export async function rateLimit(
+let rateLimiterIDCounter = 0
+export function rateLimit(
   ctx: AppContext,
-  request: any,
-  response: any,
-  limiterName: string,
-  key: string,
-  windowLimit: number,
-  windowDurationSec: number,
-): Promise<void> {
-  // No rate limiting without Redis support
+  limit: number,
+  duration: number,
+  keyFunc: (req: any) => string,
+): (req: any, res: any, next: any) => Promise<void> {
+  // Without Redis support, don't rate limit at all
   if (!ctx.redis) {
-    return
+    return async (req, res, next) => {
+      next()
+    }
   }
-  // If we receive the secret bypass token, don't rate limit
-  const bypassToken = request.get('X-RateLimit-Bypass')
-  if (
-    ctx.rateLimitBypassToken !== undefined &&
-    bypassToken === ctx.rateLimitBypassToken
-  ) {
-    return
-  }
-  // Tests oftentimes run much faster than normal clients, so increase rate limit
+  // Tests have a tendency to spam requests, so we need a higher limit in debug mode
   if (ctx.debug) {
-    windowLimit = windowLimit * 10
+    limit = limit * 10
   }
-  let limiter = rateLimiters.get(limiterName)
-  if (!limiter) {
-    limiter = new RateLimiterRedis({
-      points: windowLimit,
-      duration: windowDurationSec,
-      storeClient: ctx.redis,
-      keyPrefix: 'rate-limit-' + limiterName,
-    })
-    rateLimiters.set(limiterName, limiter)
+  const limiter = new RateLimiterRedis({
+    points: limit,
+    duration: duration,
+    storeClient: ctx.redis,
+    keyPrefix: 'rate-limit-' + rateLimiterIDCounter++,
+  })
+  const middleware = async (req, res, next) => {
+    // Bypass rate limiting completely if the secret bypass token is provided
+    const bypassToken = req.get('X-RateLimit-Bypass')
+    if (
+      ctx.rateLimitBypassToken !== undefined &&
+      bypassToken === ctx.rateLimitBypassToken
+    ) {
+      next()
+      return
+    }
+    console.log(req)
+    const key = keyFunc(req)
+    if (key) {
+      await limiter.get(key).then((rateLimitRes) => {
+        if (!!rateLimitRes) {
+          setResponseHeaders(res, limit, duration, rateLimitRes)
+          if (rateLimitRes.remainingPoints === 0) {
+            throw new ServerError(429, 'Rate limit exceeded')
+          }
+        }
+      })
+    }
+    next()
+    if (key) {
+      await limiter.consume(key).catch(() => {})
+    }
   }
-  await limiter
-    ?.consume(key, 1)
-    .then((rateLimitRes) => {
-      setResponseHeaders(response, windowLimit, windowDurationSec, rateLimitRes)
-    })
-    .catch((rateLimitRes) => {
-      setResponseHeaders(response, windowLimit, windowDurationSec, rateLimitRes)
-      throw new ServerError(429, 'Rate limit exceeded')
-    })
+  return middleware
 }
 
 export function rateLimitPerDay(
   ctx: AppContext,
-  request: any,
-  response: any,
-  limiterName: string,
-  key: string,
   limit: number,
-): Promise<void> {
-  return rateLimit(ctx, request, response, limiterName, key, limit, 86400)
+  keyFunc: (req: any) => string,
+): (req: any, res: any, next: any) => Promise<void> {
+  return rateLimit(ctx, limit, 60 * 60 * 24, keyFunc)
 }
 
 export function rateLimitPerHour(
   ctx: AppContext,
-  request: any,
-  response: any,
-  limiterName: string,
-  key: string,
   limit: number,
-): Promise<void> {
-  return rateLimit(ctx, request, response, limiterName, key, limit, 3600)
+  keyFunc: (req: any) => string,
+): (req: any, res: any, next: any) => Promise<void> {
+  return rateLimit(ctx, limit, 60 * 60, keyFunc)
 }
 
 export function rateLimitPerMinute(
   ctx: AppContext,
-  request: any,
-  response: any,
-  limiterName: string,
-  key: string,
   limit: number,
-): Promise<void> {
-  return rateLimit(ctx, request, response, limiterName, key, limit, 60)
+  keyFunc: (req: any) => string,
+): (req: any, res: any, next: any) => Promise<void> {
+  return rateLimit(ctx, limit, 60, keyFunc)
 }
 
 export function rateLimitPerSecond(
   ctx: AppContext,
-  request: any,
-  response: any,
-  limiterName: string,
-  key: string,
   limit: number,
-): Promise<void> {
-  return rateLimit(ctx, request, response, limiterName, key, limit, 1)
+  keyFunc: (req: any) => string,
+): (req: any, res: any, next: any) => Promise<void> {
+  return rateLimit(ctx, limit, 1, keyFunc)
 }
