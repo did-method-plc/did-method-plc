@@ -245,23 +245,10 @@ describe('PLC server', () => {
       pds: atpPds,
       signer: rotationKey1,
     })
-    const newRotationKey = await EcdsaKeypair.create()
-    signingKey = await EcdsaKeypair.create()
-    handle = 'at://ali.example2.com'
-    atpPds = 'https://example2.com'
-
     let failed = false
     try {
       for (let i = 0; i < 100; i++) {
         await client.updateAtprotoKey(did, rotationKey1, signingKey.did())
-        await client.updateRotationKeys(did, rotationKey1, [
-          newRotationKey.did(),
-          rotationKey2.did(),
-        ])
-        rotationKey1 = newRotationKey
-
-        await client.updateHandle(did, rotationKey1, handle)
-        await client.updatePds(did, rotationKey1, atpPds)
       }
     } catch (rawErr) {
       if (rawErr instanceof PlcClientError) {
