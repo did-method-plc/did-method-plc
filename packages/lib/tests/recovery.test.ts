@@ -1,5 +1,5 @@
 import { cidForCbor, DAY, HOUR } from '@atproto/common'
-import { EcdsaKeypair, Keypair, Secp256k1Keypair } from '@atproto/crypto'
+import { P256Keypair, Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import { CID } from 'multiformats/cid'
 import { InvalidSignatureError, LateRecoveryError } from '../src'
 import * as data from '../src/data'
@@ -9,8 +9,8 @@ import * as t from '../src/types'
 describe('plc recovery', () => {
   let signingKey: Secp256k1Keypair
   let rotationKey1: Secp256k1Keypair
-  let rotationKey2: EcdsaKeypair
-  let rotationKey3: EcdsaKeypair
+  let rotationKey2: P256Keypair
+  let rotationKey3: P256Keypair
   let did: string
   const handle = 'alice.example.com'
   const atpPds = 'https://example.com'
@@ -22,8 +22,8 @@ describe('plc recovery', () => {
   beforeAll(async () => {
     signingKey = await Secp256k1Keypair.create()
     rotationKey1 = await Secp256k1Keypair.create()
-    rotationKey2 = await EcdsaKeypair.create()
-    rotationKey3 = await EcdsaKeypair.create()
+    rotationKey2 = await P256Keypair.create()
+    rotationKey3 = await P256Keypair.create()
   })
 
   const formatIndexed = async (

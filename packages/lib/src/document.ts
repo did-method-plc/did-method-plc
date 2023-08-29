@@ -2,7 +2,7 @@ import * as uint8arrays from 'uint8arrays'
 import * as crypto from '@atproto/crypto'
 import * as t from './types'
 import { UnsupportedKeyError } from './error'
-import { ParsedDidKey } from '@atproto/crypto'
+import { ParsedMultikey } from '@atproto/crypto'
 
 export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
   const context = ['https://www.w3.org/ns/did/v1']
@@ -59,7 +59,7 @@ type KeyAndContext = {
 }
 
 const formatKeyAndContext = (key: string): KeyAndContext => {
-  let keyInfo: ParsedDidKey
+  let keyInfo: ParsedMultikey
   try {
     keyInfo = crypto.parseDidKey(key)
   } catch (err) {
