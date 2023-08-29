@@ -1,5 +1,5 @@
 import { check, cidForCbor } from '@atproto/common'
-import { EcdsaKeypair, Secp256k1Keypair } from '@atproto/crypto'
+import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import {
   GenesisHashError,
   ImproperOperationError,
@@ -15,7 +15,7 @@ describe('plc did data', () => {
 
   let signingKey: Secp256k1Keypair
   let rotationKey1: Secp256k1Keypair
-  let rotationKey2: EcdsaKeypair
+  let rotationKey2: P256Keypair
   let did: string
   let handle = 'at://alice.example.com'
   let atpPds = 'https://example.com'
@@ -25,7 +25,7 @@ describe('plc did data', () => {
   beforeAll(async () => {
     signingKey = await Secp256k1Keypair.create()
     rotationKey1 = await Secp256k1Keypair.create()
-    rotationKey2 = await EcdsaKeypair.create()
+    rotationKey2 = await P256Keypair.create()
   })
 
   const lastOp = () => {

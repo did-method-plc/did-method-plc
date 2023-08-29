@@ -1,4 +1,4 @@
-import { EcdsaKeypair } from '@atproto/crypto'
+import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
 import { check } from '@atproto/common'
@@ -13,9 +13,9 @@ describe('PLC server', () => {
   let db: Database
   let client: plc.Client
 
-  let signingKey: EcdsaKeypair
-  let rotationKey1: EcdsaKeypair
-  let rotationKey2: EcdsaKeypair
+  let signingKey: P256Keypair
+  let rotationKey1: P256Keypair
+  let rotationKey2: P256Keypair
 
   let did: string
 
@@ -27,9 +27,9 @@ describe('PLC server', () => {
     db = server.db
     close = server.close
     client = new plc.Client(server.url)
-    signingKey = await EcdsaKeypair.create()
-    rotationKey1 = await EcdsaKeypair.create()
-    rotationKey2 = await EcdsaKeypair.create()
+    signingKey = await P256Keypair.create()
+    rotationKey1 = await P256Keypair.create()
+    rotationKey2 = await P256Keypair.create()
   })
 
   afterAll(async () => {
@@ -70,8 +70,8 @@ describe('PLC server', () => {
   })
 
   it('can perform some updates', async () => {
-    const newRotationKey = await EcdsaKeypair.create()
-    signingKey = await EcdsaKeypair.create()
+    const newRotationKey = await P256Keypair.create()
+    signingKey = await P256Keypair.create()
     handle = 'at://ali.example2.com'
     atpPds = 'https://example2.com'
 
@@ -111,16 +111,16 @@ describe('PLC server', () => {
   })
 
   it('rejects on bad updates', async () => {
-    const newKey = await EcdsaKeypair.create()
+    const newKey = await P256Keypair.create()
     const operation = client.updateAtprotoKey(did, newKey, newKey.did())
     await expect(operation).rejects.toThrow()
   })
 
   it('allows for recovery through a forked history', async () => {
-    const attackerKey = await EcdsaKeypair.create()
+    const attackerKey = await P256Keypair.create()
     await client.updateRotationKeys(did, rotationKey2, [attackerKey.did()])
 
-    const newKey = await EcdsaKeypair.create()
+    const newKey = await P256Keypair.create()
     const ops = await client.getOperationLog(did)
     const forkPoint = ops.at(-2)
     if (!check.is(forkPoint, plc.def.operation)) {
@@ -158,9 +158,9 @@ describe('PLC server', () => {
 
   it('handles concurrent requests to many docs', async () => {
     const COUNT = 20
-    const keys: EcdsaKeypair[] = []
+    const keys: P256Keypair[] = []
     for (let i = 0; i < COUNT; i++) {
-      keys.push(await EcdsaKeypair.create())
+      keys.push(await P256Keypair.create())
     }
     await Promise.all(
       keys.map(async (key, index) => {
@@ -177,9 +177,9 @@ describe('PLC server', () => {
 
   it('resolves races into a coherent history with no forks', async () => {
     const COUNT = 20
-    const keys: EcdsaKeypair[] = []
+    const keys: P256Keypair[] = []
     for (let i = 0; i < COUNT; i++) {
-      keys.push(await EcdsaKeypair.create())
+      keys.push(await P256Keypair.create())
     }
     // const prev = await client.getPrev(did)
 
