@@ -387,7 +387,7 @@ In the context of atproto, support for multiple "handles" for the same DID is be
 
 We welcome proposals for small additions to make `did:plc` more generic and reusable for applications other than atproto. But no promises: atproto will remain the focus for the near future.
 
-Moving governance of the `did:plc` method, and operation of registry servers, out of the sole control of Bluesky PBLLC is something we are enthusiastic about. Audit log snapshots, mirroring, and automated third-party auditing have all been considered as mechanisms to mitigate the centralized nature of the PLC server.
+Moving governance of the `did:plc` method, and operation of registry servers, out of the sole control of Bluesky PBC is something we are enthusiastic about. Audit log snapshots, mirroring, and automated third-party auditing have all been considered as mechanisms to mitigate the centralized nature of the PLC server.
 
 The size of the `verificationMethods`, `alsoKnownAs`, and `service` mappings/arrays may be specifically constrained. And the maximum DAG-CBOR size may be constrained.
 
