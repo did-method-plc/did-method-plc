@@ -2,7 +2,7 @@
   "name": "did-method-plc",
   "version": "0.0.1",
   "repository": "git@github.com:bluesky-social/did-method-plc.git",
-  "author": "Bluesky PBLLC <hello@blueskyweb.xyz>",
+  "author": "Bluesky PBC <hello@blueskyweb.xyz>",
   "license": "MIT",
   "private": true,
   "engines": {
