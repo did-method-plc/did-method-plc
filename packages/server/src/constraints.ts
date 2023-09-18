@@ -1,4 +1,4 @@
-import { cborEncode, check } from '@atproto/common'
+import { DAY, HOUR, cborEncode, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import { parseDidKey } from '@atproto/crypto'
@@ -67,6 +67,48 @@ export function assertValidIncomingOp(
       parseDidKey(key)
     } catch (err) {
       throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
+    }
+  }
+}
+
+const HOUR_LIMIT = 10
+const DAY_LIMIT = 30
+const WEEK_LIMIT = 100
+
+export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
+  const hourAgo = new Date(Date.now() - HOUR)
+  const dayAgo = new Date(Date.now() - DAY)
+  const weekAgo = new Date(Date.now() - DAY * 7)
+  let withinHour = 0
+  let withinDay = 0
+  let withinWeek = 0
+  for (const op of ops) {
+    if (op.createdAt > weekAgo) {
+      withinWeek++
+      if (withinWeek >= WEEK_LIMIT) {
+        throw new ServerError(
+          400,
+          `To many operations within last week (max ${WEEK_LIMIT})`,
+        )
+      }
+    }
+    if (op.createdAt > dayAgo) {
+      withinDay++
+      if (withinDay >= DAY_LIMIT) {
+        throw new ServerError(
+          400,
+          `To many operations within last day (max ${DAY_LIMIT})`,
+        )
+      }
+    }
+    if (op.createdAt > hourAgo) {
+      withinHour++
+      if (withinHour >= HOUR_LIMIT) {
+        throw new ServerError(
+          400,
+          `To many operations within last hour (max ${HOUR_LIMIT})`,
+        )
+      }
     }
   }
 }
