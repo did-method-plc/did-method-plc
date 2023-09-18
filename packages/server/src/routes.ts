@@ -139,9 +139,15 @@ export function assertValidIncomingOp(
   if (op.alsoKnownAs.length > 10) {
     throw new ServerError(400, 'To many alsoKnownAs items (max 10)')
   }
+  const akaDupe: Record<string, boolean> = {}
   for (const aka of op.alsoKnownAs) {
     if (aka.length > 256) {
       throw new ServerError(400, `alsoKnownAs field too long (max 256): ${aka}`)
+    }
+    if (akaDupe[aka]) {
+      throw new ServerError(400, `duplicate alsoKnownAs field: ${aka}`)
+    } else {
+      akaDupe[aka] = true
     }
   }
   if (op.rotationKeys.length > 5) {
