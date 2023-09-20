@@ -1,8 +1,20 @@
 {
   "name": "@did-plc/server",
   "version": "0.0.1",
-  "main": "dist/index.js",
   "license": "MIT",
+  "description": "DID PLC Directory Service",
+  "keywords": [
+    "did-plc",
+    "did",
+    "atproto"
+  ],
+  "homepage": "https://web.plc.directory",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bluesky-social/did-method-plc",
+    "directory": "packages/server"
+  },
+  "main": "dist/index.js",
   "scripts": {
     "start": "node dist/bin.js",
     "test": "./pg/with-test-db.sh jest",
