@@ -7,6 +7,7 @@ import { ServerError } from '../error'
 import * as migrations from '../migrations'
 import { DatabaseSchema, PlcDatabase } from './types'
 import MockDatabase from './mock'
+import { enforceOpsRateLimit } from '../constraints'
 
 export * from './mock'
 export * from './types'
@@ -99,6 +100,11 @@ export class Database implements PlcDatabase {
     const ops = await this.indexedOpsForDid(did)
     // throws if invalid
     const { nullified, prev } = await plc.assureValidNextOp(did, ops, proposed)
+    // do not enforce rate limits on recovery operations to prevent DDOS by a bad actor
+    if (nullified.length === 0) {
+      enforceOpsRateLimit(ops)
+    }
+
     const cid = await cidForCbor(proposed)
 
     await this.db.transaction().execute(async (tx) => {

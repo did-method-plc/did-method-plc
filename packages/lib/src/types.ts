@@ -34,24 +34,28 @@ export type UnsignedCreateOpV1 = z.infer<typeof unsignedCreateOpV1>
 const createOpV1 = unsignedCreateOpV1.extend({ sig: z.string() })
 export type CreateOpV1 = z.infer<typeof createOpV1>
 
-const unsignedOperation = z.object({
-  type: z.literal('plc_operation'),
-  rotationKeys: z.array(z.string()),
-  verificationMethods: z.record(z.string()),
-  alsoKnownAs: z.array(z.string()),
-  services: z.record(service),
-  prev: z.string().nullable(),
-})
+const unsignedOperation = z
+  .object({
+    type: z.literal('plc_operation'),
+    rotationKeys: z.array(z.string()),
+    verificationMethods: z.record(z.string()),
+    alsoKnownAs: z.array(z.string()),
+    services: z.record(service),
+    prev: z.string().nullable(),
+  })
+  .strict()
 export type UnsignedOperation = z.infer<typeof unsignedOperation>
-const operation = unsignedOperation.extend({ sig: z.string() })
+const operation = unsignedOperation.extend({ sig: z.string() }).strict()
 export type Operation = z.infer<typeof operation>
 
-const unsignedTombstone = z.object({
-  type: z.literal('plc_tombstone'),
-  prev: z.string(),
-})
+const unsignedTombstone = z
+  .object({
+    type: z.literal('plc_tombstone'),
+    prev: z.string(),
+  })
+  .strict()
 export type UnsignedTombstone = z.infer<typeof unsignedTombstone>
-const tombstone = unsignedTombstone.extend({ sig: z.string() })
+const tombstone = unsignedTombstone.extend({ sig: z.string() }).strict()
 export type Tombstone = z.infer<typeof tombstone>
 
 const opOrTombstone = z.union([operation, tombstone])

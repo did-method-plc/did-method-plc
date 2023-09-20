@@ -3,7 +3,6 @@ import { check, cidForCbor, HOUR } from '@atproto/common'
 import * as t from './types'
 import {
   assureValidCreationOp,
-  assureValidOp,
   assureValidSig,
   normalizeOp,
 } from './operations'
@@ -18,13 +17,6 @@ export const assureValidNextOp = async (
   ops: t.IndexedOperation[],
   proposed: t.CompatibleOpOrTombstone,
 ): Promise<{ nullified: CID[]; prev: CID | null }> => {
-  if (check.is(proposed, t.def.createOpV1)) {
-    const normalized = normalizeOp(proposed)
-    await assureValidOp(normalized)
-  } else {
-    await assureValidOp(proposed)
-  }
-
   // special case if account creation
   if (ops.length === 0) {
     await assureValidCreationOp(did, proposed)

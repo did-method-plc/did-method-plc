@@ -220,7 +220,7 @@ describe('PLC server', () => {
     }
   })
 
-  it('still allows create v1s', async () => {
+  it('disallows create v1s', async () => {
     const createV1 = await plc.deprecatedSignCreate(
       {
         type: 'create',
@@ -233,7 +233,8 @@ describe('PLC server', () => {
       signingKey,
     )
     const did = await didForCreateOp(createV1)
-    await client.sendOperation(did, createV1 as any)
+    const attempt = client.sendOperation(did, createV1 as any)
+    await expect(attempt).rejects.toThrow()
   })
 
   it('healthcheck succeeds when database is available.', async () => {
