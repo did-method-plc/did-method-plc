@@ -1,6 +1,6 @@
-# DID Placeholder Method (did:plc)
+# DID PLC Method (did:plc)
 
-DID Placeholder is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
+DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
 An example DID is: `did:plc:yk4dd2qkboz2yv6tpubpc6co`
 
@@ -8,10 +8,10 @@ Control over a `did:plc` identity rests in a set of re-configurable "rotation" k
 
 ## Motivation
 
-[Bluesky](https://blueskyweb.xyz/) developed DID Placeholder when designing the [AT Protocol](https://atproto.com) ("atproto") because we were not satisfied with any of the existing DID methods.
+[Bluesky](https://blueskyweb.xyz/) developed DID PLC when designing the [AT Protocol](https://atproto.com) ("atproto") because we were not satisfied with any of the existing DID methods.
 We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
 
-We titled the method "Placeholder", because we _don't_ want it to stick around forever in its current form. We are actively hoping to replace it with or evolve it into something less centralized - likely a permissioned DID consortium. That being said, we do intend to support `did:plc` in the current form until after any successor is deployed, with a reasonable grace period. We would also provide a migration route to allow continued use of existing `did:plc` identifiers.
+We originally titled the method "Placeholder", because we didn't want it to stick around forever in its current form. We are actively hoping to replace it with or evolve it into something less centralized - likely a permissioned DID consortium. That being said, we do intend to support `did:plc` in the current form until after any successor is deployed, with a reasonable grace period. We would also provide a migration route to allow continued use of existing `did:plc` identifiers.
 
 ## How it works
 
@@ -99,7 +99,7 @@ In pseudo-code:
 
 ### Identifier Syntax
 
-The DID Placeholder method name is `plc`. The identifier part is 24 characters
+The DID PLC method name is `plc`. The identifier part is 24 characters
 long, including only characters from the `base32` encoding set. An example is
 `did:plc:yk4dd2qkboz2yv6tpubpc6co`. This means:
 
@@ -387,7 +387,7 @@ In the context of atproto, support for multiple "handles" for the same DID is be
 
 We welcome proposals for small additions to make `did:plc` more generic and reusable for applications other than atproto. But no promises: atproto will remain the focus for the near future.
 
-Moving governance of the `did:plc` method, and operation of registry servers, out of the sole control of Bluesky PBLLC is something we are enthusiastic about. Audit log snapshots, mirroring, and automated third-party auditing have all been considered as mechanisms to mitigate the centralized nature of the PLC server.
+Moving governance of the `did:plc` method, and operation of registry servers, out of the sole control of Bluesky PBC is something we are enthusiastic about. Audit log snapshots, mirroring, and automated third-party auditing have all been considered as mechanisms to mitigate the centralized nature of the PLC server.
 
 The size of the `verificationMethods`, `alsoKnownAs`, and `service` mappings/arrays may be specifically constrained. And the maximum DAG-CBOR size may be constrained.
 
@@ -396,3 +396,12 @@ As an anti-abuse mechanisms, the PLC server load balancer restricts the number o
 A "DID PLC history explorer" web interface would make the public nature of the DID audit log more publicly understandable.
 
 It is concievable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also concievable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
+
+## License
+
+This project is dual-licensed under MIT and Apache 2.0 terms:
+
+- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/ipfs/kubo/blob/master/LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](https://github.com/ipfs/kubo/blob/master/LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+Downstream projects and users may chose either license, or both, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
