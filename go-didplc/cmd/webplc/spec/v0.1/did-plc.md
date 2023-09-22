@@ -5,9 +5,9 @@
 
 DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
-An example DID is: `did:plc:yk4dd2qkboz2yv6tpubpc6co`
+An example DID is: `did:plc:ewvi7nxzyoun6zhxrhs64oiz`
 
-Control over a `did:plc` identity rests in a set of re-configurable "rotation" keys pairs. These keys can sign update "operations" to mutate the identity (including key rotations), with each operation referencing a prior version of the identity state by hash. Each identity starts from an initial "genesis" operation, and the hash of this initial object is what defines the DID itself (that is, the DID URI "identifier" string). A central "directory" server collects and validates operations, and maintains a transparent log of operations for each DID.
+Control over a `did:plc` identity rests in a set of reconfigurable rotation keys pairs. These keys can sign update operations to mutate the identity (including key rotations), with each operation referencing a prior version of the identity state by hash. Each identity starts from an initial genesis operation, and the hash of this initial object is what defines the DID itself (that is, the DID URI identifier string). A central directory server collects and validates operations, and maintains a transparent log of operations for each DID.
 
 ## How it works
 
@@ -19,27 +19,27 @@ The core data fields associated with an active `did:plc` identifier at any point
 - `alsoKnownAs` (array of strings): priority-ordered list of URIs which indicate other names or aliases associated with the DID identifier
 - `services` (map with string keys; values are maps with `type` and `endpoint` string fields): a set of service / URL mappings. the key strings should not include a `#` prefix; that will be added when rendering the DID document.
 
-Every update "operation" to the DID identifier, including the initial creation operation ("genesis" operation), contains all of the above information, except for the `did` field. The DID itself is generated from a hash of the signed genesis operation (details described below), which makes the DID entirely self-certifying. Updates after initial creation contain a pointer to the most-recent previous operation (by hash).
+Every update operation to the DID identifier, including the initial creation operation (the genesis operation), contains all of the above information, except for the `did` field. The DID itself is generated from a hash of the signed genesis operation (details described below), which makes the DID entirely self-certifying. Updates after initial creation contain a pointer to the most-recent previous operation (by hash).
 
-"Operations" are signed and submitted to the central PLC directory server over an un-authenticated HTTP request. The PLC server validates operations against any and all existing operations on the DID (including signature validation, recovery time windows, etc), and either rejects the operation or accepts and permanently stores the operation, along with a server-generated timestamp.
+Operations are signed and submitted to the central PLC directory server over an un-authenticated HTTP request. The PLC server validates operations against any and all existing operations on the DID (including signature validation, recovery time windows, etc), and either rejects the operation or accepts and permanently stores the operation, along with a server-generated timestamp.
 
-A special operation type is a "tombstone", which clears all of the data fields and permanently "de-activates" the DID. Note that the usual recovery time window applies to "tombstone" operations.
+A special operation type is a "tombstone", which clears all of the data fields and permanently deactivates the DID. Note that the usual recovery time window applies to tombstone operations.
 
-Note that `rotationKeys` and `verificationMethods` ("signing keys") may have public keys which are re-used across many accounts. There is not necessarily a one-to-one mapping between a DID and either "rotation" keys or "signing" keys.
+Note that `rotationKeys` and `verificationMethods` (signing keys) may have public keys which are re-used across many accounts. There is not necessarily a one-to-one mapping between a DID and either rotation keys or signing keys.
 
-Only `secp256k1` ("k256") and NIST P-256 ("p256") keys are currently supported, for both "rotation" and "signing" keys.
+Only `secp256k1` ("k256") and NIST P-256 ("p256") keys are currently supported, for both rotation and signing keys.
 
 ### Use with AT Protocol
 
 The following information should be included for use with atproto:
 
-- `verificationMethods`: an `atproto` entry with a "blessed" public key type, to be used as a "signing key" for authenticating updates to the account's repository. the signing key does not have any control over the DID identity unless also included in the `rotationKeys` list. best practice is to maintain separation between rotation keys and atproto signing keys
-- `alsoKnownAs`: should include an `at://` URI indicating a "handle" (hostname) for the account. note that the handle/DID mapping needs to be validated bi-directionally (via handle resolution), and needs to be re-verified periodically
+- `verificationMethods`: an `atproto` entry with a "blessed" public key type, to be used as a signing key for authenticating updates to the account's repository. The signing key does not have any control over the DID identity unless also included in the `rotationKeys` list. Best practice is to maintain separation between rotation keys and atproto signing keys.
+- `alsoKnownAs`: should include an `at://` URI indicating a handle (hostname) for the account. Note that the handle/DID mapping needs to be validated bi-directionally (via handle resolution), and needs to be re-verified periodically
 - `services`: an `atproto_pds` entry with an `AtprotoPersonalDataServer` type and http/https URL `endpoint` indicating the account's current PDS hostname. for example, `https://pds.example.com` (no `/xrpc/` suffix needed).
 
 ### Operation Serialization, Signing, and Validation
 
-There are a couple variations on the "operation" data object schema. The operations are also serialized both as simple JSON objects, or binary DAG-CBOR encoding for the purpose of hashing or signing.
+There are a couple variations on the operation data object schema. The operations are also serialized both as simple JSON objects, or binary DAG-CBOR encoding for the purpose of hashing or signing.
 
 A regular creation or update operation contains the following fields:
 
@@ -48,7 +48,7 @@ A regular creation or update operation contains the following fields:
 - `verificationMethods` (mapping of string keys and values): as described above
 - `alsoKnownAs` (array of strings): as described above
 - `services` (mapping of string keys and object values): as described above
-- `prev` (string, nullable): a "CID" hash pointer to a previous operation if an update, or `null` for a creation. if `null`, the key should actually be part of the object, with value `null`, not simply omitted. in DAG-CBOR encoding, the CID is string-encoded, not a binary IPLD "Link"
+- `prev` (string, nullable): a CID hash pointer to a previous operation if an update, or `null` for a creation. If `null`, the key should actually be part of the object, with value `null`, not simply omitted. In DAG-CBOR encoding, the CID is string-encoded, not a binary IPLD "Link"
 - `sig` (string): signature of the operation in `base64url` encoding
 
 A tombstone operation contains:
@@ -371,17 +371,17 @@ Will be presented as the following DID document:
 
 ## Possible Future Changes
 
-The set of allowed ("blessed") public key cryptographic algorithms (aka, curves) may expanded over time, slowly. Likewise, support for additional "blessed" CID types and parameters may be expanded over time, slowly.
+The set of allowed ("blessed") public key cryptographic algorithms (aka, curves) may expanded over time, slowly. Likewise, support for additional blessed CID types and parameters may be expanded over time, slowly.
 
 The recovery time window may become configurable, within constraints, as part of the DID metadata itself.
 
 Support for "DID Controller Delegation" could be useful (eg, in the context of atproto PDS hosts), and may be incorporated.
 
-In the context of atproto, support for multiple "handles" for the same DID is being considered, with a single "primary" handle. But no final decision has been made yet.
+In the context of atproto, support for multiple handles for the same DID is being considered, with a single primary handle. But no final decision has been made yet.
 
 We welcome proposals for small additions to make `did:plc` more generic and reusable for applications other than atproto. But no promises: atproto will remain the focus for the near future.
 
-Moving governance of the `did:plc` method, and operation of registry servers, out of the sole control of Bluesky PBLLC is something we are enthusiastic about. Audit log snapshots, mirroring, and automated third-party auditing have all been considered as mechanisms to mitigate the centralized nature of the PLC server.
+We are enthusiastic about the prospect of moving governance of the `did:plc` method, and operation of registry servers, out of the sole control of Bluesky PBC. Audit log snapshots, mirroring, and automated third-party auditing have all been considered as mechanisms to mitigate the centralized nature of the PLC server.
 
 The size of the `verificationMethods`, `alsoKnownAs`, and `service` mappings/arrays may be specifically constrained. And the maximum DAG-CBOR size may be constrained.
 
