@@ -196,7 +196,7 @@ components:
                 type: string
             example:
               message: "DID not registered: did:plc:ewvi7nxzyoun6zhxrhs64oiz"
-    404DidNotAvailable:
+    410DidNotAvailable:
       description: "DID Not Available (Tombstone)"
       content:
         application/json:
