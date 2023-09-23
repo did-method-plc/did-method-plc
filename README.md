@@ -6,6 +6,8 @@ An example DID is: `did:plc:ewvi7nxzyoun6zhxrhs64oiz`
 
 Control over a `did:plc` identity rests in a set of reconfigurable rotation keys pairs. These keys can sign update operations to mutate the identity (including key rotations), with each operation referencing a prior version of the identity state by hash. Each identity starts from an initial genesis operation, and the hash of this initial object is what defines the DID itself (that is, the DID URI identifier string). A central directory server collects and validates operations, and maintains a transparent log of operations for each DID.
 
+This git repository contains a TypeScript reference implementation of the method (`@did-plc/lib`) and a directory server `@did-plc/server`, both in the `package/` directory. The `go-didplc/`directory is intended to hold a golang implementation.
+
 ## Motivation
 
 [Bluesky PBC](https://blueskyweb.xyz/) developed DID PLC when designing the [AT Protocol](https://atproto.com) (atproto) because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
