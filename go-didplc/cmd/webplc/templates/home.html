@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block main -%}
+  <hgroup>
+    <h1>DID PLC Directory</h1>
+    <h3>A self-authenticating Decentralized Identifier (DID) system which is strongly-consistent, recoverable, and allows for key rotation</h3>
+  </hgroup>
+
+  <p>PLC is a persistent global identifier system, which allows accounts to retain relationships while changing names or migrating between service providers. It makes use of cryptography and gives individuals (or organizations) direct control and ownership over their identitifier, but does not make use of any blockchain or cryptocurrency technology, and is inexpensive enough to provide as a no-cost service.</p>
+
+  <p>PLC is a method which implements the W3C Decentralized Identifier (DID) standard. This means it is interoperable and resuable by other applications and organization.</p>
+
+  <p>Bluesky PBC developed DID Placeholder when designing the AT Protocol (atproto) because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.</p>
+
+  <p>While PLC originally stood for "placeholder", the system has been in production use for several months, with over half a million registered accounts in the atproto network as of August 2023. While it is conceivable that the method will evolve or be replaced over time by a successor method, we feel that the current system provides value and is worth consideration as a persistent identifier for other applications.</p>
+
+  <article>
+    <h3>For Developers</h3>
+    <p>DID resolution can be as simple as:
+    <pre><code>curl -s "https://plc.directory/did:plc:ewvi7nxzyoun6zhxrhs64oiz" | jq .</pre></code>
+    <p>Jump in to the <a href="/spec/v0.1/did-plc">specification</a> to understand how to verify self-certifying operation logs.
+    </p>
+    <p>Check out the <a href="/api/redoc">HTTP API documentation</a> (generated from an OpenAPI schema) for details on how to submit operations, fetch the current DID document, or get a paginated export of all operations for all accounts.</p>
+  </article>
+
+{%- endblock %}

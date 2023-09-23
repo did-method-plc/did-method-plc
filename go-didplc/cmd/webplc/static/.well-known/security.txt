@@ -1,0 +1,3 @@
+Contact: mailto:security@bsky.app
+Preferred-Languages: en
+Canonical: https://web.plc.directory/.well-known/security.txt

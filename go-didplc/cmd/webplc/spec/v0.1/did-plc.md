@@ -1,18 +1,13 @@
-# DID PLC Method (did:plc)
+
+# `did:plc` Method Specification
+
+**Version:** v0.1 (May 2023)
 
 DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
 An example DID is: `did:plc:ewvi7nxzyoun6zhxrhs64oiz`
 
 Control over a `did:plc` identity rests in a set of reconfigurable rotation keys pairs. These keys can sign update operations to mutate the identity (including key rotations), with each operation referencing a prior version of the identity state by hash. Each identity starts from an initial genesis operation, and the hash of this initial object is what defines the DID itself (that is, the DID URI identifier string). A central directory server collects and validates operations, and maintains a transparent log of operations for each DID.
-
-This git repository contains a TypeScript reference implementation of the method (`@did-plc/lib`) and a directory server `@did-plc/server`, both in the `package/` directory. The `go-didplc/`directory is intended to hold a golang implementation.
-
-## Motivation
-
-[Bluesky PBC](https://blueskyweb.xyz/) developed DID PLC when designing the [AT Protocol](https://atproto.com) (atproto) because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
-
-We originally titled the method "placeholder", because we didn't want it to stick around forever in its current form. We are actively hoping to replace it with or evolve it into something less centralized - likely a permissioned DID consortium. That being said, we do intend to support `did:plc` in the current form until after any successor is deployed, with a reasonable grace period. We would also provide a migration route to allow continued use of existing `did:plc` identifiers.
 
 ## How it works
 
@@ -100,9 +95,7 @@ In pseudo-code:
 
 ### Identifier Syntax
 
-The DID PLC method name is `plc`. The identifier part is 24 characters
-long, including only characters from the `base32` encoding set. An example is
-`did:plc:yk4dd2qkboz2yv6tpubpc6co`. This means:
+The DID PLC method name is `plc`. The identifier part is 24 characters long, including only characters from the `base32` encoding set. An example is `did:plc:yk4dd2qkboz2yv6tpubpc6co`. This means:
 
 - the overall identifier length is 32 characters
 - the entire identifier is lower-case (and should be normalized to lower-case)
@@ -397,12 +390,3 @@ As an anti-abuse mechanisms, the PLC server load balancer restricts the number o
 A "DID PLC history explorer" web interface would make the public nature of the DID audit log more publicly understandable.
 
 It is concievable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also concievable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
-
-## License
-
-This project is dual-licensed under MIT and Apache 2.0 terms:
-
-- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/ipfs/kubo/blob/master/LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](https://github.com/ipfs/kubo/blob/master/LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-Downstream projects and users may chose either license, or both, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
