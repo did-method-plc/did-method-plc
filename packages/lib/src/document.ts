@@ -1,7 +1,7 @@
 import * as crypto from '@atproto/crypto'
 import * as t from './types'
 import { UnsupportedKeyError } from './error'
-import { ParsedDidKey } from '@atproto/crypto'
+import { ParsedMultikey } from '@atproto/crypto'
 
 export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
   const context = [
@@ -61,7 +61,7 @@ type KeyAndContext = {
 }
 
 const formatKeyAndContext = (key: string): KeyAndContext => {
-  let keyInfo: ParsedDidKey
+  let keyInfo: ParsedMultikey
   try {
     keyInfo = crypto.parseDidKey(key)
   } catch (err) {

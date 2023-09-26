@@ -1,15 +1,15 @@
 import express from 'express'
-import { cborEncode, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import { AppContext } from './context'
+import { assertValidIncomingOp } from './constraints'
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
 
   router.get('/', async function (req, res) {
-    // HTTP temporary redirect to project git repo
-    res.redirect(302, 'https://github.com/bluesky-social/did-method-plc')
+    // HTTP temporary redirect to project homepage
+    res.redirect(302, 'https://web.plc.directory')
   })
 
   router.get('/_health', async function (req, res) {
@@ -114,13 +114,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   router.post('/:did', async function (req, res) {
     const { did } = req.params
     const op = req.body
-    const byteLength = cborEncode(op).byteLength
-    if (byteLength > 7500) {
-      throw new ServerError(400, 'Operation too large')
-    }
-    if (!check.is(op, plc.def.compatibleOpOrTombstone)) {
-      throw new ServerError(400, `Not a valid operation: ${JSON.stringify(op)}`)
-    }
+    assertValidIncomingOp(op)
     await ctx.db.validateAndAddOp(did, op)
     res.sendStatus(200)
   })

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/pico.min.css">
+  <title>{%- block head_title -%}did:plc Directory{%- endblock -%}</title>
+  <style>
+html { position: relative; min-height: 100%; height: auto; }
+body { margin-bottom: 3em; }
+body > nav { background-color: var(--muted-border-color); }
+body > footer { position: absolute; bottom: 0px; padding: 2em; background-color: var(--muted-border-color); }
+thead th { font-weight: bold; }
+main article { margin: 2.5rem 0; padding: 2rem; }
+
+/* Green Light scheme (Default) */
+/* Can be forced with data-theme="light" */
+[data-theme="light"],
+:root:not([data-theme="dark"]) {
+  --color: black;
+  --primary: #3949ab;
+  --primary-hover: #3f51b5;
+  --primary-focus: rgba(57, 73, 171, 0.125);
+  --primary-inverse: #FFF;
+  --code-color: var(--color);
+}
+
+/* Green Dark scheme (Auto) */
+/* Automatically enabled if user has Dark mode enabled */
+@media only screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color: white;
+    --primary: #3949ab;
+    --primary-hover: #3f51b5;
+    --primary-focus: rgba(57, 73, 171, 0.25);
+    --primary-inverse: #FFF;
+    --code-color: var(--color);
+  }
+}
+
+/* Green Dark scheme (Forced) */
+/* Enabled if forced with data-theme="dark" */
+[data-theme="dark"] {
+  --color: white;
+  /* --muted-color: white; */
+  --primary: #3949ab;
+  --primary-hover: #3f51b5;
+  --primary-focus: rgba(57, 73, 171, 0.25);
+  --primary-inverse: #FFF;
+  --code-color: var(--color);
+}
+
+/* Green (Common styles) */
+:root {
+  --form-element-active-border-color: var(--primary);
+  --form-element-focus-color: var(--primary-focus);
+  --switch-color: var(--primary-inverse);
+  --switch-checked-background-color: var(--primary);
+}
+  </style>
+  {# <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png"> #}
+  {# <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png"> #}
+  {# <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png"> #}
+  {% block html_head_extra -%}{%- endblock %}
+  <meta name="application-name" name="DID PLC Directory">
+  <meta name="generator" name="webplc">
+</head>
+<body>
+{%- block body_all %}
+<nav class="container-fluid">
+  <ul>
+  	<li><a href="/"><strong>did:plc</strong></a></li>
+  </ul>
+  <ul>
+  	<li><a href="/resolve" >Lookup</a> </li>
+  	<li><a href="/api/redoc" >API</a> </li>
+  	<li><a href="/spec/v0.1/did-plc" >Specification</a> </li>
+    <li><a href="https://github.com/bluesky-social/did-method-plc">Code</a></li>
+  </ul>
+</nav>
+
+<main class="container">
+  {% block main %}{% endblock %}
+</main>
+
+<footer class="container-fluid">
+	<div class="container">
+    <small>Developed by <a href="https://blueskyweb.xyz">Bluesky PBC</a> for <a href="https://atproto.com">atproto</a></small>
+  </div>
+</footer>
+{% endblock -%}
+</body>
+</html>

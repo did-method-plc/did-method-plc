@@ -1,13 +1,13 @@
-import { EcdsaKeypair, parseDidKey, Secp256k1Keypair } from '@atproto/crypto'
+import { P256Keypair, parseDidKey, Secp256k1Keypair } from '@atproto/crypto'
 import * as document from '../src/document'
 import * as t from '../src/types'
 
 describe('document', () => {
   it('formats a valid DID document', async () => {
     const atprotoKey = await Secp256k1Keypair.create()
-    const otherKey = await EcdsaKeypair.create()
+    const otherKey = await P256Keypair.create()
     const rotate1 = await Secp256k1Keypair.create()
-    const rotate2 = await EcdsaKeypair.create()
+    const rotate2 = await P256Keypair.create()
     const alsoKnownAs = ['at://alice.test', 'https://bob.test']
     const atpPds = 'https://example.com'
     const otherService = 'https://other.com'

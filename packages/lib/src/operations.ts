@@ -1,7 +1,7 @@
 import * as cbor from '@ipld/dag-cbor'
 import { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
-import { Keypair, parseDidKey, sha256, verifySignature } from '@atproto/crypto'
+import { Keypair, sha256, verifySignature } from '@atproto/crypto'
 import { check, cidForCbor } from '@atproto/common'
 import * as t from './types'
 import {
@@ -9,7 +9,6 @@ import {
   ImproperOperationError,
   InvalidSignatureError,
   MisorderedOperationError,
-  UnsupportedKeyError,
 } from './error'
 
 export const didForCreateOp = async (op: t.CompatibleOp) => {
@@ -240,28 +239,6 @@ export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
 // Verifying operations/signatures
 // ---------------------------
 
-export const assureValidOp = async (op: t.OpOrTombstone) => {
-  if (check.is(op, t.def.tombstone)) {
-    return true
-  }
-  // ensure we support the op's keys
-  const keys = [...Object.values(op.verificationMethods), ...op.rotationKeys]
-  await Promise.all(
-    keys.map(async (k) => {
-      try {
-        parseDidKey(k)
-      } catch (err) {
-        throw new UnsupportedKeyError(k, err)
-      }
-    }),
-  )
-  if (op.rotationKeys.length > 5) {
-    throw new ImproperOperationError('too many rotation keys', op)
-  } else if (op.rotationKeys.length < 1) {
-    throw new ImproperOperationError('need at least one rotation key', op)
-  }
-}
-
 export const assureValidCreationOp = async (
   did: string,
   op: t.CompatibleOpOrTombstone,
@@ -270,7 +247,6 @@ export const assureValidCreationOp = async (
     throw new MisorderedOperationError()
   }
   const normalized = normalizeOp(op)
-  await assureValidOp(normalized)
   await assureValidSig(normalized.rotationKeys, op)
   const expectedDid = await didForCreateOp(op)
   if (expectedDid !== did) {
