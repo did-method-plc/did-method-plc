@@ -8,8 +8,8 @@ export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
 
   router.get('/', async function (req, res) {
-    // HTTP temporary redirect to project git repo
-    res.redirect(302, 'https://github.com/bluesky-social/did-method-plc')
+    // HTTP temporary redirect to project homepage
+    res.redirect(302, 'https://web.plc.directory')
   })
 
   router.get('/_health', async function (req, res) {
