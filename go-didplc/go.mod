@@ -1,4 +1,4 @@
-module github.com/bluesky-social/did-method-plc/webplc
+module github.com/did-method-plc/did-method-plc/webplc
 
 go 1.20
 
@@ -8,6 +8,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.16.7
 	github.com/labstack/echo/v4 v4.11.1
+	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/urfave/cli/v2 v2.25.7
 )
 
@@ -20,7 +21,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect

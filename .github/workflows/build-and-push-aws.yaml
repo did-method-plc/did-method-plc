@@ -8,7 +8,7 @@ env:
 
 jobs:
   plc-container-aws:
-    if: github.repository == 'bluesky-social/did-method-plc'
+    if: github.repository == 'did-method-plc/did-method-plc'
     runs-on: ubuntu-latest
     permissions:
       contents: read
