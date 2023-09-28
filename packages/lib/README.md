@@ -3,7 +3,7 @@
 ================================================
 
 [![NPM](https://img.shields.io/npm/v/@did-plc/lib)](https://www.npmjs.com/package/@did-plc/lib)
-[![Github CI Status](https://github.com/bluesky-social/did-method-plc/actions/workflows/repo.yaml/badge.svg)](https://github.com/bluesky-social/did-method-plc/actions/workflows/repo.yaml)
+[![Github CI Status](https://github.com/did-method-plc/did-method-plc/actions/workflows/repo.yaml/badge.svg)](https://github.com/did-method-plc/did-method-plc/actions/workflows/repo.yaml)
 
 This library provides both a simple client for the PLC directory, and an implementation of the PLC method itself (using a cryptographically signed operation log).
 
