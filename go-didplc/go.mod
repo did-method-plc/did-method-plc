@@ -1,4 +1,4 @@
-module github.com/bluesky-social/did-method-plc/webplc
+module github.com/did-method-plc/did-method-plc/webplc
 
 go 1.20
 
