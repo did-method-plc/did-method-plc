@@ -1,8 +1,5 @@
 name: build-and-push-ghcr
-on:
-  push:
-    branches:
-      - main
+on: [push]
 env:
   REGISTRY: ghcr.io
   USERNAME: ${{ github.actor }}
