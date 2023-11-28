@@ -8,7 +8,7 @@ const main = async () => {
   const dbCreds = JSON.parse(process.env.DB_CREDS_JSON)
   const dbSchema = process.env.DB_SCHEMA || undefined
   const enableMigrations = process.env.ENABLE_MIGRATIONS === 'true'
-  if(enableMigrations) {
+  if (enableMigrations) {
     const dbMigrateCreds = JSON.parse(process.env.DB_MIGRATE_CREDS_JSON)
     // Migrate using credentialed user
     const migrateDb = Database.postgres({
