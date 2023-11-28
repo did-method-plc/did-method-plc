@@ -26,9 +26,14 @@ export class Database implements PlcDatabase {
     })
   }
 
-  static postgres(opts: { url: string; schema?: string }): Database {
-    const { url, schema } = opts
-    const pool = new PgPool({ connectionString: url })
+  static postgres(opts: PgOptions): Database {
+    const { schema } = opts
+    const pool = new PgPool({
+      connectionString: opts.url,
+      max: opts.poolSize,
+      maxUses: opts.poolMaxUses,
+      idleTimeoutMillis: opts.poolIdleTimeoutMs,
+    })
 
     // Select count(*) and other pg bigints as js integer
     pgTypes.setTypeParser(pgTypes.builtins.INT8, (n) => parseInt(n, 10))
@@ -230,6 +235,14 @@ export class Database implements PlcDatabase {
       createdAt: row.createdAt.toISOString(),
     }))
   }
+}
+
+export type PgOptions = {
+  url: string
+  schema?: string
+  poolSize?: number
+  poolMaxUses?: number
+  poolIdleTimeoutMs?: number
 }
 
 export default Database

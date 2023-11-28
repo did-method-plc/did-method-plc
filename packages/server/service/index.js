@@ -8,6 +8,9 @@ const main = async () => {
   const dbCreds = JSON.parse(process.env.DB_CREDS_JSON)
   const dbMigrateCreds = JSON.parse(process.env.DB_MIGRATE_CREDS_JSON)
   const dbSchema = process.env.DB_SCHEMA || undefined
+  const dbPoolSize = parseMaybeInt(process.env.DB_POOL_SIZE)
+  const dbPoolMaxUses = parseMaybeInt(process.env.DB_POOL_MAX_USES)
+  const dbPoolIdleTimeoutMs = parseMaybeInt(process.env.PDS_DB_POOL_IDLE_TIMEOUT_MS)
   // Migrate using credentialed user
   const migrateDb = Database.postgres({
     url: pgUrl(dbMigrateCreds),
@@ -19,8 +22,11 @@ const main = async () => {
   const db = Database.postgres({
     url: pgUrl(dbCreds),
     schema: dbSchema,
+    poolSize: dbPoolSize,
+    poolMaxUses: dbPoolMaxUses,
+    poolIdleTimeoutMs: dbPoolIdleTimeoutMs,
   })
-  const port = parseInt(process.env.PORT)
+  const port = parseMaybeInt(process.env.PORT)
   const plc = PlcServer.create({ db, port, version })
   const server = await plc.start()
   server.keepAliveTimeout = 90000
@@ -33,6 +39,10 @@ const main = async () => {
 const pgUrl = ({ username = "postgres", password = "postgres", host = "localhost", port = "5432", database = "postgres", sslmode }) => {
   const enc = encodeURIComponent
   return `postgresql://${username}:${enc(password)}@${host}:${port}/${database}${sslmode ? `?sslmode=${enc(sslmode)}` : ''}`
+}
+
+const parseMaybeInt = (str) => {
+  return str === undefined ? undefined : parseInt(str, 10)
 }
 
 main()
