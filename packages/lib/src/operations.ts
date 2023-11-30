@@ -265,6 +265,9 @@ export const assureValidSig = async (
   op: t.CompatibleOpOrTombstone,
 ): Promise<string> => {
   const { sig, ...opData } = op
+  if (sig.endsWith('=')) {
+    throw new InvalidSignatureError(op)
+  }
   const sigBytes = uint8arrays.fromString(sig, 'base64url')
   const dataBytes = new Uint8Array(cbor.encode(opData))
   for (const didKey of allowedDidKeys) {

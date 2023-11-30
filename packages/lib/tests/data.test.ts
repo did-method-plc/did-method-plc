@@ -1,5 +1,6 @@
 import { check, cidForCbor } from '@atproto/common'
 import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
+import * as ui8 from 'uint8arrays'
 import {
   GenesisHashError,
   ImproperOperationError,
@@ -135,6 +136,14 @@ describe('plc did data', () => {
 
   it('does not allow operations from the signingKey', async () => {
     const op = await operations.updateHandleOp(lastOp(), signingKey, 'at://bob')
+    expect(data.validateOperationLog(did, [...ops, op])).rejects.toThrow(
+      InvalidSignatureError,
+    )
+  })
+
+  it('does not allow padded signatures', async () => {
+    const op = await operations.updateHandleOp(lastOp(), signingKey, 'at://bob')
+    op.sig = ui8.toString(ui8.fromString(op.sig, 'base64url'), 'base64urlpad')
     expect(data.validateOperationLog(did, [...ops, op])).rejects.toThrow(
       InvalidSignatureError,
     )
