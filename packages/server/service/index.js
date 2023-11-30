@@ -42,7 +42,7 @@ const pgUrl = ({ username = "postgres", password = "postgres", host = "localhost
 }
 
 const parseMaybeInt = (str) => {
-  return str === undefined ? undefined : parseInt(str, 10)
+  return str ? parseInt(str, 10) : undefined
 }
 
 main()
