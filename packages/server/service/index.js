@@ -20,7 +20,7 @@ const main = async () => {
   }
   const dbPoolSize = parseMaybeInt(process.env.DB_POOL_SIZE)
   const dbPoolMaxUses = parseMaybeInt(process.env.DB_POOL_MAX_USES)
-  const dbPoolIdleTimeoutMs = parseMaybeInt(process.env.PDS_DB_POOL_IDLE_TIMEOUT_MS)
+  const dbPoolIdleTimeoutMs = parseMaybeInt(process.env.DB_POOL_IDLE_TIMEOUT_MS)
   // Use lower-credentialed user to run the app
   const db = Database.postgres({
     url: pgUrl(dbCreds),
