@@ -110,6 +110,7 @@ func (op *RegularOp) UnsignedCBORBytes() []byte {
 		Prev:                op.Prev,
 		Sig:                 nil,
 	}
+
 	out, err := cbor.DumpObject(unsigned)
 	if err != nil {
 		return nil

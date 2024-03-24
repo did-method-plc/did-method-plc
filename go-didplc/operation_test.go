@@ -38,6 +38,7 @@ func TestLogEntryValidate(t *testing.T) {
 	list := []string{
 		"testdata/log_bskyapp.json",
 		"testdata/log_legacy_dholms.json",
+		"testdata/log_bnewbold_robocracy.json",
 	}
 	for _, p := range list {
 		entries := loadTestLogEntries(t, p)
