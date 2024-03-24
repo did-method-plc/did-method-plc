@@ -49,7 +49,8 @@ func (le *LogEntry) Validate() error {
 			if le.DID != did {
 				return fmt.Errorf("log entry DID didn't match computed genesis operation DID")
 			}
-			pub, err := crypto.ParsePublicDIDKey(le.Operation.Legacy.RecoveryKey)
+			// TODO: try both signing and recovery key?
+			pub, err := crypto.ParsePublicDIDKey(le.Operation.Legacy.SigningKey)
 			if err != nil {
 				return fmt.Errorf("could not parse recovery key: %v", err)
 			}
