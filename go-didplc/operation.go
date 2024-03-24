@@ -48,13 +48,13 @@ type RegularOp struct {
 	AlsoKnownAs         []string             `json:"alsoKnownAs" cborgen:"alsoKnownAs"`
 	Services            map[string]OpService `json:"services" cborgen:"services"`
 	Prev                *string              `json:"prev" cborgen:"prev"`
-	Sig                 *string              `json:"sig,omitempty" cborgen:"sig,omitempty"`
+	Sig                 *string              `json:"sig,omitempty" cborgen:"sig,omitempty" refmt:"sig,omitempty"`
 }
 
 type TombstoneOp struct {
 	Type string  `json:"type,const=plc_tombstone" cborgen:"type,const=plc_tombstone"`
 	Prev string  `json:"prev" cborgen:"prev"`
-	Sig  *string `json:"sig,omitempty" cborgen:"sig,omitempty"`
+	Sig  *string `json:"sig,omitempty" cborgen:"sig,omitempty" refmt:"sig,omitempty"`
 }
 
 type LegacyOp struct {
@@ -64,7 +64,7 @@ type LegacyOp struct {
 	Handle      string  `json:"handle" cborgen:"handle"`
 	Service     string  `json:"service" cborgen:"service"`
 	Prev        *string `json:"prev" cborgen:"prev"`
-	Sig         *string `json:"sig,omitempty" cborgen:"sig,omitempty"`
+	Sig         *string `json:"sig,omitempty" cborgen:"sig,omitempty" refmt:"sig,omitempty"`
 }
 
 var _ Operation = (*RegularOp)(nil)
