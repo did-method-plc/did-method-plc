@@ -23,6 +23,7 @@ func (le *LogEntry) Validate() error {
 		if le.CID != le.Operation.Regular.CID().String() {
 			return fmt.Errorf("log entry CID didn't match computed operation CID")
 		}
+		// NOTE: for non-genesis ops, the rotation key may have bene in a previous op
 		if le.Operation.Regular.IsGenesis() {
 			did, err := le.Operation.Regular.DID()
 			if err != nil {
@@ -39,6 +40,7 @@ func (le *LogEntry) Validate() error {
 		if le.CID != le.Operation.Legacy.CID().String() {
 			return fmt.Errorf("log entry CID didn't match computed operation CID")
 		}
+		// NOTE: for non-genesis ops, the rotation key may have bene in a previous op
 		if le.Operation.Legacy.IsGenesis() {
 			did, err := le.Operation.Legacy.DID()
 			if err != nil {
@@ -52,13 +54,14 @@ func (le *LogEntry) Validate() error {
 				return fmt.Errorf("could not parse recovery key: %v", err)
 			}
 			if err := le.Operation.Legacy.VerifySignature(pub); err != nil {
-				return fmt.Errorf("failed to validate op genesis signature: %v", err)
+				return fmt.Errorf("failed to validate legacy op genesis signature: %v", err)
 			}
 		}
 	} else if le.Operation.Tombstone != nil {
 		if le.CID != le.Operation.Tombstone.CID().String() {
 			return fmt.Errorf("log entry CID didn't match computed operation CID")
 		}
+		// NOTE: for tombstones, the rotation key is always in a previous op
 	} else {
 		return fmt.Errorf("expected tombstone, legacy, or regular PLC operation")
 	}

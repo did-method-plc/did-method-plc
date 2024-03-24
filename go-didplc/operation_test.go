@@ -63,6 +63,7 @@ func TestCreatePLC(t *testing.T) {
 	handleURI := "at://handle.example.com"
 	endpoint := "https://pds.example.com"
 	op := RegularOp{
+		Type:         "plc_operation",
 		RotationKeys: []string{pubDIDKey},
 		VerificationMethods: map[string]string{
 			"atproto": pubDIDKey,
