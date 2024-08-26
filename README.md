@@ -10,7 +10,7 @@ This git repository contains a TypeScript reference implementation of the method
 
 ## Motivation
 
-[Bluesky PBC](https://blueskyweb.xyz/) developed DID PLC when designing the [AT Protocol](https://atproto.com) (atproto) because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
+[Bluesky PBC](https://bsky.social/) developed DID PLC when designing the [AT Protocol](https://atproto.com) (atproto) because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
 
 We originally titled the method "placeholder", because we didn't want it to stick around forever in its current form. We are actively hoping to replace it with or evolve it into something less centralized - likely a permissioned DID consortium. That being said, we do intend to support `did:plc` in the current form until after any successor is deployed, with a reasonable grace period. We would also provide a migration route to allow continued use of existing `did:plc` identifiers.
 
