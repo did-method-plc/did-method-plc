@@ -2,7 +2,7 @@ import express from 'express'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import { AppContext } from './context'
-import { assertValidIncomingOp } from './constraints'
+import { validateIncomingOp } from './constraints'
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
@@ -113,8 +113,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Update or create a DID doc
   router.post('/:did', async function (req, res) {
     const { did } = req.params
-    const op = req.body
-    assertValidIncomingOp(op)
+    const op = validateIncomingOp(req.body)
     await ctx.db.validateAndAddOp(did, op)
     res.sendStatus(200)
   })

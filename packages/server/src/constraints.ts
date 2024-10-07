@@ -1,4 +1,4 @@
-import { DAY, HOUR, cborEncode, check } from '@atproto/common'
+import { DAY, HOUR, cborEncode } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import { parseDidKey } from '@atproto/crypto'
@@ -12,21 +12,36 @@ const MAX_SERVICE_TYPE_LENGTH = 256
 const MAX_SERVICE_ENDPOINT_LENGTH = 512
 const MAX_ID_LENGTH = 32
 
-export function assertValidIncomingOp(
-  op: unknown,
-): asserts op is plc.OpOrTombstone {
-  const byteLength = cborEncode(op).byteLength
+export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
+  const byteLength = cborEncode(input).byteLength
   if (byteLength > MAX_OP_BYTES) {
     throw new ServerError(
       400,
       `Operation too large (${MAX_OP_BYTES} bytes maximum in cbor encoding)`,
     )
   }
-  if (!check.is(op, plc.def.opOrTombstone)) {
-    throw new ServerError(400, `Not a valid operation: ${JSON.stringify(op)}`)
+
+  // We *need* to parse, and use the result of the parsing, to ensure that any
+  // unknown fields are removed from the input. "@atproto/common"'s check
+  // function will not remove unknown fields.
+  const result = plc.def.opOrTombstone.safeParse(input)
+
+  if (!result.success) {
+    const errors = result.error.errors.map(
+      (e) => `${e.message} at /${e.path.join('/')}`,
+    )
+    throw new ServerError(
+      400,
+      errors.length
+        ? errors.join('. ') + '.'
+        : `Not a valid operation: ${JSON.stringify(input)}`,
+    )
   }
+
+  const op = result.data
+
   if (op.type === 'plc_tombstone') {
-    return
+    return op
   }
   if (op.alsoKnownAs.length > MAX_AKA_ENTRIES) {
     throw new ServerError(
@@ -34,7 +49,7 @@ export function assertValidIncomingOp(
       `To many alsoKnownAs entries (max ${MAX_AKA_ENTRIES})`,
     )
   }
-  const akaDupe: Record<string, boolean> = {}
+  const akaDupe = new Set<string>()
   for (const aka of op.alsoKnownAs) {
     if (aka.length > MAX_AKA_LENGTH) {
       throw new ServerError(
@@ -42,10 +57,10 @@ export function assertValidIncomingOp(
         `alsoKnownAs entry too long (max ${MAX_AKA_LENGTH}): ${aka}`,
       )
     }
-    if (akaDupe[aka]) {
+    if (akaDupe.has(aka)) {
       throw new ServerError(400, `duplicate alsoKnownAs entry: ${aka}`)
     } else {
-      akaDupe[aka] = true
+      akaDupe.add(aka)
     }
   }
   if (op.rotationKeys.length > MAX_ROTATION_ENTRIES) {
@@ -102,6 +117,8 @@ export function assertValidIncomingOp(
       throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
     }
   }
+
+  return op
 }
 
 const HOUR_LIMIT = 10
