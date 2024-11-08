@@ -397,7 +397,7 @@ As an anti-abuse mechanisms, the PLC server load balancer restricts the number o
 
 A "DID PLC history explorer" web interface would make the public nature of the DID audit log more publicly understandable.
 
-It is concievable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also conceivable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
+It is conceivable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also conceivable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
 
 ## License
 
