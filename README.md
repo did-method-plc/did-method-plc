@@ -44,7 +44,7 @@ The following information should be included for use with atproto:
 
 ### Operation Serialization, Signing, and Validation
 
-There are a couple variations on the operation data object schema. The operations are also serialized both as simple JSON objects, or binary DAG-CBOR encoding for the purpose of hashing or signing.
+There are a couple of variations on the operation data object schema. The operations are also serialized both as simple JSON objects, or binary DAG-CBOR encoding for the purpose of hashing or signing.
 
 A regular creation or update operation contains the following fields:
 
@@ -136,7 +136,7 @@ The PLC server does not cross-validate `alsoKnownAs` or `service` entries in ope
 
 The timestamp metadata encoded in the PLC audit log could be cross-verified against network traffic or other information to de-anonymize account holders. It also makes the "identity creation date" public.
 
-If "rotation" and "signing" keys are re-used across multiple account, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
+If "rotation" and "signing" keys are re-used across multiple accounts, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
 
 
 #### PLC Server Trust Model
