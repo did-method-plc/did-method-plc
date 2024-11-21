@@ -136,7 +136,7 @@ The PLC server does not cross-validate `alsoKnownAs` or `service` entries in ope
 
 The timestamp metadata encoded in the PLC audit log could be cross-verified against network traffic or other information to de-anonymize account holders. It also makes the "identity creation date" public.
 
-If "rotation" and "signing" keys are re-used across multiple account, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
+If "rotation" and "signing" keys are re-used across multiple accounts, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
 
 
 #### PLC Server Trust Model
@@ -393,7 +393,7 @@ We are enthusiastic about the prospect of moving governance of the `did:plc` met
 
 The size of the `verificationMethods`, `alsoKnownAs`, and `service` mappings/arrays may be specifically constrained. And the maximum DAG-CBOR size may be constrained.
 
-As an anti-abuse mechanisms, the PLC server load balancer restricts the number of HTTP requests per time window. The limits are generous, and operating large services or scraping the operation log should not run in to limits. Specific per-DID limits on operation rate may be introduced over time. For example, no more than N operations per DID per rotation key per 24 hour window.
+As an anti-abuse mechanism, the PLC server load balancer restricts the number of HTTP requests per time window. The limits are generous, and operating large services or scraping the operation log should not run in to limits. Specific per-DID limits on operation rate may be introduced over time. For example, no more than N operations per DID per rotation key per 24 hour window.
 
 A "DID PLC history explorer" web interface would make the public nature of the DID audit log more publicly understandable.
 
