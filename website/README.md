@@ -1,23 +1,26 @@
 
-`go-didplc`: did:plc in golang
-==============================
+`web.plc.directory`
+===================
 
-This golang package will eventually be an implementation of the did:plc specification in golang, including at a minimum verification of DID documents from a PLC operation log.
+This is a basic website for the PLC directory, allowing lookup of individual DID documents.
 
-For now it primarily contains a basic website for the PLC directory, allowing lookup of individual DID documents.
+It also hosts a copy of the PLC specs. Due to a quirk of Go static file embedding, the specification files need to be copied from the top-level of this git repostiory every time there are edits:
+
+```shell
+make sync-specs
+```
 
 
 ## Developer Quickstart
 
-Install golang. We are generally using v1.20+.
+Install golang. We are generally using v1.22+.
 
-In this directory (`go-didplc/`):
+In this directory (`website/`):
 
     # re-build and run daemon
-    go run ./cmd/webplc serve
+    go run . serve
 
     # build and output a binary
-    go build -o webplc ./cmd/webplc/
+    go build -o webplc .
 
-The easiest way to configure the daemon is to copy `example.env` to `.env` and
-fill in auth values there.
+The easiest way to configure the daemon is to copy `example.env` to `.env` and fill in auth values there.

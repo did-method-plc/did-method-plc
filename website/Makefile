@@ -10,7 +10,7 @@ help: ## Print info about all commands
 
 .PHONY: build
 build: ## Build all executables
-	go build ./cmd/webplc
+	go build . -o webplc
 
 .PHONY: test
 test: ## Run all tests
@@ -34,9 +34,13 @@ fmt: ## Run syntax re-formatting (modify in place)
 check: ## Compile everything, checking syntax (does not output binaries)
 	go build ./...
 
+.PHONY: sync-spec
+sync-spec: ## Copies specs text from top level of git repo
+	cp -r ../spec/* ./spec/
+
 .env:
 	if [ ! -f ".env" ]; then cp example.dev.env .env; fi
 
 .PHONY: run-dev-webplc
-run-dev-webplc: .env ## Runs 'bskyweb' for local dev
-	GOLOG_LOG_LEVEL=info go run ./cmd/webplc serve --debug
+run-dev-webplc: .env ## Runs 'webplc' for local dev
+	GOLOG_LOG_LEVEL=info go run . serve --debug
