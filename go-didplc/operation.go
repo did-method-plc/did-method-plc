@@ -222,10 +222,10 @@ func (op *RegularOp) Doc(did string) (Doc, error) {
 		})
 	}
 	doc := Doc{
-		ID:                  did,
-		AlsoKnownAs:         op.AlsoKnownAs,
-		VerificationMethods: vm,
-		Service:             svc,
+		ID:                 did,
+		AlsoKnownAs:        op.AlsoKnownAs,
+		VerificationMethod: vm,
+		Service:            svc,
 	}
 	return doc, nil
 }
@@ -307,10 +307,10 @@ func (op *LegacyOp) Doc(did string) (Doc, error) {
 		},
 	}
 	doc := Doc{
-		ID:                  did,
-		AlsoKnownAs:         []string{"at://" + op.Handle},
-		VerificationMethods: vm,
-		Service:             svc,
+		ID:                 did,
+		AlsoKnownAs:        []string{"at://" + op.Handle},
+		VerificationMethod: vm,
+		Service:            svc,
 	}
 	return doc, nil
 }

@@ -16,8 +16,8 @@ type DocService struct {
 }
 
 type Doc struct {
-	ID                  string                  `json:"id"`
-	AlsoKnownAs         []string                `json:"alsoKnownAs,omitempty"`
-	VerificationMethods []DocVerificationMethod `json:"verificationMethods,omitempty"`
-	Service             []DocService            `json:"service,omitempty"`
+	ID                 string                  `json:"id"`
+	AlsoKnownAs        []string                `json:"alsoKnownAs,omitempty"`
+	VerificationMethod []DocVerificationMethod `json:"verificationMethod,omitempty"`
+	Service            []DocService            `json:"service,omitempty"`
 }
