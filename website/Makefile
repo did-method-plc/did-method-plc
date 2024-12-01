@@ -34,10 +34,6 @@ fmt: ## Run syntax re-formatting (modify in place)
 check: ## Compile everything, checking syntax (does not output binaries)
 	go build ./...
 
-.PHONY: sync-spec
-sync-spec: ## Copies specs text from top level of git repo
-	cp -r ../spec/* ./spec/
-
 .env:
 	if [ ! -f ".env" ]; then cp example.dev.env .env; fi
 

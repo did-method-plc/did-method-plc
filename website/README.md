@@ -2,13 +2,7 @@
 `web.plc.directory`
 ===================
 
-This is a basic website for the PLC directory, allowing lookup of individual DID documents.
-
-It also hosts a copy of the PLC specs. Due to a quirk of Go static file embedding, the specification files need to be copied from the top-level of this git repostiory every time there are edits:
-
-```shell
-make sync-specs
-```
+This is a basic website for the PLC directory, allowing lookup of individual DID documents. It also hosts a copy of the PLC specs.
 
 
 ## Developer Quickstart
