@@ -1,6 +1,6 @@
-module github.com/did-method-plc/did-method-plc/webplc
+module github.com/did-method-plc/did-method-plc/website
 
-go 1.20
+go 1.22.0
 
 require (
 	github.com/flosch/pongo2/v6 v6.0.0
@@ -9,7 +9,7 @@ require (
 	github.com/klauspost/compress v1.16.7
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/russross/blackfriday/v2 v2.1.0
-	github.com/urfave/cli/v2 v2.25.7
+	github.com/urfave/cli/v2 v2.27.1
 )
 
 require (
