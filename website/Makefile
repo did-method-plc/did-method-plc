@@ -8,9 +8,9 @@ help: ## Print info about all commands
 	@echo
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[01;32m%-20s\033[0m %s\n", $$1, $$2}'
 
-#.PHONY: build
-#build: ## Build all executables
-#	go build ./...
+.PHONY: build
+build: ## Build all executables
+	go build . -o webplc
 
 .PHONY: test
 test: ## Run all tests
@@ -33,3 +33,10 @@ fmt: ## Run syntax re-formatting (modify in place)
 .PHONY: check
 check: ## Compile everything, checking syntax (does not output binaries)
 	go build ./...
+
+.env:
+	if [ ! -f ".env" ]; then cp example.dev.env .env; fi
+
+.PHONY: run-dev-webplc
+run-dev-webplc: .env ## Runs 'webplc' for local dev
+	GOLOG_LOG_LEVEL=info go run . serve --debug
