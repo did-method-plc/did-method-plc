@@ -11,7 +11,7 @@ info:
 
     The central directory server receives and persists self-signed operation logs for each DID, starting with a "genesis operation" which defined the DID identifier itself. This document describes the HTTP API for interacting with the directory server to resolve DID Document, fetch audit logs, and submit signed operations.
 
-    The HTTP API is permissionless, but only valid (correctly signed) operations are accepted. Reasonable rate-limits are applied, but they should not interfer with account recovery in most situations.
+    The HTTP API is permissionless, but only valid (correctly signed) operations are accepted. Reasonable rate-limits are applied, but they should not interfere with account recovery in most situations.
 servers:
   - url: https://plc.directory
 
