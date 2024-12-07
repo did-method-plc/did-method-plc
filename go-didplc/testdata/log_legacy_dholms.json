@@ -1,0 +1,125 @@
+[
+  {
+    "did": "did:plc:yk4dd2qkboz2yv6tpubpc6co",
+    "operation": {
+      "sig": "7QTzqO1BcL3eDzP4P_YBxMmv5U4brHzAItkM9w5o8gZA7ElZkrVYEwsfQCfk5EoWLk58Z1y6fyNP9x1pthJnlw",
+      "prev": null,
+      "type": "create",
+      "handle": "dan.bsky.social",
+      "service": "https://bsky.social",
+      "signingKey": "did:key:zQ3shP5TBe1sQfSttXty15FAEHV1DZgcxRZNxvEWnPfLFwLxJ",
+      "recoveryKey": "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg"
+    },
+    "cid": "bafyreigcxay6ucqlwowfpu35alyxqtv3c4vsj7gmdtmnidsnqs6nblyarq",
+    "nullified": false,
+    "createdAt": "2022-11-17T01:07:13.996Z"
+  },
+  {
+    "did": "did:plc:yk4dd2qkboz2yv6tpubpc6co",
+    "operation": {
+      "sig": "n-VWsPZY4xkFN8wlg-kJBU_yzWTNd2oBnbjkjxXu3HdjbBLaEB7K39JHIPn_DZVALKRjts6bUicjSEecZy8eIw",
+      "prev": "bafyreigcxay6ucqlwowfpu35alyxqtv3c4vsj7gmdtmnidsnqs6nblyarq",
+      "type": "plc_operation",
+      "services": {
+        "atproto_pds": {
+          "type": "AtprotoPersonalDataServer",
+          "endpoint": "https://bsky.social"
+        }
+      },
+      "alsoKnownAs": [
+        "at://dholms.xyz"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg",
+        "did:key:zQ3shP5TBe1sQfSttXty15FAEHV1DZgcxRZNxvEWnPfLFwLxJ"
+      ],
+      "verificationMethods": {
+        "atproto": "did:key:zQ3shP5TBe1sQfSttXty15FAEHV1DZgcxRZNxvEWnPfLFwLxJ"
+      }
+    },
+    "cid": "bafyreiho5sanautvnw3det66jcwic4vkeabc35y7iou3ygwj2l3xqcxdau",
+    "nullified": false,
+    "createdAt": "2023-03-06T18:47:09.501Z"
+  },
+  {
+    "did": "did:plc:yk4dd2qkboz2yv6tpubpc6co",
+    "operation": {
+      "sig": "HWgrfQXxUN3mhR5TR-nrwGJwVr9RDbyDn6eCmqBg32x2zIjhe98YxOtFOLI9jQkBlTTzqzUOwJh1KZd4O2pDOw",
+      "prev": "bafyreiho5sanautvnw3det66jcwic4vkeabc35y7iou3ygwj2l3xqcxdau",
+      "type": "plc_operation",
+      "services": {
+        "atproto_pds": {
+          "type": "AtprotoPersonalDataServer",
+          "endpoint": "https://bsky.social"
+        }
+      },
+      "alsoKnownAs": [
+        "at://dholms.bsky.social"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg",
+        "did:key:zQ3shP5TBe1sQfSttXty15FAEHV1DZgcxRZNxvEWnPfLFwLxJ"
+      ],
+      "verificationMethods": {
+        "atproto": "did:key:zQ3shP5TBe1sQfSttXty15FAEHV1DZgcxRZNxvEWnPfLFwLxJ"
+      }
+    },
+    "cid": "bafyreic3am2nmgykxtwsxwigzn6faibxv5ef5kalcv7li3eatcqldcqrku",
+    "nullified": false,
+    "createdAt": "2023-03-06T19:50:49.987Z"
+  },
+  {
+    "did": "did:plc:yk4dd2qkboz2yv6tpubpc6co",
+    "operation": {
+      "sig": "9Fy2iHCSK5mtgLNCkS9CyI0r7lu6H1SVgusaD1jQdsMUySUU6apde0z7SobpYZKp4sThk4hxOWtO-bXhu1cNjg",
+      "prev": "bafyreic3am2nmgykxtwsxwigzn6faibxv5ef5kalcv7li3eatcqldcqrku",
+      "type": "plc_operation",
+      "services": {
+        "atproto_pds": {
+          "type": "AtprotoPersonalDataServer",
+          "endpoint": "https://bsky.social"
+        }
+      },
+      "alsoKnownAs": [
+        "at://dholms.xyz"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg",
+        "did:key:zQ3shP5TBe1sQfSttXty15FAEHV1DZgcxRZNxvEWnPfLFwLxJ"
+      ],
+      "verificationMethods": {
+        "atproto": "did:key:zQ3shP5TBe1sQfSttXty15FAEHV1DZgcxRZNxvEWnPfLFwLxJ"
+      }
+    },
+    "cid": "bafyreicwybxr6h6vkxpoarismso3liozdzswshmzcvl4tyckdazn5lxjte",
+    "nullified": false,
+    "createdAt": "2023-03-06T19:51:09.950Z"
+  },
+  {
+    "did": "did:plc:yk4dd2qkboz2yv6tpubpc6co",
+    "operation": {
+      "sig": "lBXd8rHZ84hCuQysGdi_5A9C8yPHTHasPibO4DZiuZVrehs2hiBcjAL0srLSTsF1kvsHTw1ddai-QwH0Wd_drQ",
+      "prev": "bafyreicwybxr6h6vkxpoarismso3liozdzswshmzcvl4tyckdazn5lxjte",
+      "type": "plc_operation",
+      "services": {
+        "atproto_pds": {
+          "type": "AtprotoPersonalDataServer",
+          "endpoint": "https://bsky.social"
+        }
+      },
+      "alsoKnownAs": [
+        "at://dholms.xyz"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg",
+        "did:key:zQ3shpKnbdPx3g3CmPf5cRVTPe1HtSwVn5ish3wSnDPQCbLJK"
+      ],
+      "verificationMethods": {
+        "atproto": "did:key:zQ3shXjHeiBuRCKmM36cuYnm7YEMzhGnCmCyW92sRJ9pribSF"
+      }
+    },
+    "cid": "bafyreidfrpuegbqd5r56shka4duythb7phb6d7i3bck2dkeb5fjppwd7gi",
+    "nullified": false,
+    "createdAt": "2023-03-09T23:18:31.709Z"
+  }
+]
