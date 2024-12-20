@@ -414,7 +414,7 @@ components:
           items:
             type: string
             example: "at://atproto.com"
-        verificationMethods:
+        verificationMethod:
           type: array
           items:
             type: object
