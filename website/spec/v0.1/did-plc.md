@@ -39,7 +39,7 @@ The following information should be included for use with atproto:
 
 ### Operation Serialization, Signing, and Validation
 
-There are a couple variations on the operation data object schema. The operations are also serialized both as simple JSON objects, or binary DAG-CBOR encoding for the purpose of hashing or signing.
+There are a couple of variations on the operation data object schema. The operations are also serialized both as simple JSON objects, or binary DAG-CBOR encoding for the purpose of hashing or signing.
 
 A regular creation or update operation contains the following fields:
 
@@ -75,7 +75,7 @@ As an anti-abuse mechanism, operations have a maximum size when encoded as DAG-C
 
 For signatures, the object is first encoded as DAG-CBOR *without* the `sig` field at all (as opposed to a `null` value in that field). Those bytes are signed, and then the signature bytes are encoded as a string using `base64url` encoding. The `sig` value is then populated with the string. In strongly typed programming languages it is a best practice to have distinct "signed" and "unsigned" types.
 
-When working with signatures, note that ECDSA signatures are not necessarily *deterministic* or *unique*. That is, the same key signing the same bytes *might* generate the same signature every time, or it might generate a *different* signature every time, depending on the cryptographic library and configuration. In some cases it is also easy for a third party to take a valid signature and transform it in to a new, distinct signature, which also validates. Be sure to always use the "validate signature" routine from a cryptographic library, instead of re-signing bytes and directly comparing the signature bytes.
+When working with signatures, note that ECDSA signatures are not necessarily *deterministic* or *unique*. That is, the same key signing the same bytes *might* generate the same signature every time, or it might generate a *different* signature every time, depending on the cryptographic library and configuration. In some cases it is also easy for a third party to take a valid signature and transform it into a new, distinct signature, which also validates. Be sure to always use the "validate signature" routine from a cryptographic library, instead of re-signing bytes and directly comparing the signature bytes.
 
 For `prev` references, the SHA-256 of the previous operation's bytes are encoded as a "[CID](https://github.com/multiformats/cid)", with the following parameters:
 
@@ -129,7 +129,7 @@ The PLC server does not cross-validate `alsoKnownAs` or `service` entries in ope
 
 The timestamp metadata encoded in the PLC audit log could be cross-verified against network traffic or other information to de-anonymize account holders. It also makes the "identity creation date" public.
 
-If "rotation" and "signing" keys are re-used across multiple account, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
+If "rotation" and "signing" keys are re-used across multiple accounts, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
 
 
 #### PLC Server Trust Model
@@ -385,8 +385,8 @@ We are enthusiastic about the prospect of moving governance of the `did:plc` met
 
 The size of the `verificationMethods`, `alsoKnownAs`, and `service` mappings/arrays may be specifically constrained. And the maximum DAG-CBOR size may be constrained.
 
-As an anti-abuse mechanisms, the PLC server load balancer restricts the number of HTTP requests per time window. The limits are generous, and operating large services or scraping the operation log should not run in to limits. Specific per-DID limits on operation rate may be introduced over time. For example, no more than N operations per DID per rotation key per 24 hour window.
+As an anti-abuse mechanisms, the PLC server load balancer restricts the number of HTTP requests per time window. The limits are generous, and operating large services or scraping the operation log should not run into limits. Specific per-DID limits on operation rate may be introduced over time. For example, no more than N operations per DID per rotation key per 24 hour window.
 
 A "DID PLC history explorer" web interface would make the public nature of the DID audit log more publicly understandable.
 
-It is concievable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also concievable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
+It is conceivable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also conceivable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
