@@ -48,7 +48,7 @@ A regular creation or update operation contains the following fields:
 - `verificationMethods` (mapping of string keys and values): as described above
 - `alsoKnownAs` (array of strings): as described above
 - `services` (mapping of string keys and object values): as described above
-- `prev` (string, nullable): a CID hash pointer to a previous operation if an update, or `null` for a creation. If `null`, the key should actually be part of the object, with value `null`, not simply omitted. In DAG-CBOR encoding, the CID is string-encoded, not a binary IPLD "Link"
+- `prev` (string, nullable): a CID hash pointer to a previous operation of an update, or `null` for a creation. If `null`, the key should actually be part of the object, with value `null`, not simply omitted. In DAG-CBOR encoding, the CID is string-encoded, not a binary IPLD "Link"
 - `sig` (string): signature of the operation in `base64url` encoding
 
 A tombstone operation contains:
