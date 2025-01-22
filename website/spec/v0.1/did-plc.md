@@ -11,7 +11,7 @@ Control over a `did:plc` identity rests in a set of reconfigurable rotation keys
 
 ## How it works
 
-The core data fields associated with an active `did:plc` identifier at any point in time are listed below. The encoding and structure differs somewhat from DID document formatting and semantics, but this information is sufficient to render a valid DID document.
+The metadata associated with an active `did:plc` identifier at any point in time is listed below. The encoding and structure differs somewhat from DID document formatting and semantics, but this information is sufficient to render a valid DID document.
 
 - `did` (string): the full DID identifier
 - `rotationKeys` (array of strings): priority-ordered list of public keys in `did:key` encoding. must include least 1 key and at most 5 keys, with no duplication. control of the DID identifier rests in these keys. not included in DID document.
@@ -148,7 +148,7 @@ Some trust is required in the PLC server. Its attacks are limited to:
 
 To summarize the process of creating a new `did:plc` identifier:
 
-- collect values for all of the core data fields, including generating new secure key pairs if necessary
+- collect values for the essential operation data fields, including generating new secure key pairs if necessary
 - construct an "unsigned" regular operation object. include a `prev` field with `null` value. do not use the deprecated/legacy operation format for new DID creations
 - serialize the "unsigned" operation with DAG-CBOR, and sign the resulting bytes with one of the initial `rotationKeys`. encode the signature as `base64url`, and use that to construct a "signed" operation object
 - serialize the "signed" operation with DAG-CBOR, take the SHA-256 hash of those bytes, and encode the hash bytes in `base32`. use the first 24 characters to generate DID value (`did:plc:<hashchars>`)
@@ -163,7 +163,7 @@ To summarize the process of updating a new `did:plc` identifier:
 
 - if the current DID state isn't known, fetch the current state from `https://plc.directory/:did/data`
 - if the most recent valid DID operation CID (hash) isn't known, fetch the audit log from `https://plc.directory/:did/log/audit`, identify the most recent valid operation, and get the `cid` value. if this is a recovery operation, the relevant "valid" operation to fork from may not be the most recent in the audit log
-- collect updated values for all of the core data fields, including generating new secure key pairs if necessary (eg, key rotation)
+- collect updated values for the essential operation data fields, including generating new secure key pairs if necessary (eg, key rotation)
 - construct an "unsigned" regular operation object. include a `prev` field with the CID (hash) of the previous valid operation
 - serialize the "unsigned" operation with DAG-CBOR, and sign the resulting bytes with one of the previously-existing `rotationKeys`. encode the signature as `base64url`, and use that to construct a "signed" operation object
 - serialize the "signed" operation as simple JSON, and submit it via HTTP POST to `https://plc.directory/:did`
