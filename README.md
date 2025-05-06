@@ -10,7 +10,7 @@ This git repository contains a TypeScript reference implementation of the method
 
 ## Motivation
 
-[Bluesky PBC](https://bsky.social/) developed DID PLC when designing the [AT Protocol](https://atproto.com) (atproto) because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
+[Bluesky Social PBC](https://bsky.social/) developed DID PLC when designing the [AT Protocol](https://atproto.com) (atproto) because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
 
 PLC stands for "Public Ledger of Credentials". We expect to evolve the system (in a backwards-compatible manner) into something less centralized - likely a permissioned DID consortium. That being said, we do intend to support `did:plc` in the current form until after any successor is deployed, with a reasonable grace period. We would also provide a migration route to allow continued use of existing `did:plc` identifiers.
 
@@ -389,7 +389,7 @@ In the context of atproto, support for multiple handles for the same DID is bein
 
 We welcome proposals for small additions to make `did:plc` more generic and reusable for applications other than atproto. But no promises: atproto will remain the focus for the near future.
 
-We are enthusiastic about the prospect of moving governance of the `did:plc` method, and operation of registry servers, out of the sole control of Bluesky PBC. Audit log snapshots, mirroring, and automated third-party auditing have all been considered as mechanisms to mitigate the centralized nature of the PLC server.
+We are enthusiastic about the prospect of moving governance of the `did:plc` method, and operation of registry servers, out of the sole control of Bluesky Social PBC. Audit log snapshots, mirroring, and automated third-party auditing have all been considered as mechanisms to mitigate the centralized nature of the PLC server.
 
 The size of the `verificationMethods`, `alsoKnownAs`, and `service` mappings/arrays may be specifically constrained. And the maximum DAG-CBOR size may be constrained.
 
