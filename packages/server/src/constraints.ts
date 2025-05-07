@@ -8,8 +8,8 @@ const MAX_AKA_ENTRIES = 10
 const MAX_AKA_LENGTH = 258 // max handle length (253) plus at:// prefix (5)
 const MAX_ROTATION_ENTRIES = 10
 const MAX_SERVICE_ENTRIES = 10
-const MAX_SERVICE_TYPE_LENGTH = 256
-const MAX_SERVICE_ENDPOINT_LENGTH = 512
+const MAX_SERVICE_TYPE_LENGTH = 96
+const MAX_SERVICE_ENDPOINT_LENGTH = 256
 const MAX_ID_LENGTH = 32
 
 export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
