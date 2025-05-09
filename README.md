@@ -89,7 +89,7 @@ For `prev` references, the SHA-256 of the previous operation's bytes are encoded
 - `dag-cbor` multibase type (code: 0x71)
 - `sha-256` multihash (code: 0x12)
 
-Rotation keys are serialized as strings using [did:key](https://w3c-ccg.github.io/did-method-key/), and only `secp256k1` ("k256") and NIST P-256 ("p256") are currently supported.
+Rotation keys are serialized as strings using [did:key](https://w3c-ccg.github.io/did-key-spec/), and only `secp256k1` ("k256") and NIST P-256 ("p256") are currently supported.
 
 The signing keys (`verificationMethods`) are also serialized using `did:key` in operations. When rendered in a DID document, signing keys are represented as objects, with the actual keys in multibase encoding, as required by the DID Core specification.
 
