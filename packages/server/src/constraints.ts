@@ -1,7 +1,12 @@
 import { DAY, HOUR, cborEncode } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
-import { parseDidKey } from '@atproto/crypto'
+import {
+  ParsedMultikey,
+  P256_JWT_ALG,
+  SECP256K1_JWT_ALG,
+  parseDidKey,
+} from '@atproto/crypto'
 
 const MAX_OP_BYTES = 4000
 const MAX_AKA_ENTRIES = 10
@@ -11,6 +16,21 @@ const MAX_SERVICE_ENTRIES = 10
 const MAX_SERVICE_TYPE_LENGTH = 256
 const MAX_SERVICE_ENDPOINT_LENGTH = 512
 const MAX_ID_LENGTH = 32
+
+/**
+ * Some keys, like rotation keys and atproto verification keys are restricted
+ * to "blessed" algorithms. Use this function to check, which throws for all
+ * other, i.e. not "blessed" algorithms.
+ */
+function checkBlessedAlg(did: string, parsedMultikey: ParsedMultikey): void {
+  const alg = parsedMultikey.jwtAlg
+  if (alg !== P256_JWT_ALG && alg !== SECP256K1_JWT_ALG) {
+    throw new ServerError(
+      400,
+      `'${did}' is not encoding a key for any of the following blessed curves: P-256, secp256k1.`,
+    )
+  }
+}
 
 export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
   const byteLength = cborEncode(input).byteLength
@@ -70,11 +90,16 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
     )
   }
   for (const key of op.rotationKeys) {
+    let parsed
     try {
-      parseDidKey(key)
+      parsed = parseDidKey(key)
     } catch (err) {
-      throw new ServerError(400, `Invalid rotationKey: ${key}`)
+      throw new ServerError(
+        400,
+        `Could not parse DID '${key}' for rotationKeys`,
+      )
     }
+    checkBlessedAlg(key, parsed)
   }
   const serviceEntries = Object.entries(op.services)
   if (serviceEntries.length > MAX_SERVICE_ENTRIES) {
@@ -111,10 +136,17 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
         `Verification Method id too long (max ${MAX_ID_LENGTH}): ${id}`,
       )
     }
+    let parsed
     try {
-      parseDidKey(key)
+      parsed = parseDidKey(key)
     } catch (err) {
-      throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
+      throw new ServerError(
+        400,
+        `Could not parse DID '${key}' for verificationMethod with ID '${id}'`,
+      )
+    }
+    if (id === 'atproto') {
+      checkBlessedAlg(key, parsed)
     }
   }
 
