@@ -134,7 +134,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogEntry'
+                $ref: '#/components/schemas/Operation'
         '404':
           $ref: '#/components/responses/404DidNotFound'
   /{did}/data:
