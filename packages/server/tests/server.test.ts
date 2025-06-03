@@ -89,17 +89,38 @@ describe('PLC server', () => {
     verifyDoc(doc)
   })
 
-  it('does not allow key types that we do not support', async () => {
-    // an ed25519 key which we don't yet support
+  it('does not allow *rotation* key types that we do not yet support', async () => {
+    // an ed25519 key, which we don't yet support
+    const newRotationKey =
+      'did:key:z6MkjwbBXZnFqL8su24wGL2Fdjti6GSLv9SWdYGswfazUPm9'
+
+    const promise = client.updateRotationKeys(did, rotationKey1, [
+      rotationKey1.did(),
+      newRotationKey,
+    ])
+    await expect(promise).rejects.toThrow(PlcClientError)
+  })
+
+  it('allows *service* key types that we do not explicitly support', async () => {
+    // an ed25519 key, which we don't explicitly support
     const newSigningKey =
       'did:key:z6MkjwbBXZnFqL8su24wGL2Fdjti6GSLv9SWdYGswfazUPm9'
 
-    const promise = client.updateAtprotoKey(did, rotationKey1, newSigningKey)
-    await expect(promise).rejects.toThrow(PlcClientError)
+    await client.updateAtprotoKey(did, rotationKey1, newSigningKey)
+  })
 
-    const promise2 = client.updateRotationKeys(did, rotationKey1, [
-      newSigningKey,
-    ])
+  it('does not allow syntactically invalid service keys', async () => {
+    const promise = client.updateAtprotoKey(
+      did,
+      rotationKey1,
+      'did:banana', // a malformed did:key
+    )
+    await expect(promise).rejects.toThrow(PlcClientError)
+    const promise2 = client.updateAtprotoKey(
+      did,
+      rotationKey1,
+      'blah', // an even more malformed did:key
+    )
     await expect(promise2).rejects.toThrow(PlcClientError)
   })
 
