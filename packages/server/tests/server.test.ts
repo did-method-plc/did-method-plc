@@ -107,6 +107,9 @@ describe('PLC server', () => {
       'did:key:z6MkjwbBXZnFqL8su24wGL2Fdjti6GSLv9SWdYGswfazUPm9'
 
     await client.updateAtprotoKey(did, rotationKey1, newSigningKey)
+
+    // put the old key back so as not to disrupt the other tests
+    await client.updateAtprotoKey(did, rotationKey1, signingKey.did())
   })
 
   it('does not allow syntactically invalid service keys', async () => {
@@ -235,7 +238,7 @@ describe('PLC server', () => {
   it('exports the data set', async () => {
     const data = await client.export()
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
-    expect(data.length).toBe(29)
+    expect(data.length).toBe(31)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
     }
