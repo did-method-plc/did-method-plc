@@ -6,7 +6,8 @@ import { Database } from '../src'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
 describe('PLC server', () => {
-  let handle = 'at://alice.example.com'
+  let handle1 = 'at://alice.example.com'
+  let handle2 = 'at://bob.example.com'
   let atpPds = 'https://example.com'
 
   let close: CloseFn
@@ -16,8 +17,10 @@ describe('PLC server', () => {
   let signingKey: P256Keypair
   let rotationKey1: P256Keypair
   let rotationKey2: P256Keypair
+  let rotationKey3: P256Keypair
 
-  let did: string
+  let did1: string
+  let did2: string
 
   beforeAll(async () => {
     const server = await runTestServer({
@@ -30,6 +33,7 @@ describe('PLC server', () => {
     signingKey = await P256Keypair.create()
     rotationKey1 = await P256Keypair.create()
     rotationKey2 = await P256Keypair.create()
+    rotationKey3 = await P256Keypair.create()
   })
 
   afterAll(async () => {
@@ -42,10 +46,10 @@ describe('PLC server', () => {
     if (!doc) {
       throw new Error('expected doc')
     }
-    expect(doc.did).toEqual(did)
+    expect(doc.did).toEqual(did1)
     expect(doc.verificationMethods).toEqual({ atproto: signingKey.did() })
     expect(doc.rotationKeys).toEqual([rotationKey1.did(), rotationKey2.did()])
-    expect(doc.alsoKnownAs).toEqual([handle])
+    expect(doc.alsoKnownAs).toEqual([handle1])
     expect(doc.services).toEqual({
       atproto_pds: {
         type: 'AtprotoPersonalDataServer',
@@ -55,37 +59,45 @@ describe('PLC server', () => {
   }
 
   it('registers a did', async () => {
-    did = await client.createDid({
+    did1 = await client.createDid({
       signingKey: signingKey.did(),
       rotationKeys: [rotationKey1.did(), rotationKey2.did()],
-      handle,
+      handle: handle1,
       pds: atpPds,
       signer: rotationKey1,
+    })
+
+    did2 = await client.createDid({
+      signingKey: signingKey.did(),
+      rotationKeys: [rotationKey3.did()],
+      handle: handle2,
+      pds: atpPds,
+      signer: rotationKey3,
     })
   })
 
   it('retrieves did doc data', async () => {
-    const doc = await client.getDocumentData(did)
+    const doc = await client.getDocumentData(did1)
     verifyDoc(doc)
   })
 
   it('can perform some updates', async () => {
     const newRotationKey = await P256Keypair.create()
     signingKey = await P256Keypair.create()
-    handle = 'at://ali.example2.com'
+    handle1 = 'at://ali.example2.com'
     atpPds = 'https://example2.com'
 
-    await client.updateAtprotoKey(did, rotationKey1, signingKey.did())
-    await client.updateRotationKeys(did, rotationKey1, [
+    await client.updateAtprotoKey(did1, rotationKey1, signingKey.did())
+    await client.updateRotationKeys(did1, rotationKey1, [
       newRotationKey.did(),
       rotationKey2.did(),
     ])
     rotationKey1 = newRotationKey
 
-    await client.updateHandle(did, rotationKey1, handle)
-    await client.updatePds(did, rotationKey1, atpPds)
+    await client.updateHandle(did1, rotationKey1, handle1)
+    await client.updatePds(did1, rotationKey1, atpPds)
 
-    const doc = await client.getDocumentData(did)
+    const doc = await client.getDocumentData(did1)
     verifyDoc(doc)
   })
 
@@ -94,8 +106,8 @@ describe('PLC server', () => {
     const newRotationKey =
       'did:key:z6MkjwbBXZnFqL8su24wGL2Fdjti6GSLv9SWdYGswfazUPm9'
 
-    const promise = client.updateRotationKeys(did, rotationKey1, [
-      rotationKey1.did(),
+    const promise = client.updateRotationKeys(did2, rotationKey3, [
+      rotationKey2.did(),
       newRotationKey,
     ])
     await expect(promise).rejects.toThrow(PlcClientError)
@@ -108,55 +120,52 @@ describe('PLC server', () => {
 
     // Note: atproto itself does not currently support ed25519 keys, but PLC
     // does not have opinions about atproto (or other services!)
-    await client.updateAtprotoKey(did, rotationKey1, newSigningKey)
+    await client.updateAtprotoKey(did2, rotationKey3, newSigningKey)
 
     // a BLS12-381 key
     const exoticSigningKeyFromTheFuture =
       'did:key:zUC7K4ndUaGZgV7Cp2yJy6JtMoUHY6u7tkcSYUvPrEidqBmLCTLmi6d5WvwnUqejscAkERJ3bfjEiSYtdPkRSE8kSa11hFBr4sTgnbZ95SJj19PN2jdvJjyzpSZgxkyyxNnBNnY'
     await client.updateAtprotoKey(
-      did,
-      rotationKey1,
+      did2,
+      rotationKey3,
       exoticSigningKeyFromTheFuture,
     )
-
-    // put the old key back so as not to disrupt the other tests
-    await client.updateAtprotoKey(did, rotationKey1, signingKey.did())
   })
 
   it('does not allow syntactically invalid service keys', async () => {
     const promise = client.updateAtprotoKey(
-      did,
-      rotationKey1,
+      did2,
+      rotationKey3,
       'did:banana', // a malformed did:key
     )
     await expect(promise).rejects.toThrow(PlcClientError)
     const promise2 = client.updateAtprotoKey(
-      did,
-      rotationKey1,
+      did2,
+      rotationKey3,
       'blah', // an even more malformed did:key
     )
     await expect(promise2).rejects.toThrow(PlcClientError)
   })
 
   it('retrieves the operation log', async () => {
-    const doc = await client.getDocumentData(did)
-    const ops = await client.getOperationLog(did)
-    const computedDoc = await plc.validateOperationLog(did, ops)
+    const doc = await client.getDocumentData(did1)
+    const ops = await client.getOperationLog(did1)
+    const computedDoc = await plc.validateOperationLog(did1, ops)
     expect(computedDoc).toEqual(doc)
   })
 
   it('rejects on bad updates', async () => {
     const newKey = await P256Keypair.create()
-    const operation = client.updateAtprotoKey(did, newKey, newKey.did())
+    const operation = client.updateAtprotoKey(did1, newKey, newKey.did())
     await expect(operation).rejects.toThrow()
   })
 
   it('allows for recovery through a forked history', async () => {
     const attackerKey = await P256Keypair.create()
-    await client.updateRotationKeys(did, rotationKey2, [attackerKey.did()])
+    await client.updateRotationKeys(did1, rotationKey2, [attackerKey.did()])
 
     const newKey = await P256Keypair.create()
-    const ops = await client.getOperationLog(did)
+    const ops = await client.getOperationLog(did1)
     const forkPoint = ops.at(-2)
     if (!check.is(forkPoint, plc.def.operation)) {
       throw new Error('Could not find fork point')
@@ -165,17 +174,17 @@ describe('PLC server', () => {
       rotationKey1.did(),
       newKey.did(),
     ])
-    await client.sendOperation(did, op)
+    await client.sendOperation(did1, op)
 
     rotationKey2 = newKey
 
-    const doc = await client.getDocumentData(did)
+    const doc = await client.getDocumentData(did1)
     verifyDoc(doc)
   })
 
   it('retrieves the auditable operation log', async () => {
-    const log = await client.getOperationLog(did)
-    const auditable = await client.getAuditableLog(did)
+    const log = await client.getOperationLog(did1)
+    const auditable = await client.getAuditableLog(did1)
     // has one nullifed op
     expect(auditable.length).toBe(log.length + 1)
     expect(auditable.filter((op) => op.nullified).length).toBe(1)
@@ -186,8 +195,8 @@ describe('PLC server', () => {
   })
 
   it('retrieves the did doc', async () => {
-    const data = await client.getDocumentData(did)
-    const doc = await client.getDocument(did)
+    const data = await client.getDocumentData(did1)
+    const doc = await client.getDocument(did1)
     expect(doc).toEqual(plc.formatDidDoc(data))
   })
 
@@ -223,7 +232,7 @@ describe('PLC server', () => {
     await Promise.all(
       keys.map(async (key) => {
         try {
-          await client.updateAtprotoKey(did, rotationKey1, key.did())
+          await client.updateAtprotoKey(did1, rotationKey1, key.did())
           successes++
         } catch (err) {
           failures++
@@ -233,23 +242,23 @@ describe('PLC server', () => {
     expect(successes).toBe(1)
     expect(failures).toBe(19)
 
-    const ops = await client.getOperationLog(did)
-    await plc.validateOperationLog(did, ops)
+    const ops = await client.getOperationLog(did1)
+    await plc.validateOperationLog(did1, ops)
   })
 
   it('tombstones the did', async () => {
-    await client.tombstone(did, rotationKey1)
+    await client.tombstone(did1, rotationKey1)
 
-    const promise = client.getDocument(did)
+    const promise = client.getDocument(did1)
     await expect(promise).rejects.toThrow(PlcClientError)
-    const promise2 = client.getDocumentData(did)
+    const promise2 = client.getDocumentData(did1)
     await expect(promise2).rejects.toThrow(PlcClientError)
   })
 
   it('exports the data set', async () => {
     const data = await client.export()
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
-    expect(data.length).toBe(31)
+    expect(data.length).toBe(32)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
     }
@@ -261,7 +270,7 @@ describe('PLC server', () => {
         type: 'create',
         signingKey: signingKey.did(),
         recoveryKey: rotationKey1.did(),
-        handle,
+        handle: handle1,
         service: atpPds,
         prev: null,
       },
