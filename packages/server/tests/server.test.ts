@@ -106,7 +106,18 @@ describe('PLC server', () => {
     const newSigningKey =
       'did:key:z6MkjwbBXZnFqL8su24wGL2Fdjti6GSLv9SWdYGswfazUPm9'
 
+    // Note: atproto itself does not currently support ed25519 keys, but PLC
+    // does not have opinions about atproto (or other services!)
     await client.updateAtprotoKey(did, rotationKey1, newSigningKey)
+
+    // a BLS12-381 key
+    const exoticSigningKeyFromTheFuture =
+      'did:key:zUC7K4ndUaGZgV7Cp2yJy6JtMoUHY6u7tkcSYUvPrEidqBmLCTLmi6d5WvwnUqejscAkERJ3bfjEiSYtdPkRSE8kSa11hFBr4sTgnbZ95SJj19PN2jdvJjyzpSZgxkyyxNnBNnY'
+    await client.updateAtprotoKey(
+      did,
+      rotationKey1,
+      exoticSigningKeyFromTheFuture,
+    )
 
     // put the old key back so as not to disrupt the other tests
     await client.updateAtprotoKey(did, rotationKey1, signingKey.did())
