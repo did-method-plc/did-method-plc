@@ -130,6 +130,12 @@ describe('PLC server', () => {
       rotationKey3,
       exoticSigningKeyFromTheFuture,
     )
+
+    // check that we can still read back the did document
+    const doc = await client.getDocumentData(did2)
+    expect(doc.verificationMethods).toEqual({
+      atproto: exoticSigningKeyFromTheFuture,
+    })
   })
 
   it('does not allow syntactically invalid service keys', async () => {
