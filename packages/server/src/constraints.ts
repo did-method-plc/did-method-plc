@@ -1,7 +1,7 @@
 import { DAY, HOUR, cborEncode } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
-import { parseDidKey } from '@atproto/crypto'
+import { extractMultikey, parseDidKey } from '@atproto/crypto'
 
 const MAX_OP_BYTES = 4000
 const MAX_AKA_ENTRIES = 10
@@ -111,8 +111,11 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
         `Verification Method id too long (max ${MAX_ID_LENGTH}): ${id}`,
       )
     }
-    // perform only minimal did:key syntax checking
-    if (!key.startsWith('did:key:')) {
+    try {
+      // perform only minimal did:key syntax checking, with no restrictions on
+      // key types
+      extractMultikey(key)
+    } catch (err) {
       throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
     }
   }
