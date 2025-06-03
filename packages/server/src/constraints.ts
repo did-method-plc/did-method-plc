@@ -111,9 +111,8 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
         `Verification Method id too long (max ${MAX_ID_LENGTH}): ${id}`,
       )
     }
-    try {
-      parseDidKey(key)
-    } catch (err) {
+    // perform only minimal did:key syntax checking
+    if (!key.startsWith('did:key:')) {
       throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
     }
   }
