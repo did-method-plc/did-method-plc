@@ -113,7 +113,7 @@ describe('PLC server', () => {
     await expect(promise).rejects.toThrow(PlcClientError)
   })
 
-  it('allows *service* key types that we do not explicitly support', async () => {
+  it('allows *verificationMethod* key types that we do not explicitly support', async () => {
     // an ed25519 key, which we don't explicitly support
     const newSigningKey =
       'did:key:z6MkjwbBXZnFqL8su24wGL2Fdjti6GSLv9SWdYGswfazUPm9'
@@ -138,19 +138,34 @@ describe('PLC server', () => {
     })
   })
 
-  it('does not allow syntactically invalid service keys', async () => {
-    const promise = client.updateAtprotoKey(
+  it('does not allow syntactically invalid verificationMethod keys', async () => {
+    const promise1 = client.updateAtprotoKey(
+      did2,
+      rotationKey3,
+      'did:key:BJV2WY5DJMJQXGZJANFZSAYLXMVZW63LFEEQFY3ZP', // not b58 (b32!)
+    )
+    await expect(promise1).rejects.toThrow(PlcClientError)
+    const promise2 = client.updateAtprotoKey(
       did2,
       rotationKey3,
       'did:banana', // a malformed did:key
     )
-    await expect(promise).rejects.toThrow(PlcClientError)
-    const promise2 = client.updateAtprotoKey(
+    await expect(promise2).rejects.toThrow(PlcClientError)
+    const promise3 = client.updateAtprotoKey(
       did2,
       rotationKey3,
       'blah', // an even more malformed did:key
     )
-    await expect(promise2).rejects.toThrow(PlcClientError)
+    await expect(promise3).rejects.toThrow(PlcClientError)
+  })
+
+  it('does not allow unreasonably long verificationMethod keys', async () => {
+    const promise = client.updateAtprotoKey(
+      did2,
+      rotationKey3,
+      'did:key:z41vu8qtWtp8XRJ9Te5QhkyzU9ByBbiw7bZHKXDjZ8iYorixqZQmEZpxgVSteYirYWMBjqQuEbMYTDsCzXXCAanCSH2xG2cwpbCWGZ2coY2PnhbrDVo7QghsAHpm2X5zsRRwDLyUcm9MTNQAZuRs2B22ygQw3UwkKLA7PZ9ZQ9wMHppmkoaBapmUGaxRNjp1Mt4zxrm9RbEx8FiK3ANBL1fsjggNqvkKpbj6MjntRScPQnJCes9Vt1cFe3iwNP7Ya9RfbaKsVi1eothvSBcbWoouHActGeakHgqFLj1JpbkP7PL3hGGSWLQbXxzmdrfzBCYAtiUxGRvpf3JiaNA2WYbJTh58bzx',
+    )
+    await expect(promise).rejects.toThrow(PlcClientError)
   })
 
   it('retrieves the operation log', async () => {
