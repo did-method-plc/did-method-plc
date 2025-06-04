@@ -126,7 +126,7 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
     if (key.length > MAX_DID_KEY_LENGTH) {
       throw new ServerError(
         400,
-        `Verification Method key too long (max ${MAX_DID_KEY_LENGTH}): ${id}`,
+        `Verification Method key too long (max ${MAX_DID_KEY_LENGTH}): ${key}`,
       )
     }
     try {
