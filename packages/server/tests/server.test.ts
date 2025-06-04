@@ -131,11 +131,16 @@ describe('PLC server', () => {
       exoticSigningKeyFromTheFuture,
     )
 
-    // check that we can still read back the did document
-    const doc = await client.getDocumentData(did2)
-    expect(doc.verificationMethods).toEqual({
-      atproto: exoticSigningKeyFromTheFuture,
-    })
+    // check that we can still read back the rendered did document
+    const doc = await client.getDocument(did2)
+    expect(doc.verificationMethod).toEqual([
+      {
+        id: did2 + '#atproto',
+        type: 'Multikey',
+        controller: did2,
+        publicKeyMultibase: exoticSigningKeyFromTheFuture.slice(8),
+      },
+    ])
   })
 
   it('does not allow syntactically invalid verificationMethod keys', async () => {
