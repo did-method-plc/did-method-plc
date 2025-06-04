@@ -12,7 +12,7 @@ export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
   const verificationMethods: VerificationMethod[] = []
   for (const [keyid, key] of Object.entries(data.verificationMethods)) {
     const info = formatKeyAndContext(key)
-    if (!context.includes(info.context)) {
+    if (info.context && !context.includes(info.context)) {
       context.push(info.context)
     }
     verificationMethods.push({
@@ -55,9 +55,9 @@ type Service = {
 }
 
 type KeyAndContext = {
-  context: string
+  context?: string
   type: string
-  publicKeyMultibase
+  publicKeyMultibase: string
 }
 
 const formatKeyAndContext = (key: string): KeyAndContext => {
@@ -65,7 +65,11 @@ const formatKeyAndContext = (key: string): KeyAndContext => {
   try {
     keyInfo = crypto.parseDidKey(key)
   } catch (err) {
-    throw new UnsupportedKeyError(key, err)
+    return {
+      // we can't specify a context for a key type we don't recognize
+      type: 'Multikey',
+      publicKeyMultibase: key.replace(/^(did:key:)/, ''),
+    }
   }
   const { jwtAlg } = keyInfo
 
@@ -82,5 +86,13 @@ const formatKeyAndContext = (key: string): KeyAndContext => {
       publicKeyMultibase: key.replace(/^(did:key:)/, ''),
     }
   }
-  throw new UnsupportedKeyError(key, `Unsupported key type: ${jwtAlg}`)
+
+  // this codepath might seem unreachable/redundant, but it's possible
+  // parseDidKey() supports more key formats in future, before this function
+  // can be updated likewise
+  return {
+    // we can't specify a context for a key type we don't recognize
+    type: 'Multikey',
+    publicKeyMultibase: key.replace(/^(did:key:)/, ''),
+  }
 }
