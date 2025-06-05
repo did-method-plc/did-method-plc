@@ -1,7 +1,11 @@
 import { DAY, HOUR, cborEncode } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
-import { parseDidKey } from '@atproto/crypto'
+import {
+  extractPrefixedBytes,
+  extractMultikey,
+  parseDidKey,
+} from '@atproto/crypto'
 
 const MAX_OP_BYTES = 4000
 const MAX_AKA_ENTRIES = 10
@@ -10,7 +14,9 @@ const MAX_ROTATION_ENTRIES = 10
 const MAX_SERVICE_ENTRIES = 10
 const MAX_SERVICE_TYPE_LENGTH = 256
 const MAX_SERVICE_ENDPOINT_LENGTH = 512
+const MAX_VERIFICATION_METHOD_ENTRIES = 10
 const MAX_ID_LENGTH = 32
+const MAX_DID_KEY_LENGTH = 256 // k256 = 57, BLS12-381 = 143
 
 export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
   const byteLength = cborEncode(input).byteLength
@@ -104,6 +110,12 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
     }
   }
   const verifyMethods = Object.entries(op.verificationMethods)
+  if (verifyMethods.length > MAX_VERIFICATION_METHOD_ENTRIES) {
+    throw new ServerError(
+      400,
+      `Too many Verification Method entries (max ${MAX_VERIFICATION_METHOD_ENTRIES})`,
+    )
+  }
   for (const [id, key] of verifyMethods) {
     if (id.length > MAX_ID_LENGTH) {
       throw new ServerError(
@@ -111,8 +123,17 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
         `Verification Method id too long (max ${MAX_ID_LENGTH}): ${id}`,
       )
     }
+    if (key.length > MAX_DID_KEY_LENGTH) {
+      throw new ServerError(
+        400,
+        `Verification Method key too long (max ${MAX_DID_KEY_LENGTH}): ${key}`,
+      )
+    }
     try {
-      parseDidKey(key)
+      // perform only minimal did:key syntax checking, with no restrictions on
+      // key types
+      const multikey = extractMultikey(key) // enforces did:key: prefix
+      extractPrefixedBytes(multikey) // enforces base58-btc encoding
     } catch (err) {
       throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
     }
