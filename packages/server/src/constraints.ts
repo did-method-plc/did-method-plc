@@ -14,7 +14,7 @@ const MAX_ROTATION_ENTRIES = 10
 const MAX_SERVICE_ENTRIES = 10
 const MAX_SERVICE_TYPE_LENGTH = 256
 const MAX_SERVICE_ENDPOINT_LENGTH = 512
-const MAX_VERIF_METHOD_ENTRIES = 10
+const MAX_VERIFICATION_METHOD_ENTRIES = 10
 const MAX_ID_LENGTH = 32
 const MAX_DID_KEY_LENGTH = 256 // k256 = 57, BLS12-381 = 143
 
@@ -110,10 +110,10 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
     }
   }
   const verifyMethods = Object.entries(op.verificationMethods)
-  if (verifyMethods.length > MAX_VERIF_METHOD_ENTRIES) {
+  if (verifyMethods.length > MAX_VERIFICATION_METHOD_ENTRIES) {
     throw new ServerError(
       400,
-      `Too many Verification Method entries (max ${MAX_VERIF_METHOD_ENTRIES})`,
+      `Too many Verification Method entries (max ${MAX_VERIFICATION_METHOD_ENTRIES})`,
     )
   }
   for (const [id, key] of verifyMethods) {
