@@ -93,6 +93,8 @@ Rotation keys are serialized as strings using [did:key](https://w3c-ccg.github.i
 
 The signing keys (`verificationMethods`) are also serialized using `did:key` in operations. When rendered in a DID document, signing keys are represented as objects, with the actual keys in multibase encoding, as required by the DID Core specification.
 
+Although `verificationMethods` signing keys can be of any key type (unlike rotation keys), they must still be syntactically valid. i.e. They must have a `did:key:` prefix, followed by a `base58btc` multibase string.
+
 The DID itself is derived from the hash of the first operation in the log, called the "genesis" operation. The signed operation is encoded in DAG-CBOR; the bytes are hashed with SHA-256; the hash bytes are `base32`-encoded (not hex encoded) as a string; and that string is truncated to 24 chars to yield the "identifier" segment of the DID.
 
 In pseudo-code: 
@@ -407,3 +409,11 @@ This project is dual-licensed under MIT and Apache 2.0 terms:
 - MIT license ([LICENSE-MIT](https://github.com/ipfs/kubo/blob/master/LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 Downstream projects and users may chose either license, or both, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
+
+## Changelog
+
+### 2025-06-05
+
+- `verificationMethods` keys may now use any syntactically-valid `did:key:`, regardless of key format (allowing e.g. `ed25519` keys). Rotation keys are not affected by this change, the original format constraints still apply.
+
+- A total limit of 10 `verificationMethods` (per DID) has been added.

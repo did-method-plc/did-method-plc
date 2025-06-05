@@ -88,6 +88,8 @@ Rotation keys are serialized as strings using [did:key](https://w3c-ccg.github.i
 
 The signing keys (`verificationMethods`) are also serialized using `did:key` in operations. When rendered in a DID document, signing keys are represented as objects, with the actual keys in multibase encoding, as required by the DID Core specification.
 
+Although `verificationMethods` signing keys can be of any key type (unlike rotation keys), they must still be syntactically valid. i.e. They must have a `did:key:` prefix, followed by a `base58btc` multibase string.
+
 The DID itself is derived from the hash of the first operation in the log, called the "genesis" operation. The signed operation is encoded in DAG-CBOR; the bytes are hashed with SHA-256; the hash bytes are `base32`-encoded (not hex encoded) as a string; and that string is truncated to 24 chars to yield the "identifier" segment of the DID.
 
 In pseudo-code: 
@@ -390,3 +392,11 @@ As an anti-abuse mechanisms, the PLC server load balancer restricts the number o
 A "DID PLC history explorer" web interface would make the public nature of the DID audit log more publicly understandable.
 
 It is conceivable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also conceivable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
+
+## Changelog
+
+### 2025-06-05
+
+- `verificationMethods` keys may now use any syntactically-valid `did:key:`, regardless of key format (allowing e.g. `ed25519` keys). Rotation keys are not affected by this change, the original format constraints still apply.
+
+- A total limit of 10 `verificationMethods` (per DID) has been added.
