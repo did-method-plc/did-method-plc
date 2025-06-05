@@ -15,7 +15,7 @@ The metadata associated with an active `did:plc` identifier at any point in time
 
 - `did` (string): the full DID identifier
 - `rotationKeys` (array of strings): priority-ordered list of public keys in `did:key` encoding. must include least 1 key and at most 5 keys, with no duplication. control of the DID identifier rests in these keys. not included in DID document.
-- `verificationMethods` (map with string keys and values): maps services to public keys, stored in `did:key` encoding. The key strings should not include a `#` prefix; that will be added when rendering the DID document. used to generate `verificationMethods` of DID document. these keys do not have control over the DID document.
+- `verificationMethods` (map with string keys and values): maps services to public keys, stored in `did:key` encoding. The service id strings should not include a `#` prefix; that will be added when rendering the DID document. used to generate `verificationMethods` of DID document. these keys do not have control over the DID document.
 - `alsoKnownAs` (array of strings): priority-ordered list of URIs which indicate other names or aliases associated with the DID identifier
 - `services` (map with string keys; values are maps with `type` and `endpoint` string fields): a set of service / URL mappings. the key strings should not include a `#` prefix; that will be added when rendering the DID document.
 
