@@ -15,7 +15,7 @@ The metadata associated with an active `did:plc` identifier at any point in time
 
 - `did` (string): the full DID identifier
 - `rotationKeys` (array of strings): priority-ordered list of public keys in `did:key` encoding. must include least 1 key and at most 5 keys, with no duplication. control of the DID identifier rests in these keys. not included in DID document.
-- `verificationMethods` (map with string keys and values): a set service / public key mappings. the values are public keys `did:key` encoding; they get re-encoded in "multibase" form when rendered in DID document. the key strings should not include a `#` prefix; that will be added when rendering the DID document. used to generate `verificationMethods` of DID document. these keys do not have control over the DID document
+- `verificationMethods` (map with string keys and values): maps services to public keys, stored in `did:key` encoding. The key strings should not include a `#` prefix; that will be added when rendering the DID document. used to generate `verificationMethods` of DID document. these keys do not have control over the DID document.
 - `alsoKnownAs` (array of strings): priority-ordered list of URIs which indicate other names or aliases associated with the DID identifier
 - `services` (map with string keys; values are maps with `type` and `endpoint` string fields): a set of service / URL mappings. the key strings should not include a `#` prefix; that will be added when rendering the DID document.
 
@@ -27,7 +27,7 @@ A special operation type is a "tombstone", which clears all of the data fields a
 
 Note that `rotationKeys` and `verificationMethods` (signing keys) may have public keys which are re-used across many accounts. There is not necessarily a one-to-one mapping between a DID and either rotation keys or signing keys.
 
-Only `secp256k1` ("k256") and NIST P-256 ("p256") keys are currently supported, for both rotation and signing keys.
+Only `secp256k1` ("k256") and NIST P-256 ("p256") keys are currently supported for rotation keys, whereas `verificationMethods` keys can be any syntactically-valid `did:key`.
 
 ### Use with AT Protocol
 
