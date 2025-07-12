@@ -373,7 +373,7 @@ components:
           type: cid
           description: "Hash of the operation, in string CID format"
         nullified:
-          type: bool
+          type: boolean
           description: "Whether this operation is included in the current operation chain, or has been overridden"
         createdAt:
           type: string
