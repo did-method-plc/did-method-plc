@@ -73,9 +73,19 @@ The process for signing and hashing operation objects is to first encode them in
 
 As an anti-abuse mechanism, operations have a maximum size when encoded as DAG-CBOR. The current limit is 7500 bytes.
 
-For signatures, the object is first encoded as DAG-CBOR *without* the `sig` field at all (as opposed to a `null` value in that field). Those bytes are signed, and then the signature bytes are encoded as a string using `base64url` encoding. The `sig` value is then populated with the string. In strongly typed programming languages it is a best practice to have distinct "signed" and "unsigned" types.
+For signatures, the object is first encoded as DAG-CBOR *without* the `sig` field at all (as opposed to a `null` value in that field). Those bytes are signed using ECDSA-SHA256, and the signature value is encoded as follows:
 
-When working with signatures, note that ECDSA signatures are not necessarily *deterministic* or *unique*. That is, the same key signing the same bytes *might* generate the same signature every time, or it might generate a *different* signature every time, depending on the cryptographic library and configuration. In some cases it is also easy for a third party to take a valid signature and transform it into a new, distinct signature, which also validates. Be sure to always use the "validate signature" routine from a cryptographic library, instead of re-signing bytes and directly comparing the signature bytes.
+1. The signature value is represented as a pair of integers `(r, s)`, as described in [RFC 4754](https://datatracker.ietf.org/doc/html/rfc4754#section-3)
+
+2. If `s` is greater than half the EC group order constant, the value of `s` is replaced by `-s` (modulo the EC group order). Signatures that have undergone this transformation are sometimes referred to as "low-S" signatures (because `s` is now guaranteed to be less than half the EC group order). This process is described for the secp256k1 curve as part of [Bitcoin BIP-0062](https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki), but this definition can be generalised to the NIST P-256 curve also.
+
+3. The `(r, s)` tuple is encoded to bytes in the same format as specified in the [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/sign#ecdsa) web API. This format is refered to by a variety of names, including "raw", "compact", "IEEE P1363". For secp256k1 and NIST P-256 curves, it is concretely: 32 big-endian bytes representing integer `r`, followed by 32 big-endian bytes representing integer `s`.
+
+4. Those bytes are encoded as a string using `base64url` encoding, without equals-padding. Trailing padding bits MUST be set to zero, as described in [RFC 4648 section 3.5](https://www.rfc-editor.org/rfc/rfc4648.html#section-3.5)
+
+The `sig` field is then populated with the string. In strongly typed programming languages it is a best practice to have distinct "signed" and "unsigned" types.
+
+When verifying signatures, the above encoding requirements must be enforced strictly, with non-canonical encodings or "High-S" values rejected as invalid. Otherwise, it would be possible for the signature encoding to be modified (thus modifying the operation's CID) without invalidating the signature.
 
 For `prev` references, the SHA-256 of the previous operation's bytes are encoded as a "[CID](https://github.com/multiformats/cid)", with the following parameters:
 
