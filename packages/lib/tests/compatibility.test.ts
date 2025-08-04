@@ -104,7 +104,7 @@ describe('compatibility', () => {
     for (const fileName of await fs.readdir(valid_audit_logs)) {
       if (fileName.includes('nullif')) continue // validateOperationLog does not handle nullifications
       const testPath = path.join(valid_audit_logs, fileName)
-      const testcase: any[] = JSON.parse(await fs.readFile(testPath, 'utf8'))
+      const testcase = JSON.parse(await fs.readFile(testPath, 'utf8'))
       const ops = testcase.map((logItem) => logItem.operation)
       await validateOperationLog(testcase[0].did, ops)
     }
@@ -121,7 +121,7 @@ describe('compatibility', () => {
 
     async function validateLogForPath(fileName: string) {
       const testPath = path.join(invalid_audit_logs, fileName)
-      const testcase: any[] = JSON.parse(await fs.readFile(testPath, 'utf8'))
+      const testcase = JSON.parse(await fs.readFile(testPath, 'utf8'))
       const ops = testcase.map((logItem) => logItem.operation)
       await validateOperationLog(testcase[0].did, ops)
     }
@@ -152,6 +152,6 @@ describe('compatibility', () => {
 
     await expect(
       validateLogForPath('log_invalid_update_tombstoned.json'),
-    ).rejects.toThrowError("Operations not correctly ordered")
+    ).rejects.toThrowError('Operations not correctly ordered')
   })
 })
