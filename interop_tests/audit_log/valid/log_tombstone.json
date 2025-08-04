@@ -1,0 +1,33 @@
+[
+  {
+    "did": "did:plc:6adr3q2labdllanslzhqkqd3",
+    "operation": {
+      "sig": "ZznbxHinpBI3NgEYWzXUXLA65s2U1ezJooreZlscHYQRfd4EMlijqhpikGMabs-81Tsy4Mt9Iscpmk7Uz13aAg",
+      "prev": null,
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [
+        "at://op0"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shmWf4f6ZwzNyjUDYw4oFQjgHWZoYZDjJYtz75YfYYrphB",
+        "did:key:zQ3shr2PwdoF6kbuYYymyZq6YbGWShiTXAkdMioCPdSdPL9NV"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreihqa4o4gsyai22ydms6j4cua6yr6tuc7trq2temvnycadk2daniru",
+    "nullified": false,
+    "createdAt": "2025-07-25T15:50:58.440Z"
+  },
+  {
+    "did": "did:plc:6adr3q2labdllanslzhqkqd3",
+    "operation": {
+      "sig": "iKFOLyEujXdHWujAAnwFhKfb9kkIcpMDGOV15eNWqlxLM2GtdQD3lVWCshTKWi0dF7InXGseVFDexS0kg0KmEQ",
+      "prev": "bafyreihqa4o4gsyai22ydms6j4cua6yr6tuc7trq2temvnycadk2daniru",
+      "type": "plc_tombstone"
+    },
+    "cid": "bafyreifafe44xylxagcom47xb3lrya5pysu3b7zfjmmmitiuimhmgmerze",
+    "nullified": false,
+    "createdAt": "2025-07-25T15:50:58.837Z"
+  }
+]

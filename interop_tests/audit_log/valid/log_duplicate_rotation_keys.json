@@ -1,0 +1,20 @@
+[
+  {
+    "did": "did:plc:fjhag55cvrg4no2optwsld2d",
+    "operation": {
+      "sig": "eYGQcdzFhATHh1wn9eNBjL5TRd7U-K_D3eyY3KPp2BcFrz_CMZ5PPoIN1P_HSO7m_66pmRcDiPPvBclDHQZ6tQ",
+      "prev": null,
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [],
+      "rotationKeys": [
+        "did:key:zDnaet3CLvFwasyRn1qaCJec6XDqh2pXE4fUoJpG19H9xauUf",
+        "did:key:zDnaet3CLvFwasyRn1qaCJec6XDqh2pXE4fUoJpG19H9xauUf"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreibkjybxpivmjxdlwtt45usy6q6nutr3clatlbfejlnusqvmpsxm5y",
+    "nullified": false,
+    "createdAt": "2025-07-23T11:52:57.706Z"
+  }
+]

@@ -1,0 +1,21 @@
+[
+  {
+    "did": "did:plc:3hhmazwcb2hbcjn3thxamwrk",
+    "operation": {
+      "type": "plc_operation",
+      "rotationKeys": [
+        "did:key:zDnaefqvvRQsME5c7LvxdghHeARNWEFbg2PfrAYiHhKVf9rH9"
+      ],
+      "verificationMethods": {},
+      "alsoKnownAs": [
+        "at://weird_sig_padding"
+      ],
+      "services": {},
+      "prev": null,
+      "sig": "yRcZOnrdCdTMIWVbM-HX8ByF0Rk1SOkivl3A3YbmzT4saxyk_nERJSJ-CqKlNP4CmMdVL5Cvc1vSM_Fe5HBbmR"
+    },
+    "cid": "bafyreigzz3agnqqoryislo4z5ydfukwzcax3nslasimanzm7qhomnasrie",
+    "nullified": false,
+    "createdAt": "1970-01-01T00:00:00.000Z"
+  }
+]

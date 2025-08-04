@@ -1,0 +1,73 @@
+[
+  {
+    "did": "did:plc:7iqnimg5hvigsckpbqrqktoh",
+    "operation": {
+      "sig": "GI8N37O5s6xr4QgWJ0zJdBIdS8xZ-G107B8jaaM_efJmkF8MYpIG0v3XJBW8tVzFS3xkvoOj46ufvmn9Z6KKtg",
+      "prev": null,
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [
+        "at://op0"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shYZd89t3Lke7N9NbDs8fcaTyAm7fAux3aVjDELLLSVmVQ",
+        "did:key:zQ3shuK7Yt3GQoh8BoyEzSNZeWdovfAkqjjKJMUKHYC1878vm"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreih2edkdbxj5kbuqstymemcu3r3mxj4gtgxcmuxpmj5mtnpazdocvm",
+    "nullified": false,
+    "createdAt": "2025-07-25T15:47:47.372Z"
+  },
+  {
+    "did": "did:plc:7iqnimg5hvigsckpbqrqktoh",
+    "operation": {
+      "sig": "8kZqyCA19y3ORbAS88hOBzzKqe-QB8c_WtTfJTlrxxcvQRJ9KauzBVa70pIPR62m_aNc7kH50MKXjw9N0MWWmQ",
+      "prev": "bafyreih2edkdbxj5kbuqstymemcu3r3mxj4gtgxcmuxpmj5mtnpazdocvm",
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [
+        "at://op1"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shVec44WTCPYCMZb4Ka5ajjDKKLmfjWUxyRptht4knaMq8",
+        "did:key:zQ3shmXuxJHxmy5SsXSdg3EWLsbrD4gztdU3TDhNq5QM7HyZr"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreidfdc7xu5wvkyq2dwr6fuierhb7ybcdc3dnfmzf5u22hukttm75iq",
+    "nullified": false,
+    "createdAt": "2025-07-25T15:47:47.749Z"
+  },
+  {
+    "did": "did:plc:7iqnimg5hvigsckpbqrqktoh",
+    "operation": {
+      "sig": "0nvoKq0K3s6mcEutE4kZG9VhG7ptabCaxI_Hf9MdbuV0h00TBrYyDwa5VZGR334P_1Mhidnq9zMVb3o_XZ-PGg",
+      "prev": "bafyreidfdc7xu5wvkyq2dwr6fuierhb7ybcdc3dnfmzf5u22hukttm75iq",
+      "type": "plc_tombstone"
+    },
+    "cid": "bafyreidsszc2f6szlqfw3gsud7o7prfgihwuefyl7hlihgopnex44owwdy",
+    "nullified": true,
+    "createdAt": "2025-07-25T15:47:48.128Z"
+  },
+  {
+    "did": "did:plc:7iqnimg5hvigsckpbqrqktoh",
+    "operation": {
+      "sig": "RG7_y1y8d1vx_z_DHrmPVBaN_SBoFx_PJMaLAzkx2J1Y7a44USpLhFelEDupo3Kn90H447eWIoQWUFM1splTiQ",
+      "prev": "bafyreidfdc7xu5wvkyq2dwr6fuierhb7ybcdc3dnfmzf5u22hukttm75iq",
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [
+        "at://op3"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shWWPEB81oEwNJ1mCVfvMPNFsdsat9u9FmGFteyjNAHh2A",
+        "did:key:zQ3shXhSnMgAtK7JoaLAgEYf1aWqgXwwSfVC2Nx2WRCGGp6Si"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreidmokii52hymid6kt3u7npdd5opfndn7asvt2ckwoe7g5osjw5jba",
+    "nullified": false,
+    "createdAt": "2025-07-25T15:47:48.511Z"
+  }
+]

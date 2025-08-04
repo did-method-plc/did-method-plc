@@ -1,0 +1,102 @@
+[
+  {
+    "did": "did:plc:4v3qers3fn55uitqeuwokfwy",
+    "operation": {
+      "sig": "_h3yBs4fXKilIYIAUJpB5AoE4E_aXmGYHzm7Na5B53EmoOpDnFd6H9dg9oFvKKYwFPkQkr8HMQT32HT7vgIYuw",
+      "prev": null,
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [
+        "at://op0"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shSeJv85PFZJTHmLtRF7eKcD94NBYSrvsxy6xRMUWMq9To",
+        "did:key:zQ3shbxVAaoHKvxeP9Ra2C2i8szs4pK7oyZxmr8dGGWCtBCbd"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreihfo4bemwzlppnce4bfftsrnwgtj76cku6bdtgwmf6hc7sfrt2tji",
+    "nullified": false,
+    "createdAt": "2025-07-25T14:33:23.810Z"
+  },
+  {
+    "did": "did:plc:4v3qers3fn55uitqeuwokfwy",
+    "operation": {
+      "sig": "h21ooBoOMqXoHxiS_bWtgPiGPc9RF1oR7nm6C26gsQd1Kz8-aAvigfer9rvTctbOZY5o9OGw-TI5Smu3lqy5ag",
+      "prev": "bafyreihfo4bemwzlppnce4bfftsrnwgtj76cku6bdtgwmf6hc7sfrt2tji",
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [
+        "at://op1"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shRDdqSg2h43c8k4pCLi8yS1FpZdrEV7cHN8HvRYd9MUcD",
+        "did:key:zQ3shUB1soE1ijB3NohA4esPNusMdpLQfibdUq9KhW9nab5Re"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreieekauxgid3iwwfa5ywmzk62ccka66d777nz6hsdnbjgas36ikh6i",
+    "nullified": false,
+    "createdAt": "2025-07-25T14:33:24.203Z"
+  },
+  {
+    "did": "did:plc:4v3qers3fn55uitqeuwokfwy",
+    "operation": {
+      "sig": "jQN_ksPQqr3slUyALtQnNDbg7b6jagOOI127aId3kQcKEyJeSwNraCgecIz2K1jO0NfFcVguVHmC9zKSGrXv-Q",
+      "prev": "bafyreieekauxgid3iwwfa5ywmzk62ccka66d777nz6hsdnbjgas36ikh6i",
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [
+        "at://op2"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shesZHWBAh4UCXbGQ1XrEu3DEBJK4isHb8XEcBiMatYbjs",
+        "did:key:zQ3shY6PYLasew5NYpLzCMy4hehrTadBQAKjivkDBjGbJ4oEi"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreifd5fjnolmvvsjqk5dcexqvhmm6xljppbof2bdniz7pz7dn5ncdha",
+    "nullified": true,
+    "createdAt": "2025-07-25T14:33:24.589Z"
+  },
+  {
+    "did": "did:plc:4v3qers3fn55uitqeuwokfwy",
+    "operation": {
+      "sig": "M0bV7tNe6YkQ55NX12p_2GXveNOiqcoffSIbT-r5Zp5ZYHvje3GAHh4YRtuVPKboqmO3yL7D5CseWYBiKrpcbA",
+      "prev": "bafyreieekauxgid3iwwfa5ywmzk62ccka66d777nz6hsdnbjgas36ikh6i",
+      "type": "plc_operation",
+      "services": {},
+      "alsoKnownAs": [
+        "at://op3"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shdEwwjTRYxEntN3bCWVfvLTawVNf7FiZY7gahFZ5jRt6b",
+        "did:key:zQ3shrjSBoLEWUJcDSJSdKCdhkstmyg3GKnAfbPDunZDN8uTv"
+      ],
+      "verificationMethods": {}
+    },
+    "cid": "bafyreifviyelylmzecx3a4bi4imrq742xyxivu7yvplcsyomsanpkoge6e",
+    "nullified": false,
+    "createdAt": "2025-07-25T14:33:24.967Z"
+  },
+  {
+    "did": "did:plc:4v3qers3fn55uitqeuwokfwy",
+    "operation": {
+      "type": "plc_operation",
+      "rotationKeys": [
+        "did:key:zQ3shoHCAecmKC3naChFg6gpePieh8YU4VjS16knqKWvQChBV",
+        "did:key:zQ3shZd6DcRqomk4x2mW4BAwgBzexvVwxbM93GSEgJ7n4AW3v"
+      ],
+      "verificationMethods": {},
+      "alsoKnownAs": [
+        "at://op4"
+      ],
+      "services": {},
+      "prev": "bafyreifd5fjnolmvvsjqk5dcexqvhmm6xljppbof2bdniz7pz7dn5ncdha",
+      "sig": "gObrmMH4xksEZ1HloufSifAIGmn35u36mM0CNyUq8fkk-MRhCj0tHSUazIybeNAYYEF-XTm3611XNUAUD3eXhA"
+    },
+    "cid": "bafyreiabwwuzzavmsvz6zkl335p3eaaizaa2dg74xpazlbyehlpwzplqxq",
+    "nullified": false,
+    "createdAt": "2025-07-25T14:33:24.967Z"
+  }
+]
