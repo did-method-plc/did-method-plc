@@ -1,0 +1,21 @@
+[
+  {
+    "did": "did:plc:svbmkmqgxdr4i5cnt5y5lq5h",
+    "operation": {
+      "type": "plc_operation",
+      "rotationKeys": [
+        "did:key:zDnaefqvvRQsME5c7LvxdghHeARNWEFbg2PfrAYiHhKVf9rH9"
+      ],
+      "verificationMethods": {},
+      "alsoKnownAs": [
+        "at://high_s_p256"
+      ],
+      "services": {},
+      "prev": null,
+      "sig": "v5pzK205KUu88-3lrYRoLmw_3TJL0xK3uCNUJXged7zEEjAQcndRh4rlglwVeMQa_UH-3XArH1Oh5T_3QGLzbg"
+    },
+    "cid": "bafyreievilctebvy4pchitm7ohk4hj2tfuzcouax6gnx7obc5mp5unwvea",
+    "nullified": false,
+    "createdAt": "1970-01-01T00:00:00.000Z"
+  }
+]

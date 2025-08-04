@@ -1,0 +1,56 @@
+[
+  {
+    "did": "did:plc:z72i7hdynmk6r22z27h6tvur",
+    "operation": {
+      "sig": "9NuYV7AqwHVTc0YuWzNV3CJafsSZWH7qCxHRUIP2xWlB-YexXC1OaYAnUayiCXLVzRQ8WBXIqF-SvZdNalwcjA",
+      "prev": null,
+      "type": "plc_operation",
+      "services": {
+        "atproto_pds": {
+          "type": "AtprotoPersonalDataServer",
+          "endpoint": "https://bsky.social"
+        }
+      },
+      "alsoKnownAs": [
+        "at://bluesky-team.bsky.social"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg",
+        "did:key:zQ3shpKnbdPx3g3CmPf5cRVTPe1HtSwVn5ish3wSnDPQCbLJK"
+      ],
+      "verificationMethods": {
+        "atproto": "did:key:zQ3shXjHeiBuRCKmM36cuYnm7YEMzhGnCmCyW92sRJ9pribSF"
+      }
+    },
+    "cid": "bafyreigp6shzy6dlcxuowwoxz7u5nemdrkad2my5zwzpwilcnhih7bw6zm",
+    "nullified": false,
+    "createdAt": "2023-04-12T04:53:57.057Z"
+  },
+  {
+    "did": "did:plc:z72i7hdynmk6r22z27h6tvur",
+    "operation": {
+      "sig": "1mEWzRtFOgeRXH-YCSPTxb990JOXxa__n8Qw6BOKl7Ndm6OFFmwYKiiMqMCpAbxpnGjF5abfIsKc7u3a77Cbnw",
+      "prev": "bafyreigp6shzy6dlcxuowwoxz7u5nemdrkad2my5zwzpwilcnhih7bw6zm",
+      "type": "plc_operation",
+      "services": {
+        "atproto_pds": {
+          "type": "AtprotoPersonalDataServer",
+          "endpoint": "https://bsky.social"
+        }
+      },
+      "alsoKnownAs": [
+        "at://bsky.app"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg",
+        "did:key:zQ3shpKnbdPx3g3CmPf5cRVTPe1HtSwVn5ish3wSnDPQCbLJK"
+      ],
+      "verificationMethods": {
+        "atproto": "did:key:zQ3shXjHeiBuRCKmM36cuYnm7YEMzhGnCmCyW92sRJ9pribSF"
+      }
+    },
+    "cid": "bafyreihmuvr3frdvd6vmdhucih277prdcfcezf67lasg5oekxoimnunjoq",
+    "nullified": false,
+    "createdAt": "2023-04-12T17:26:46.468Z"
+  }
+]
