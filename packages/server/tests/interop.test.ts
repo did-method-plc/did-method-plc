@@ -1,9 +1,7 @@
-import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
-import { check } from '@atproto/common'
 import { Database } from '../src'
-import { didForCreateOp, PlcClientError } from '@did-plc/lib'
+import { PlcClientError } from '@did-plc/lib'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
