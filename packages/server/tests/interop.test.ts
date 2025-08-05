@@ -61,14 +61,56 @@ describe('interop', () => {
       const testPath = path.join(invalid_audit_logs, fileName)
       const testcase: any[] = JSON.parse(await fs.readFile(testPath, 'utf8'))
       for (const entry of testcase) {
-        // we talk to the db directly so we can specify the timestamp
-        await db.validateAndAddOp(entry.did, entry.operation, new Date(entry.createdAt))
+        // we submit to the db directly so we can specify the timestamp (and get
+        // more detailed errors)
+        await db.validateAndAddOp(
+          entry.did,
+          entry.operation,
+          new Date(entry.createdAt),
+        )
       }
     }
 
-    for (const fileName of await fs.readdir(invalid_audit_logs)) {
-      let res = replayTestCase(fileName)
-      await expect(res).rejects.toThrow()
-    }
+    await expect(
+      replayTestCase('log_invalid_nullification_reused_key.json'),
+    ).rejects.toThrowError(/Invalid signature on op/)
+
+    await expect(
+      replayTestCase('log_invalid_nullification_too_slow.json'),
+    ).rejects.toThrowError(
+      /Recovery operation occurred outside of the allowed 72 hr recovery window/,
+    )
+
+    await expect(
+      replayTestCase('log_invalid_sig_b64_newline.json'),
+    ).rejects.toThrowError('Non-base64url character')
+
+    await expect(
+      replayTestCase('log_invalid_sig_b64_padding_bits.json'),
+    ).rejects.toThrowError('Unexpected end of data')
+
+    await expect(
+      replayTestCase('log_invalid_sig_b64_padding_chars.json'),
+    ).rejects.toThrowError(/Invalid signature on op/)
+
+    await expect(
+      replayTestCase('log_invalid_sig_der.json'),
+    ).rejects.toThrowError(/Invalid signature on op/)
+
+    await expect(
+      replayTestCase('log_invalid_sig_k256_high_s.json'),
+    ).rejects.toThrowError(/Invalid signature on op/)
+
+    await expect(
+      replayTestCase('log_invalid_sig_p256_high_s.json'),
+    ).rejects.toThrowError(/Invalid signature on op/)
+
+    await expect(
+      replayTestCase('log_invalid_update_nullified.json'),
+    ).rejects.toThrowError('Operations not correctly ordered')
+
+    await expect(
+      replayTestCase('log_invalid_update_tombstoned.json'),
+    ).rejects.toThrowError('Operations not correctly ordered')
   })
 })
