@@ -35,17 +35,18 @@ describe('interop', () => {
   })
 
   it('accepts replayed valid interop test logs', async () => {
-    // NOTE: replayed ops will not have their original timestamps, so timestamp-related
-    // test cases are not being tested properly.
-
-    // "legacy" op tests are skipped because the server is not expected to accept them
+    // Note: "legacy" op tests are skipped here because the server is not expected to accept them
     const valid_audit_logs = path.join(INTEROP_TESTS_DIR, 'audit_log', 'valid')
     for (const fileName of await fs.readdir(valid_audit_logs)) {
       if (fileName.includes('legacy')) continue
       const testPath = path.join(valid_audit_logs, fileName)
       const testcase: any[] = JSON.parse(await fs.readFile(testPath, 'utf8'))
       for (const entry of testcase) {
-        await client.sendOperation(entry.did, entry.operation)
+        await db.validateAndAddOp(
+          entry.did,
+          entry.operation,
+          new Date(entry.createdAt),
+        )
       }
     }
   })
