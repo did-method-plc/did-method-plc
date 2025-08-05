@@ -61,15 +61,14 @@ describe('interop', () => {
       const testPath = path.join(invalid_audit_logs, fileName)
       const testcase: any[] = JSON.parse(await fs.readFile(testPath, 'utf8'))
       for (const entry of testcase) {
-        await client.sendOperation(entry.did, entry.operation)
+        // we talk to the db directly so we can specify the timestamp
+        await db.validateAndAddOp(entry.did, entry.operation, new Date(entry.createdAt))
       }
     }
 
     for (const fileName of await fs.readdir(invalid_audit_logs)) {
-      if (fileName.includes('too_slow')) continue // cannot test timestamp-related constraints for aforementioned reasons
-
       let res = replayTestCase(fileName)
-      await expect(res).rejects.toThrow(PlcClientError) // NOTE: plc.Client returns opaque HTTP 400 errors, so we can't check in more detail
+      await expect(res).rejects.toThrow()
     }
   })
 })
