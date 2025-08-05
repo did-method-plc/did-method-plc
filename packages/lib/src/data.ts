@@ -63,12 +63,18 @@ export const assureValidNextOp = async (
 
   await assureValidSig(morePowerfulKeys, proposed)
 
+  const proposedTimestamp = (proposedDate ?? new Date()).getTime()
+
+  // timestamps must increase monotonically
+  const mostRecentOp = ops.at(-1) // ops.length is always >0 here
+  if (mostRecentOp && proposedTimestamp <= mostRecentOp.createdAt.getTime()) {
+    throw new MisorderedOperationError()
+  }
+
   // recovery key gets a 72hr window to do historical re-wrties
   if (nullified.length > 0) {
     const RECOVERY_WINDOW = 72 * HOUR
-    const timeLapsed =
-      (proposedDate ?? new Date()).getTime() -
-      firstNullified.createdAt.getTime()
+    const timeLapsed = proposedTimestamp - firstNullified.createdAt.getTime()
     if (timeLapsed > RECOVERY_WINDOW) {
       throw new LateRecoveryError(timeLapsed)
     }
