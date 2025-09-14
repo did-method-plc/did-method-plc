@@ -31,6 +31,9 @@ export const createRouter = (ctx: AppContext): express.Router => {
     }
     const count = Math.min(parsedCount, 1000)
     const after = req.query.after ? new Date(req.query.after) : undefined
+    if (after !== undefined && isNaN(after.getTime())) {
+      throw new ServerError(400, 'Invalid after parameter')
+    }
     const ops = await ctx.db.exportOps(count, after)
     res.setHeader('content-type', 'application/jsonlines')
     res.status(200)
