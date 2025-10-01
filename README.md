@@ -97,7 +97,7 @@ Although `verificationMethods` signing keys can be of any key type (unlike rotat
 
 The DID itself is derived from the hash of the first operation in the log, called the "genesis" operation. The signed operation is encoded in DAG-CBOR; the bytes are hashed with SHA-256; the hash bytes are `base32`-encoded (not hex encoded) as a string; and that string is truncated to 24 chars to yield the "identifier" segment of the DID.
 
-In pseudo-code: 
+In pseudo-code:
 `did:plc:${base32Encode(sha256(createOp)).slice(0,24)}`
 
 ### Identifier Syntax
@@ -117,7 +117,7 @@ Any key specified in `rotationKeys` has the ability to sign operations for the D
 
 The set of rotation keys for a DID is not included in the DID document. They are an internal detail of PLC, and are stored in the operation log.
 
-Keys are listed in the `rotationKeys` field of operations in order of descending authority. 
+Keys are listed in the `rotationKeys` field of operations in order of descending authority.
 
 The PLC server provides a 72hr window during which a higher authority rotation key can "rewrite" history, clobbering any operations (or chain of operations) signed by a lower-authority rotation key.
 
@@ -324,7 +324,7 @@ const recoveryOp = {
 }
 ```
 
-## Presentation as DID Document 
+## Presentation as DID Document
 
 The following data:
 
@@ -409,6 +409,8 @@ This project is dual-licensed under MIT and Apache 2.0 terms:
 - MIT license ([LICENSE-MIT](https://github.com/ipfs/kubo/blob/master/LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 Downstream projects and users may chose either license, or both, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
+
+Bluesky Social PBC has committed to a software patent non-aggression pledge. For details see [the original announcement](https://bsky.social/about/blog/10-01-2025-patent-pledge).
 
 ## Changelog
 
