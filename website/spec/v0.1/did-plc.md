@@ -77,7 +77,7 @@ For signatures, the object is first encoded as DAG-CBOR *without* the `sig` fiel
 
 1. The signature value is represented as a pair of integers `(r, s)`, as described in [RFC 4754](https://datatracker.ietf.org/doc/html/rfc4754#section-3)
 
-2. If `s` is greater than half the EC group order constant, the value of `s` is replaced by `-s` (modulo the EC group order). Signatures that have undergone this transformation are sometimes referred to as "low-S" signatures (because `s` is now guaranteed to be less than half the EC group order). This process is described for the secp256k1 curve as part of [Bitcoin BIP-0062](https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki), but this definition can be generalised to the NIST P-256 curve also.
+2. The signature is canonicalized in "low-S" form. This means that if `s` is greater than or equal to half the EC group order constant, the value of `s` is replaced by `-s` (modulo the EC group order). This process is described for the secp256k1 curve as part of [Bitcoin BIP-0062](https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki), but this definition can be generalized to the NIST P-256 curve also.
 
 3. The `(r, s)` tuple is encoded to bytes in the same format as specified in the [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/sign#ecdsa) web API. This format is refered to by a variety of names, including "raw", "compact", "IEEE P1363". For secp256k1 and NIST P-256 curves, it is concretely: 32 big-endian bytes representing integer `r`, followed by 32 big-endian bytes representing integer `s`.
 
