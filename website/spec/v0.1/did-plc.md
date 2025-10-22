@@ -127,7 +127,7 @@ The PLC server provides a 72hr window during which a higher authority rotation k
 To do so, that key must sign a new operation that points to the CID of the last "valid" operation - ie the fork point.
 The PLC server will accept this recovery operation as long as:
 
-- it is submitted within 72hrs of the referenced operation
+- it is submitted within 72hrs of the to-be-invalidated operation
 - the key used for the signature has a lower index in the `rotationKeys` array than the key that signed the to-be-invalidated operation
 
 
