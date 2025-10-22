@@ -16,7 +16,7 @@ PLC stands for "Public Ledger of Credentials". We expect to evolve the system (i
 
 ## How it works
 
-See the [specification](./website/spec/v0.1/did-plc.md#how-it-works).
+See the [specification](website/spec/v0.1/did-plc.md#how-it-works).
 
 ## License
 
