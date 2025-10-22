@@ -1,7 +1,7 @@
 
 # `did:plc` Method Specification
 
-**Version:** v0.1 (May 2023)
+**Version:** v0.2.1 (October 2025)
 
 DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
@@ -82,8 +82,6 @@ For signatures, the object is first encoded as DAG-CBOR *without* the `sig` fiel
 3. The `(r, s)` tuple is encoded to bytes in the same format as specified in the [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/sign#ecdsa) web API. This format is refered to by a variety of names, including "raw", "compact", "IEEE P1363". For secp256k1 and NIST P-256 curves, it is concretely: 32 big-endian bytes representing integer `r`, followed by 32 big-endian bytes representing integer `s`.
 
 4. Those bytes are encoded as a string using `base64url` encoding, without equals-padding. Trailing padding bits MUST be set to zero, as described in [RFC 4648 section 3.5](https://www.rfc-editor.org/rfc/rfc4648.html#section-3.5)
-
-The `sig` field is then populated with the string. In strongly typed programming languages it is a best practice to have distinct "signed" and "unsigned" types.
 
 When verifying signatures, the above encoding requirements must be enforced strictly, with non-canonical encodings or "High-S" values rejected as invalid. Otherwise, it would be possible for the signature encoding to be modified (thus modifying the operation's CID) without invalidating the signature.
 
@@ -405,7 +403,17 @@ It is conceivable that longer DID PLCs, with more of the SHA-256 characters, wil
 
 ## Changelog
 
-### 2025-06-05
+### 2025-10-22 (v0.2.1)
+
+This update makes no behavioural changes, only clarifications to the written specification.
+
+- Clarify signature encoding rules.
+
+- Clarify operation nullification time constraints.
+
+- Remove some non-normative statements.
+
+### 2025-06-05 (v0.2)
 
 - `verificationMethods` keys may now use any syntactically-valid `did:key:`, regardless of key format (allowing e.g. `ed25519` keys). Rotation keys are not affected by this change, the original format constraints still apply.
 
