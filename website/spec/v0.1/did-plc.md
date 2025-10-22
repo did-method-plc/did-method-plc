@@ -83,6 +83,8 @@ For signatures, the object is first encoded as DAG-CBOR *without* the `sig` fiel
 
 4. Those bytes are encoded as a string using `base64url` encoding, without equals-padding. Trailing padding bits MUST be set to zero, as described in [RFC 4648 section 3.5](https://www.rfc-editor.org/rfc/rfc4648.html#section-3.5)
 
+The `sig` field is then populated with the encoded signature string.
+
 When verifying signatures, the above encoding requirements must be enforced strictly, with non-canonical encodings or "High-S" values rejected as invalid. Otherwise, it would be possible for the signature encoding to be modified (thus modifying the operation's CID) without invalidating the signature.
 
 For `prev` references, the SHA-256 of the previous operation's bytes are encoded as a "[CID](https://github.com/multiformats/cid)", with the following parameters:
