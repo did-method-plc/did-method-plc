@@ -357,6 +357,7 @@ Will be presented as the following DID document:
 {
   '@context': [
     'https://www.w3.org/ns/did/v1',
+    'https://w3id.org/security/multikey/v1',
     'https://w3id.org/security/suites/ecdsa-2019/v1'
   ],
   id: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
@@ -364,9 +365,9 @@ Will be presented as the following DID document:
   verificationMethod: [
     {
       id: '#atproto',
-      type: 'EcdsaSecp256r1VerificationKey2019',
+      type: 'Multikey',
       controller: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
-      publicKeyMultibase: 'zSSa7w8s5aApu6td45gWTAAFkqCnaWY6ZsJ8DpyzDdYmVy4fARKqbn5F1UYBUMeVvYTBsoSoLvZnPdjd3pVHbmAHP'
+      publicKeyMultibase: 'zDnaeh9v2RmcMo13Du2d6pjUf5bZwtauYxj3n9dYjw4EZUAR7'
     }
   ],
   service: [
