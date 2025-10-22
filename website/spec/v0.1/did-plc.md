@@ -408,7 +408,7 @@ It is conceivable that longer DID PLCs, with more of the SHA-256 characters, wil
 
 ### 2025-10-22 (v0.2.1)
 
-This update makes no behavioural changes, only clarifications to the written specification.
+This update resolves ambiguities in the spec, aligning it with the existing behaviour of the reference implementation.
 
 - Clarify signature encoding rules.
 
