@@ -26,3 +26,5 @@ This project is dual-licensed under MIT and Apache 2.0 terms:
 - MIT license ([LICENSE-MIT](https://github.com/ipfs/kubo/blob/master/LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 Downstream projects and users may chose either license, or both, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
+
+Bluesky Social PBC has committed to a software patent non-aggression pledge. For details see [the original announcement](https://bsky.social/about/blog/10-01-2025-patent-pledge).
