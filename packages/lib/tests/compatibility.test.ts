@@ -92,7 +92,12 @@ describe('compatibility', () => {
       createdAt: new Date(Date.now() - 7 * DAY),
     }
 
-    const result = await assureValidNextOp(did, [indexedLegacy], nextOp)
+    const result = await assureValidNextOp(
+      did,
+      [indexedLegacy],
+      nextOp,
+      new Date(),
+    )
     expect(result.nullified.length).toBe(0)
     expect(result.prev?.equals(legacyCid)).toBeTruthy()
   })
