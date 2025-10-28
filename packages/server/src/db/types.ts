@@ -27,7 +27,7 @@ export interface OperationsTable {
   operation: plc.CompatibleOpOrTombstone
   cid: string
   nullified: boolean
-  createdAt: Date
+  createdAt: Generated<Date> // Note: we do not currently make use of the Generated feature, it could be removed in future
 }
 
 export interface DatabaseSchema {
