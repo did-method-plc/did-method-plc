@@ -1,7 +1,7 @@
 
 # `did:plc` Method Specification
 
-**Version:** v0.1 (May 2023)
+**Version:** v0.2.1 (October 2025)
 
 DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
@@ -73,9 +73,19 @@ The process for signing and hashing operation objects is to first encode them in
 
 As an anti-abuse mechanism, operations have a maximum size when encoded as DAG-CBOR. The current limit is 7500 bytes.
 
-For signatures, the object is first encoded as DAG-CBOR *without* the `sig` field at all (as opposed to a `null` value in that field). Those bytes are signed, and then the signature bytes are encoded as a string using `base64url` encoding. The `sig` value is then populated with the string. In strongly typed programming languages it is a best practice to have distinct "signed" and "unsigned" types.
+For signatures, the object is first encoded as DAG-CBOR *without* the `sig` field at all (as opposed to a `null` value in that field). Those bytes are signed using ECDSA-SHA256, and the signature value is encoded as follows:
 
-When working with signatures, note that ECDSA signatures are not necessarily *deterministic* or *unique*. That is, the same key signing the same bytes *might* generate the same signature every time, or it might generate a *different* signature every time, depending on the cryptographic library and configuration. In some cases it is also easy for a third party to take a valid signature and transform it into a new, distinct signature, which also validates. Be sure to always use the "validate signature" routine from a cryptographic library, instead of re-signing bytes and directly comparing the signature bytes.
+1. The signature value is represented as a pair of integers `(r, s)`, as described in [RFC 4754](https://datatracker.ietf.org/doc/html/rfc4754#section-3)
+
+2. The signature is canonicalized in "low-S" form. This means that if `s` is greater than or equal to half the EC group order constant, the value of `s` is replaced by `-s` (modulo the EC group order). This process is described for the secp256k1 curve as part of [Bitcoin BIP-0062](https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki), but this definition can be generalized to the NIST P-256 curve also.
+
+3. The `(r, s)` tuple is encoded to bytes in the same format as specified in the [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/sign#ecdsa) web API. This format is refered to by a variety of names, including "raw", "compact", "IEEE P1363". For secp256k1 and NIST P-256 curves, it is concretely: 32 big-endian bytes representing integer `r`, followed by 32 big-endian bytes representing integer `s`.
+
+4. Those bytes are encoded as a string using `base64url` encoding, without equals-padding. Trailing padding bits MUST be set to zero, as described in [RFC 4648 section 3.5](https://www.rfc-editor.org/rfc/rfc4648.html#section-3.5)
+
+The `sig` field is then populated with the encoded signature string.
+
+When verifying signatures, the above encoding requirements must be enforced strictly, with non-canonical encodings or "High-S" values rejected as invalid. Otherwise, it would be possible for the signature encoding to be modified (thus modifying the operation's CID) without invalidating the signature.
 
 For `prev` references, the SHA-256 of the previous operation's bytes are encoded as a "[CID](https://github.com/multiformats/cid)", with the following parameters:
 
@@ -117,7 +127,7 @@ The PLC server provides a 72hr window during which a higher authority rotation k
 To do so, that key must sign a new operation that points to the CID of the last "valid" operation - ie the fork point.
 The PLC server will accept this recovery operation as long as:
 
-- it is submitted within 72hrs of the referenced operation
+- it is submitted within 72hrs of the to-be-invalidated operation
 - the key used for the signature has a lower index in the `rotationKeys` array than the key that signed the to-be-invalidated operation
 
 
@@ -349,6 +359,7 @@ Will be presented as the following DID document:
 {
   '@context': [
     'https://www.w3.org/ns/did/v1',
+    'https://w3id.org/security/multikey/v1',
     'https://w3id.org/security/suites/ecdsa-2019/v1'
   ],
   id: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
@@ -356,9 +367,9 @@ Will be presented as the following DID document:
   verificationMethod: [
     {
       id: '#atproto',
-      type: 'EcdsaSecp256r1VerificationKey2019',
+      type: 'Multikey',
       controller: 'did:plc:7iza6de2dwap2sbkpav7c6c6',
-      publicKeyMultibase: 'zSSa7w8s5aApu6td45gWTAAFkqCnaWY6ZsJ8DpyzDdYmVy4fARKqbn5F1UYBUMeVvYTBsoSoLvZnPdjd3pVHbmAHP'
+      publicKeyMultibase: 'zDnaeh9v2RmcMo13Du2d6pjUf5bZwtauYxj3n9dYjw4EZUAR7'
     }
   ],
   service: [
@@ -395,7 +406,17 @@ It is conceivable that longer DID PLCs, with more of the SHA-256 characters, wil
 
 ## Changelog
 
-### 2025-06-05
+### 2025-10-22 (v0.2.1)
+
+This update resolves ambiguities in the spec, aligning it with the existing behaviour of the reference implementation.
+
+- Clarify signature encoding rules.
+
+- Clarify operation nullification time constraints.
+
+- Remove some non-normative statements.
+
+### 2025-06-05 (v0.2)
 
 - `verificationMethods` keys may now use any syntactically-valid `did:key:`, regardless of key format (allowing e.g. `ed25519` keys). Rotation keys are not affected by this change, the original format constraints still apply.
 
