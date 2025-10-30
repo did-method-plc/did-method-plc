@@ -101,10 +101,16 @@ export class Database implements PlcDatabase {
   async validateAndAddOp(
     did: string,
     proposed: plc.CompatibleOpOrTombstone,
+    proposedDate: Date,
   ): Promise<void> {
     const ops = await this.indexedOpsForDid(did)
     // throws if invalid
-    const { nullified, prev } = await plc.assureValidNextOp(did, ops, proposed)
+    const { nullified, prev } = await plc.assureValidNextOp(
+      did,
+      ops,
+      proposed,
+      proposedDate,
+    )
     // do not enforce rate limits on recovery operations to prevent DDOS by a bad actor
     if (nullified.length === 0) {
       enforceOpsRateLimit(ops)
@@ -132,6 +138,7 @@ export class Database implements PlcDatabase {
           operation: proposed,
           cid: cid.toString(),
           nullified: false,
+          createdAt: proposedDate,
         })
         .execute()
 

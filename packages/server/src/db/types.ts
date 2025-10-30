@@ -7,6 +7,7 @@ export interface PlcDatabase {
   validateAndAddOp(
     did: string,
     proposed: plc.CompatibleOpOrTombstone,
+    proposedDate: Date,
   ): Promise<void>
   opsForDid(did: string): Promise<plc.CompatibleOpOrTombstone[]>
   indexedOpsForDid(
@@ -26,7 +27,7 @@ export interface OperationsTable {
   operation: plc.CompatibleOpOrTombstone
   cid: string
   nullified: boolean
-  createdAt: Generated<Date>
+  createdAt: Generated<Date> // Note: we do not currently make use of the Generated feature, it could be removed in future
 }
 
 export interface DatabaseSchema {

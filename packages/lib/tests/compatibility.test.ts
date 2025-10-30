@@ -10,6 +10,8 @@ import {
   updateAtprotoKeyOp,
   validateOperationLog,
 } from '../src'
+import * as fs from 'fs/promises'
+import * as path from 'path'
 
 describe('compatibility', () => {
   let signingKey: Secp256k1Keypair
@@ -19,6 +21,14 @@ describe('compatibility', () => {
   let did: string
 
   let legacyOp: CreateOpV1
+
+  const INTEROP_TESTS_DIR = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    'interop_tests',
+  )
 
   beforeAll(async () => {
     signingKey = await Secp256k1Keypair.create()
@@ -82,8 +92,71 @@ describe('compatibility', () => {
       createdAt: new Date(Date.now() - 7 * DAY),
     }
 
-    const result = await assureValidNextOp(did, [indexedLegacy], nextOp)
+    const result = await assureValidNextOp(
+      did,
+      [indexedLegacy],
+      nextOp,
+      new Date(),
+    )
     expect(result.nullified.length).toBe(0)
     expect(result.prev?.equals(legacyCid)).toBeTruthy()
+  })
+
+  it('validates valid interop test logs', async () => {
+    // NOTE: validateOperationLog looks at the ops themselves and thus does not
+    // validate timestamp-related constraints
+    const valid_audit_logs = path.join(INTEROP_TESTS_DIR, 'audit_log', 'valid')
+    for (const fileName of await fs.readdir(valid_audit_logs)) {
+      if (fileName.includes('nullif')) continue // validateOperationLog does not handle nullifications
+      const testPath = path.join(valid_audit_logs, fileName)
+      const testcase = JSON.parse(await fs.readFile(testPath, 'utf8'))
+      const ops = testcase.map((logItem) => logItem.operation)
+      await validateOperationLog(testcase[0].did, ops)
+    }
+  })
+
+  it('does not validate invalid interop test logs', async () => {
+    // NOTE: nullification-related test cases are not checked
+
+    const invalid_audit_logs = path.join(
+      INTEROP_TESTS_DIR,
+      'audit_log',
+      'invalid',
+    )
+
+    async function validateLogForPath(fileName: string) {
+      const testPath = path.join(invalid_audit_logs, fileName)
+      const testcase = JSON.parse(await fs.readFile(testPath, 'utf8'))
+      const ops = testcase.map((logItem) => logItem.operation)
+      await validateOperationLog(testcase[0].did, ops)
+    }
+
+    await expect(
+      validateLogForPath('log_invalid_sig_b64_newline.json'),
+    ).rejects.toThrowError('Non-base64url character')
+
+    await expect(
+      validateLogForPath('log_invalid_sig_b64_padding_bits.json'),
+    ).rejects.toThrowError('Unexpected end of data')
+
+    await expect(
+      validateLogForPath('log_invalid_sig_b64_padding_chars.json'),
+    ).rejects.toThrowError(/Invalid signature on op/) // afaict this is failing for the correct reasons
+
+    await expect(
+      validateLogForPath('log_invalid_sig_der.json'),
+    ).rejects.toThrowError(/Invalid signature on op/)
+
+    await expect(
+      validateLogForPath('log_invalid_sig_k256_high_s.json'),
+    ).rejects.toThrowError(/Invalid signature on op/)
+
+    await expect(
+      validateLogForPath('log_invalid_sig_p256_high_s.json'),
+    ).rejects.toThrowError(/Invalid signature on op/)
+
+    await expect(
+      validateLogForPath('log_invalid_update_tombstoned.json'),
+    ).rejects.toThrowError('Operations not correctly ordered')
   })
 })

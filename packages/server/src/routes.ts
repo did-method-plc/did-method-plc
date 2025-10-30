@@ -114,7 +114,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   router.post('/:did', async function (req, res) {
     const { did } = req.params
     const op = validateIncomingOp(req.body)
-    await ctx.db.validateAndAddOp(did, op)
+    await ctx.db.validateAndAddOp(did, op, new Date())
     res.sendStatus(200)
   })
 

@@ -1,0 +1,54 @@
+[
+  {
+    "did": "did:plc:nhxcyu4ewwhl5pqil4dotqjo",
+    "operation": {
+      "sig": "v9rHEhW4XVwMKRSd2yeFgk4-mZthHSZwJ4tShNPqDP4NH3w79CkxIOmJ393D6MEyWZLN1qxS1qBIbFEGtfoDDw",
+      "prev": null,
+      "type": "plc_operation",
+      "services": {
+        "atproto_pds": {
+          "type": "AtprotoPersonalDataServer",
+          "endpoint": "https://pds.robocracy.org"
+        }
+      },
+      "alsoKnownAs": [
+        "at://bnewbold.pds.robocracy.org"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shcciz4AvrLyDnUdZLpQys3kyCsesojRNzJAieyDStGxGo"
+      ],
+      "verificationMethods": {
+        "atproto": "did:key:zQ3shazA2airLo8gNJvxGMFZWPJDRkLGNR6mn9Txsc8YYndwy"
+      }
+    },
+    "cid": "bafyreidj5ywfhbfvr27l4cc7a3u4clup5vx343ufuzdliethuhzzxjbg4q",
+    "nullified": false,
+    "createdAt": "2024-02-22T04:31:08.867Z"
+  },
+  {
+    "did": "did:plc:nhxcyu4ewwhl5pqil4dotqjo",
+    "operation": {
+      "sig": "P8TrUomEKSnJpyuoyqdaqv-KilKbQKoi6MNf8DNN8LdFn1cA3_BtkqVYAjmucpQ8DDSze-jG4YDvC6HFK9QPOA",
+      "prev": "bafyreidj5ywfhbfvr27l4cc7a3u4clup5vx343ufuzdliethuhzzxjbg4q",
+      "type": "plc_operation",
+      "services": {
+        "atproto_pds": {
+          "type": "AtprotoPersonalDataServer",
+          "endpoint": "https://pds.robocracy.org"
+        }
+      },
+      "alsoKnownAs": [
+        "at://bnewbold.robocracy.org"
+      ],
+      "rotationKeys": [
+        "did:key:zQ3shcciz4AvrLyDnUdZLpQys3kyCsesojRNzJAieyDStGxGo"
+      ],
+      "verificationMethods": {
+        "atproto": "did:key:zQ3shazA2airLo8gNJvxGMFZWPJDRkLGNR6mn9Txsc8YYndwy"
+      }
+    },
+    "cid": "bafyreiemmb2ephqyt7orhiv4vp7gmdohnzhgkehwzfrvirgvg7fg352ysi",
+    "nullified": false,
+    "createdAt": "2024-02-22T04:39:57.282Z"
+  }
+]

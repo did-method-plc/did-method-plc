@@ -14,11 +14,17 @@ export class MockDatabase implements PlcDatabase {
   async validateAndAddOp(
     did: string,
     proposed: plc.OpOrTombstone,
+    proposedDate: Date,
   ): Promise<void> {
     this.contents[did] ??= []
     const opsBefore = this.contents[did]
     // throws if invalid
-    const { nullified } = await plc.assureValidNextOp(did, opsBefore, proposed)
+    const { nullified } = await plc.assureValidNextOp(
+      did,
+      opsBefore,
+      proposed,
+      proposedDate,
+    )
     const cid = await cidForCbor(proposed)
     if (this.contents[did] !== opsBefore) {
       throw new ServerError(
@@ -31,7 +37,7 @@ export class MockDatabase implements PlcDatabase {
       operation: proposed,
       cid,
       nullified: false,
-      createdAt: new Date(),
+      createdAt: proposedDate,
     })
 
     if (nullified.length > 0) {

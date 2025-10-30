@@ -16,6 +16,7 @@ export const assureValidNextOp = async (
   did: string,
   ops: t.IndexedOperation[],
   proposed: t.CompatibleOpOrTombstone,
+  proposedDate: Date,
 ): Promise<{ nullified: CID[]; prev: CID | null }> => {
   // special case if account creation
   if (ops.length === 0) {
@@ -62,10 +63,20 @@ export const assureValidNextOp = async (
 
   await assureValidSig(morePowerfulKeys, proposed)
 
+  // timestamps must increase monotonically
+  const mostRecentOp = ops.at(-1) // ops.length is always >0 here
+  if (
+    mostRecentOp &&
+    proposedDate.getTime() <= mostRecentOp.createdAt.getTime()
+  ) {
+    throw new MisorderedOperationError()
+  }
+
   // recovery key gets a 72hr window to do historical re-wrties
   if (nullified.length > 0) {
     const RECOVERY_WINDOW = 72 * HOUR
-    const timeLapsed = Date.now() - firstNullified.createdAt.getTime()
+    const timeLapsed =
+      proposedDate.getTime() - firstNullified.createdAt.getTime()
     if (timeLapsed > RECOVERY_WINDOW) {
       throw new LateRecoveryError(timeLapsed)
     }

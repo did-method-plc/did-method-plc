@@ -100,7 +100,7 @@ describe('plc recovery', () => {
     // key 2 asserts control over key 3
     const rotate = await signOpForKeys([rotationKey2], createCid, rotationKey2)
 
-    const res = await data.assureValidNextOp(did, log, rotate.op)
+    const res = await data.assureValidNextOp(did, log, rotate.op, new Date())
     expect(res.nullified.length).toBe(2)
     expect(res.nullified[0].equals(log[1].cid))
     expect(res.nullified[1].equals(log[2].cid))
@@ -111,15 +111,15 @@ describe('plc recovery', () => {
 
   it('does not allow the lower authority key to take control back', async () => {
     const rotate = await signOpForKeys([rotationKey3], createCid, rotationKey3)
-    await expect(data.assureValidNextOp(did, log, rotate.op)).rejects.toThrow(
-      InvalidSignatureError,
-    )
+    await expect(
+      data.assureValidNextOp(did, log, rotate.op, new Date()),
+    ).rejects.toThrow(InvalidSignatureError)
   })
 
   it('allows a rotation key with even higher authority to rewrite history', async () => {
     const rotate = await signOpForKeys([rotationKey1], createCid, rotationKey1)
 
-    const res = await data.assureValidNextOp(did, log, rotate.op)
+    const res = await data.assureValidNextOp(did, log, rotate.op, new Date())
     expect(res.nullified.length).toBe(1)
     expect(res.nullified[0].equals(log[1].cid))
     expect(res.prev?.equals(createCid)).toBeTruthy()
@@ -129,14 +129,14 @@ describe('plc recovery', () => {
 
   it('does not allow the either invalidated key to take control back', async () => {
     const rotate1 = await signOpForKeys([rotationKey3], createCid, rotationKey3)
-    await expect(data.assureValidNextOp(did, log, rotate1.op)).rejects.toThrow(
-      InvalidSignatureError,
-    )
+    await expect(
+      data.assureValidNextOp(did, log, rotate1.op, new Date()),
+    ).rejects.toThrow(InvalidSignatureError)
 
     const rotate2 = await signOpForKeys([rotationKey2], createCid, rotationKey2)
-    await expect(data.assureValidNextOp(did, log, rotate2.op)).rejects.toThrow(
-      InvalidSignatureError,
-    )
+    await expect(
+      data.assureValidNextOp(did, log, rotate2.op, new Date()),
+    ).rejects.toThrow(InvalidSignatureError)
   })
 
   it('does not allow recovery outside of 72 hrs', async () => {
@@ -154,7 +154,7 @@ describe('plc recovery', () => {
       rotationKey2,
     )
     await expect(
-      data.assureValidNextOp(did, timeOutOps, rotateBack.op),
+      data.assureValidNextOp(did, timeOutOps, rotateBack.op, new Date()),
     ).rejects.toThrow(LateRecoveryError)
   })
 
@@ -180,6 +180,7 @@ describe('plc recovery', () => {
       did,
       tombstoneOps,
       rotateBack.op,
+      new Date(),
     )
     expect(result.nullified.length).toBe(1)
     expect(result.nullified[0].equals(cid))
