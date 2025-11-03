@@ -247,47 +247,66 @@ export class Database implements PlcDatabase {
     did: string,
     cid: string,
   ): Promise<plc.CompatibleOpOrTombstone[]> {
-    // TODO: db transaction, row lock did
-    const ops = await this.indexedOpsForDid(did)
-    const maybeInvalidOpIdx = ops.findIndex((op) => op.cid.toString() === cid)
-    if (maybeInvalidOpIdx === -1) {
-      throw new ServerError(400, 'operation does not exist')
-    }
-
-    const opsBefore = ops.slice(0, maybeInvalidOpIdx)
-    let opIsValid: boolean
-    try {
-      await plc.assureValidNextOp(
-        did,
-        opsBefore,
-        ops[maybeInvalidOpIdx].operation,
-        ops[maybeInvalidOpIdx].createdAt,
-      )
-      opIsValid = true
-    } catch {
-      opIsValid = false
-    }
-    if (opIsValid) {
-      throw new ServerError(400, 'valid operations cannot be removed')
-    }
-
-    if (opsBefore.some((op) => op.nullified)) {
-      // handling this would require a more complex implementation, fingers crossed we won't ever need it
-      throw new ServerError(
-        400,
-        'removing ops from DIDs with prior nullifications is not currently supported',
-      )
-    }
-
-    // remove the invalid op, and any that came after it
-    const invalidOps = ops.slice(maybeInvalidOpIdx)
-    for (const op of invalidOps) {
-      await this.db
-        .deleteFrom('operations')
-        .where('did', '=', op.did)
-        .where('cid', '=', op.cid.toString())
+    const invalidOps = await this.db.transaction().execute(async (tx) => {
+      // grab a row lock on user table
+      const userLock = await tx
+        .selectFrom('dids')
+        .forUpdate()
+        .selectAll()
+        .where('did', '=', did)
         .executeTakeFirst()
-    }
+
+      if (!userLock) {
+        // check if the DID actually exists before we continue
+        if (!(await this.lastOpForDid(did))) {
+          throw new ServerError(400, 'did does not exist')
+        }
+        await tx.insertInto('dids').values({ did }).execute()
+      }
+
+      const ops = await this.indexedOpsForDid(did)
+      const maybeInvalidOpIdx = ops.findIndex((op) => op.cid.toString() === cid)
+      if (maybeInvalidOpIdx === -1) {
+        throw new ServerError(400, 'operation does not exist')
+      }
+
+      const opsBefore = ops.slice(0, maybeInvalidOpIdx)
+      let opIsValid: boolean
+      try {
+        await plc.assureValidNextOp(
+          did,
+          opsBefore,
+          ops[maybeInvalidOpIdx].operation,
+          ops[maybeInvalidOpIdx].createdAt,
+        )
+        opIsValid = true
+      } catch {
+        opIsValid = false
+      }
+      if (opIsValid) {
+        throw new ServerError(400, 'valid operations cannot be removed')
+      }
+
+      if (opsBefore.some((op) => op.nullified)) {
+        // handling this would require a more complex implementation, fingers crossed we won't ever need it
+        throw new ServerError(
+          400,
+          'removing ops from DIDs with prior nullifications is not currently supported',
+        )
+      }
+
+      // remove the invalid op, and any that came after it
+      const invalidOps = ops.slice(maybeInvalidOpIdx)
+      for (const op of invalidOps) {
+        await this.db
+          .deleteFrom('operations')
+          .where('did', '=', op.did)
+          .where('cid', '=', op.cid.toString())
+          .executeTakeFirst()
+      }
+
+      return invalidOps
+    })
 
     // TODO: logging
 
