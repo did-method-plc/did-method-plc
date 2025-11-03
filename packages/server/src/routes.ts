@@ -125,7 +125,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
     const { adminSecret, did, cid } = req.body
 
     // admin auth
-    if (ctx.adminSecret === undefined) {
+    if (!ctx.adminSecret) {
       throw new ServerError(401, 'admin secret has not been configured')
     }
     if (!timingSafeStringEqual(adminSecret, ctx.adminSecret)) {
