@@ -3,7 +3,9 @@ import { Kysely, sql } from 'kysely'
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable('admin_logs')
-    .addColumn('msg', 'text', (col) => col.notNull())
+    .addColumn('id', 'serial', (col) => col.primaryKey())
+    .addColumn('type', 'varchar', (col) => col.notNull())
+    .addColumn('data', 'jsonb', (col) => col.notNull())
     .addColumn('createdAt', 'timestamptz', (col) =>
       col.notNull().defaultTo(sql`current_timestamp`),
     )

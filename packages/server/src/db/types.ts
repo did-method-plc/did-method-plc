@@ -35,7 +35,9 @@ export interface OperationsTable {
 }
 
 export interface AdminLogsTable {
-  msg: string
+  id: Generated<number>
+  type: string
+  data: Record<string, string>
   createdAt: Generated<Date>
 }
 

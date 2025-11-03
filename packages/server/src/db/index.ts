@@ -299,10 +299,17 @@ export class Database implements PlcDatabase {
           .where('did', '=', op.did)
           .where('cid', '=', op.cid.toString())
           .executeTakeFirst()
-        const logMsg = `removeInvalidOps: Removing did=${
-          op.did
-        } cid=${op.cid.toString()}`
-        await this.db.insertInto('admin_logs').values({ msg: logMsg }).execute()
+
+        await this.db
+          .insertInto('admin_logs')
+          .values({
+            type: 'removeInvalidOps',
+            data: {
+              did: op.did,
+              cid: op.cid.toString(),
+            },
+          })
+          .execute()
       }
 
       return invalidOps
