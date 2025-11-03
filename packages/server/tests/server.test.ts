@@ -1,3 +1,4 @@
+import axios, { AxiosError } from 'axios'
 import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TEST_ADMIN_SECRET } from './_util'
@@ -311,12 +312,12 @@ describe('PLC server', () => {
 
   it('disallows removal of valid operations.', async () => {
     const auditLog = await client.getAuditableLog(did1)
-    const promise = client.removeInvalidOps(
-      TEST_ADMIN_SECRET,
-      did1,
-      auditLog[0].cid,
-    )
-    await expect(promise).rejects.toThrow(PlcClientError)
+    const promise = axios.post(`${client.url}/admin/removeInvalidOps`, {
+      adminSecret: TEST_ADMIN_SECRET,
+      did: did1,
+      cid: auditLog[0].cid,
+    })
+    await expect(promise).rejects.toThrow(AxiosError)
   })
 
   it('allows invalid operations to be removed using adminSecret', async () => {
@@ -348,11 +349,13 @@ describe('PLC server', () => {
       .execute()
 
     // attempt removal
-    const removedOps = await client.removeInvalidOps(
-      TEST_ADMIN_SECRET,
-      did,
-      res.cid,
-    )
+    const removedOps = (
+      await axios.post(`${client.url}/admin/removeInvalidOps`, {
+        adminSecret: TEST_ADMIN_SECRET,
+        did: did,
+        cid: res.cid,
+      })
+    ).data
     expect(removedOps).toEqual([res.operation]) // should return the removed op
   })
 
