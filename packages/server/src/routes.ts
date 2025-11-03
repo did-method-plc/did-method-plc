@@ -1,8 +1,10 @@
+import { CID } from 'multiformats/cid'
 import express from 'express'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import { AppContext } from './context'
 import { validateIncomingOp } from './constraints'
+import { timingSafeStringEqual } from './util'
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
@@ -116,6 +118,22 @@ export const createRouter = (ctx: AppContext): express.Router => {
     const op = validateIncomingOp(req.body)
     await ctx.db.validateAndAddOp(did, op, new Date())
     res.sendStatus(200)
+  })
+
+  // We only have one admin endpoint, so an auth middleware would probably be overkill
+  router.post('/admin/removeInvalidOps', async function (req, res) {
+    const { adminSecret, did, cid } = req.body
+
+    // admin auth
+    if (ctx.adminSecret === undefined) {
+      throw new ServerError(401, 'admin secret has not been configured')
+    }
+    if (!timingSafeStringEqual(adminSecret, ctx.adminSecret)) {
+      throw new ServerError(401, 'invalid admin secret')
+    }
+
+    const removedOps = await ctx.db.removeInvalidOps(did, cid)
+    res.json(removedOps)
   })
 
   return router

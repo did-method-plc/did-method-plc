@@ -145,6 +145,22 @@ export class Client {
   async health() {
     return await this.makeGetReq(`${this.url}/_health`)
   }
+
+  async removeInvalidOps(adminSecret: string, did: string, cid: string) {
+    try {
+      const res = await axios.post(`${this.url}/admin/removeInvalidOps`, {
+        adminSecret,
+        did,
+        cid,
+      })
+      return res.data
+    } catch (err) {
+      if (!axios.isAxiosError(err)) {
+        throw err
+      }
+      throw PlcClientError.fromAxiosError(err)
+    }
+  }
 }
 
 export class PlcClientError extends Error {

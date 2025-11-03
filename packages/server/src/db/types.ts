@@ -16,6 +16,10 @@ export interface PlcDatabase {
   ): Promise<plc.IndexedOperation[]>
   lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null>
   exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]>
+  removeInvalidOps(
+    did: string,
+    cid: string,
+  ): Promise<plc.CompatibleOpOrTombstone[]>
 }
 
 export interface DidsTable {
