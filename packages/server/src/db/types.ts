@@ -34,7 +34,13 @@ export interface OperationsTable {
   createdAt: Generated<Date> // Note: we do not currently make use of the Generated feature, it could be removed in future
 }
 
+export interface AdminLogsTable {
+  msg: string
+  createdAt: Generated<Date>
+}
+
 export interface DatabaseSchema {
   dids: DidsTable
   operations: OperationsTable
+  admin_logs: AdminLogsTable
 }
