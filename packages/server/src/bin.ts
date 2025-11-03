@@ -16,7 +16,7 @@ const run = async () => {
 
   const envPort = parseInt(process.env.PORT || '')
   const port = isNaN(envPort) ? 2582 : envPort
-  const adminSecret = process.env.ADMIN_SECRET
+  const adminSecret = process.env.ADMIN_SECRET || undefined
 
   const plc = PlcServer.create({ db, port, adminSecret })
   await plc.start()
