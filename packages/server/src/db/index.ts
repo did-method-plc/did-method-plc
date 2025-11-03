@@ -264,13 +264,21 @@ export class Database implements PlcDatabase {
         await tx.insertInto('dids').values({ did }).execute()
       }
 
-      const ops = await this.indexedOpsForDid(did)
+      const ops = await this.indexedOpsForDid(did, true)
       const maybeInvalidOpIdx = ops.findIndex((op) => op.cid.toString() === cid)
       if (maybeInvalidOpIdx === -1) {
         throw new ServerError(400, 'operation does not exist')
       }
 
       const opsBefore = ops.slice(0, maybeInvalidOpIdx)
+      if (opsBefore.some((op) => op.nullified)) {
+        // handling this would require a more complex implementation, fingers crossed we won't ever need it
+        throw new ServerError(
+          400,
+          'removing ops from DIDs with prior nullifications is not currently supported',
+        )
+      }
+
       let opIsValid: boolean
       try {
         await plc.assureValidNextOp(
@@ -285,14 +293,6 @@ export class Database implements PlcDatabase {
       }
       if (opIsValid) {
         throw new ServerError(400, 'valid operations cannot be removed')
-      }
-
-      if (opsBefore.some((op) => op.nullified)) {
-        // handling this would require a more complex implementation, fingers crossed we won't ever need it
-        throw new ServerError(
-          400,
-          'removing ops from DIDs with prior nullifications is not currently supported',
-        )
       }
 
       // remove the invalid op, and any that came after it
