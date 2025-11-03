@@ -257,11 +257,7 @@ export class Database implements PlcDatabase {
         .executeTakeFirst()
 
       if (!userLock) {
-        // check if the DID actually exists before we continue
-        if (!(await this.lastOpForDid(did))) {
-          throw new ServerError(400, 'did does not exist')
-        }
-        await tx.insertInto('dids').values({ did }).execute()
+        throw new ServerError(400, 'did does not exist')
       }
 
       const ops = await this.indexedOpsForDid(did, true)
