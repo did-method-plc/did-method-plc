@@ -30,7 +30,8 @@ const main = async () => {
     poolIdleTimeoutMs: dbPoolIdleTimeoutMs,
   })
   const port = parseMaybeInt(process.env.PORT)
-  const plc = PlcServer.create({ db, port, version })
+  const adminSecret = process.env.ADMIN_SECRET || undefined
+  const plc = PlcServer.create({ db, port, version, adminSecret })
   const server = await plc.start()
   server.keepAliveTimeout = 90000
   // Graceful shutdown (see also https://aws.amazon.com/blogs/containers/graceful-shutdowns-with-ecs/)
