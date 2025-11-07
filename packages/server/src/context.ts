@@ -6,6 +6,7 @@ export class AppContext {
       db: PlcDatabase
       version: string
       port?: number
+      adminSecret?: string
     },
   ) {}
 
@@ -19,6 +20,10 @@ export class AppContext {
 
   get port() {
     return this.opts.port
+  }
+
+  get adminSecret() {
+    return this.opts.adminSecret
   }
 }
 

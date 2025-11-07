@@ -2,6 +2,7 @@ import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from '../error'
 import { PlcDatabase } from './types'
+import { CID } from 'multiformats/cid'
 
 type Contents = Record<string, plc.IndexedOperation[]>
 
@@ -78,6 +79,13 @@ export class MockDatabase implements PlcDatabase {
   // disabled in mocks
   async exportOps(_count: number, _after?: Date): Promise<plc.ExportedOp[]> {
     return []
+  }
+
+  async removeInvalidOps(
+    _did: string,
+    _cid: string,
+  ): Promise<plc.CompatibleOpOrTombstone[]> {
+    throw new Error('not implemented in mock')
   }
 }
 

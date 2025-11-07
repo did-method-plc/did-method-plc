@@ -33,6 +33,7 @@ export class PlcServer {
     db: PlcDatabase
     port?: number
     version?: string
+    adminSecret?: string
   }): PlcServer {
     const app = express()
     app.use(express.json({ limit: '100kb' }))
@@ -44,6 +45,7 @@ export class PlcServer {
       db: opts.db,
       version: opts.version || '0.0.0',
       port: opts.port,
+      adminSecret: opts.adminSecret,
     })
 
     app.use('/', createRouter(ctx))

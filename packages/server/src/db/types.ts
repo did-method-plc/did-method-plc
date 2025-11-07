@@ -16,6 +16,10 @@ export interface PlcDatabase {
   ): Promise<plc.IndexedOperation[]>
   lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null>
   exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]>
+  removeInvalidOps(
+    did: string,
+    cid: string,
+  ): Promise<plc.CompatibleOpOrTombstone[]>
 }
 
 export interface DidsTable {
@@ -30,7 +34,15 @@ export interface OperationsTable {
   createdAt: Generated<Date> // Note: we do not currently make use of the Generated feature, it could be removed in future
 }
 
+export interface AdminLogsTable {
+  id: Generated<number>
+  type: string
+  data: Record<string, string>
+  createdAt: Generated<Date>
+}
+
 export interface DatabaseSchema {
   dids: DidsTable
   operations: OperationsTable
+  admin_logs: AdminLogsTable
 }

@@ -1,9 +1,11 @@
+import axios, { AxiosError } from 'axios'
 import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
-import { CloseFn, runTestServer } from './_util'
+import { CloseFn, runTestServer, TEST_ADMIN_SECRET } from './_util'
 import { check } from '@atproto/common'
-import { Database } from '../src'
+import { AppContext, Database } from '../src'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
+import exp from 'constants'
 
 describe('PLC server', () => {
   let handle1 = 'at://alice.example.com'
@@ -306,6 +308,55 @@ describe('PLC server', () => {
     const did = await didForCreateOp(createV1)
     const attempt = client.sendOperation(did, createV1 as any)
     await expect(attempt).rejects.toThrow()
+  })
+
+  it('disallows removal of valid operations.', async () => {
+    const auditLog = await client.getAuditableLog(did1)
+    const promise = axios.post(`${client.url}/admin/removeInvalidOps`, {
+      adminSecret: TEST_ADMIN_SECRET,
+      did: did1,
+      cid: auditLog[0].cid,
+    })
+    await expect(promise).rejects.toThrow(AxiosError)
+  })
+
+  it('allows invalid operations to be removed using adminSecret', async () => {
+    // create a new DID for testing
+    const did = await client.createDid({
+      signingKey: signingKey.did(),
+      rotationKeys: [rotationKey1.did(), rotationKey2.did()],
+      handle: 'removetest.example.com',
+      pds: atpPds,
+      signer: rotationKey1,
+    })
+
+    // the operation is valid, so we need to do some database surgery to invalidate it
+    const res = await db.db
+      .selectFrom('operations')
+      .select('operation')
+      .select('cid')
+      .where('did', '=', did)
+      .executeTakeFirst()
+    expect(res).toBeDefined()
+    if (res === undefined) {
+      throw new Error('unreachable')
+    }
+    res.operation.sig = 'invalid'
+    await db.db
+      .updateTable('operations')
+      .set({ operation: res.operation })
+      .where('did', '=', did)
+      .execute()
+
+    // attempt removal
+    const removedOps = (
+      await axios.post(`${client.url}/admin/removeInvalidOps`, {
+        adminSecret: TEST_ADMIN_SECRET,
+        did: did,
+        cid: res.cid,
+      })
+    ).data
+    expect(removedOps).toEqual([res.operation]) // should return the removed op
   })
 
   it('healthcheck succeeds when database is available.', async () => {

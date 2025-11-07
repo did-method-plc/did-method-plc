@@ -10,6 +10,8 @@ export type TestServerInfo = {
   close: CloseFn
 }
 
+export const TEST_ADMIN_SECRET = '9sa9zlrF50LJbbre364HBDgL0o8MkVpjoo'
+
 export const runTestServer = async (opts: {
   dbSchema: string
 }): Promise<TestServerInfo> => {
@@ -25,7 +27,7 @@ export const runTestServer = async (opts: {
   })
   await db.migrateToLatestOrThrow()
 
-  const plc = PlcServer.create({ db })
+  const plc = PlcServer.create({ db, adminSecret: TEST_ADMIN_SECRET })
   const plcServer = await plc.start()
   const { port } = plcServer.address() as AddressInfo
 

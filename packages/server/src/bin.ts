@@ -16,8 +16,9 @@ const run = async () => {
 
   const envPort = parseInt(process.env.PORT || '')
   const port = isNaN(envPort) ? 2582 : envPort
+  const adminSecret = process.env.ADMIN_SECRET || undefined
 
-  const plc = PlcServer.create({ db, port })
+  const plc = PlcServer.create({ db, port, adminSecret })
   await plc.start()
   console.log(`👤 PLC server is running at http://localhost:${port}`)
 }
