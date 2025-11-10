@@ -294,13 +294,13 @@ export class Database implements PlcDatabase {
       // remove the invalid op, and any that came after it
       const invalidOps = ops.slice(maybeInvalidOpIdx)
       for (const op of invalidOps) {
-        await this.db
+        await tx
           .deleteFrom('operations')
           .where('did', '=', op.did)
           .where('cid', '=', op.cid.toString())
           .executeTakeFirst()
 
-        await this.db
+        await tx
           .insertInto('admin_logs')
           .values({
             type: 'removeInvalidOps',
