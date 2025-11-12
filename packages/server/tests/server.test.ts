@@ -310,6 +310,29 @@ describe('PLC server', () => {
     await expect(attempt).rejects.toThrow()
   })
 
+  it('disallows create with extra service fields', async () => {
+    const badOp = await plc.addSignature(
+      {
+        type: 'plc_operation',
+        verificationMethods: {},
+        alsoKnownAs: [],
+        rotationKeys: [rotationKey1.did()],
+        services: {
+          foo: {
+            type: 'abc',
+            endpoint: 'https://example.com/',
+            extraField: 'blah', // if this field is removed, the op is valid
+          },
+        },
+        prev: null,
+      },
+      rotationKey1,
+    )
+    const did = await didForCreateOp(badOp as any)
+    const attempt = client.sendOperation(did, badOp as any)
+    await expect(attempt).rejects.toThrow()
+  })
+
   it('disallows removal of valid operations.', async () => {
     const auditLog = await client.getAuditableLog(did1)
     const promise = axios.post(`${client.url}/admin/removeInvalidOps`, {

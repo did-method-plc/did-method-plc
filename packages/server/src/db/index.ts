@@ -266,6 +266,7 @@ export class Database implements PlcDatabase {
         throw new ServerError(400, 'operation does not exist')
       }
 
+      const maybeInvalidOp = ops[maybeInvalidOpIdx]
       const opsBefore = ops.slice(0, maybeInvalidOpIdx)
       if (opsBefore.some((op) => op.nullified)) {
         // handling this would require a more complex implementation, fingers crossed we won't ever need it
@@ -277,11 +278,12 @@ export class Database implements PlcDatabase {
 
       let opIsValid: boolean
       try {
+        const schemaValidOp = plc.def.indexedOperation.parse(maybeInvalidOp)
         await plc.assureValidNextOp(
           did,
           opsBefore,
-          ops[maybeInvalidOpIdx].operation,
-          ops[maybeInvalidOpIdx].createdAt,
+          schemaValidOp.operation,
+          schemaValidOp.createdAt,
         )
         opIsValid = true
       } catch {
