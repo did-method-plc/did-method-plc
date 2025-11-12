@@ -328,9 +328,7 @@ describe('PLC server', () => {
       },
       rotationKey1,
     )
-    console.log(badOp)
     const did = await didForCreateOp(badOp as any)
-    console.log(did)
     const attempt = client.sendOperation(did, badOp as any)
     await expect(attempt).rejects.toThrow()
   })
