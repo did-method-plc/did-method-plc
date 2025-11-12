@@ -35,7 +35,7 @@ const unsignedCreateOpV1 = z
   })
   .strict()
 export type UnsignedCreateOpV1 = z.infer<typeof unsignedCreateOpV1>
-const createOpV1 = unsignedCreateOpV1.extend({ sig: z.string() })
+const createOpV1 = unsignedCreateOpV1.extend({ sig: z.string() }).strict()
 export type CreateOpV1 = z.infer<typeof createOpV1>
 
 const unsignedOperation = z
