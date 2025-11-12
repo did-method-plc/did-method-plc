@@ -1,4 +1,4 @@
-import { DAY, HOUR, cborEncode } from '@atproto/common'
+import { DAY, HOUR, cborEncode, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import {
@@ -18,36 +18,21 @@ const MAX_VERIFICATION_METHOD_ENTRIES = 10
 const MAX_ID_LENGTH = 32
 const MAX_DID_KEY_LENGTH = 256 // k256 = 57, BLS12-381 = 143
 
-export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
-  const byteLength = cborEncode(input).byteLength
+export function assertValidIncomingOp(
+  op: unknown,
+): asserts op is plc.OpOrTombstone {
+  const byteLength = cborEncode(op).byteLength
   if (byteLength > MAX_OP_BYTES) {
     throw new ServerError(
       400,
       `Operation too large (${MAX_OP_BYTES} bytes maximum in cbor encoding)`,
     )
   }
-
-  // We *need* to parse, and use the result of the parsing, to ensure that any
-  // unknown fields are removed from the input. "@atproto/common"'s check
-  // function will not remove unknown fields.
-  const result = plc.def.opOrTombstone.safeParse(input)
-
-  if (!result.success) {
-    const errors = result.error.errors.map(
-      (e) => `${e.message} at /${e.path.join('/')}`,
-    )
-    throw new ServerError(
-      400,
-      errors.length
-        ? errors.join('. ') + '.'
-        : `Not a valid operation: ${JSON.stringify(input)}`,
-    )
+  if (!check.is(op, plc.def.opOrTombstone)) {
+    throw new ServerError(400, `Not a valid operation: ${JSON.stringify(op)}`)
   }
-
-  const op = result.data
-
   if (op.type === 'plc_tombstone') {
-    return op
+    return
   }
   if (op.alsoKnownAs.length > MAX_AKA_ENTRIES) {
     throw new ServerError(
@@ -55,7 +40,7 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
       `To many alsoKnownAs entries (max ${MAX_AKA_ENTRIES})`,
     )
   }
-  const akaDupe = new Set<string>()
+  const akaDupe: Record<string, boolean> = {}
   for (const aka of op.alsoKnownAs) {
     if (aka.length > MAX_AKA_LENGTH) {
       throw new ServerError(
@@ -63,10 +48,10 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
         `alsoKnownAs entry too long (max ${MAX_AKA_LENGTH}): ${aka}`,
       )
     }
-    if (akaDupe.has(aka)) {
+    if (akaDupe[aka]) {
       throw new ServerError(400, `duplicate alsoKnownAs entry: ${aka}`)
     } else {
-      akaDupe.add(aka)
+      akaDupe[aka] = true
     }
   }
   if (op.rotationKeys.length > MAX_ROTATION_ENTRIES) {
@@ -138,8 +123,6 @@ export function validateIncomingOp(input: unknown): plc.OpOrTombstone {
       throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
     }
   }
-
-  return op
 }
 
 const HOUR_LIMIT = 10
