@@ -8,10 +8,12 @@ const cid = z
   })
   .transform((obj: unknown) => mf.CID.asCID(obj) as mf.CID)
 
-const service = z.object({
-  type: z.string(),
-  endpoint: z.string(),
-})
+const service = z
+  .object({
+    type: z.string(),
+    endpoint: z.string(),
+  })
+  .strict()
 
 const documentData = z.object({
   did: z.string(),
@@ -22,14 +24,16 @@ const documentData = z.object({
 })
 export type DocumentData = z.infer<typeof documentData>
 
-const unsignedCreateOpV1 = z.object({
-  type: z.literal('create'),
-  signingKey: z.string(),
-  recoveryKey: z.string(),
-  handle: z.string(),
-  service: z.string(),
-  prev: z.null(),
-})
+const unsignedCreateOpV1 = z
+  .object({
+    type: z.literal('create'),
+    signingKey: z.string(),
+    recoveryKey: z.string(),
+    handle: z.string(),
+    service: z.string(),
+    prev: z.null(),
+  })
+  .strict()
 export type UnsignedCreateOpV1 = z.infer<typeof unsignedCreateOpV1>
 const createOpV1 = unsignedCreateOpV1.extend({ sig: z.string() })
 export type CreateOpV1 = z.infer<typeof createOpV1>
