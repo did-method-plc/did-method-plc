@@ -40,7 +40,7 @@ export function assertValidIncomingOp(
       `To many alsoKnownAs entries (max ${MAX_AKA_ENTRIES})`,
     )
   }
-  const akaDupe: Record<string, boolean> = {}
+  const akaDupe = new Set<string>()
   for (const aka of op.alsoKnownAs) {
     if (aka.length > MAX_AKA_LENGTH) {
       throw new ServerError(
@@ -48,10 +48,10 @@ export function assertValidIncomingOp(
         `alsoKnownAs entry too long (max ${MAX_AKA_LENGTH}): ${aka}`,
       )
     }
-    if (akaDupe[aka]) {
+    if (akaDupe.has(aka)) {
       throw new ServerError(400, `duplicate alsoKnownAs entry: ${aka}`)
     } else {
-      akaDupe[aka] = true
+      akaDupe.add(aka)
     }
   }
   if (op.rotationKeys.length > MAX_ROTATION_ENTRIES) {
