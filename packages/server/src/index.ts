@@ -37,7 +37,7 @@ export class PlcServer {
   }): PlcServer {
     const app = express()
     app.use(express.json({ limit: '100kb' }))
-    app.use(cors())
+    app.use(cors({ methods: ['HEAD', 'GET'] }))
 
     app.use(loggerMiddleware)
 
