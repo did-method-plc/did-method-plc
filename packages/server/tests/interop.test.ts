@@ -20,7 +20,7 @@ describe('interop', () => {
 
   beforeAll(async () => {
     const server = await runTestServer({
-      dbSchema: 'server',
+      dbSchema: 'interop_tests',
     })
 
     db = server.db
