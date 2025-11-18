@@ -286,8 +286,7 @@ describe('PLC server', () => {
   it('exports the data set', async () => {
     const data = await client.export()
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
-    // the tests in this file produce 32 log entries, but other tests may be running
-    expect(data.length).toBeGreaterThanOrEqual(32)
+    expect(data.length).toEqual(32)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
     }
