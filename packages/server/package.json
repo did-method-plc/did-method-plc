@@ -51,6 +51,7 @@
     "pino-http": "^8.3.3"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/pg": "^8.6.5",
     "eslint-plugin-prettier": "^4.2.1"
   }
