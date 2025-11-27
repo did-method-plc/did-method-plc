@@ -9,20 +9,24 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Equivalent: ALTER TABLE operations ADD COLUMN seq bigint;
   // Note: This should be a metadata-only operation, and will not require a full rewrite of the table
 
-  // This index has two uses:
-  // 1. Get sequenced ops in seq order (for /export?after=<seq>, /export/stream)
-  // 2. Get unsequenced ops (seq=null) in createdAt order (for sequencing)
   await db.schema
-    .createIndex('operations_seq_createdat_idx')
+    .createIndex('operations_seq_idx')
     .on('operations')
-    .columns(['seq', 'createdAt'])
+    .columns(['seq'])
     .execute()
-  // Equivalent: CREATE INDEX operations_seq_idx ON operations (seq, "createdAt");
+  // Equivalent: CREATE INDEX operations_seq_idx ON operations (seq);
   // Note: Probably want `CREATE INDEX CONCURRENTLY` for prod
+
+  // used during sequencing (most valuable when the sequencer-leader has fallen behind)
+  await sql`CREATE INDEX operations_unsequenced_idx ON operations ("createdAt", cid COLLATE "C") WHERE seq=NULL`.execute(
+    db,
+  )
+  // ditto re: CONCURRENTLY
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
-  await db.schema.dropIndex('operations_seq_createdat_idx').execute()
+  await db.schema.dropIndex('operations_unsequenced_idx').execute()
+  await db.schema.dropIndex('operations_seq_idx').execute()
   await db.schema.alterTable('operations').dropColumn('seq').execute()
   await sql`DROP SEQUENCE plc_seq_sequence`.execute(db)
 }
