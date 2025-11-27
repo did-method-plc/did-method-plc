@@ -13,7 +13,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   // 1. Get sequenced ops in seq order (for /export?after=<seq>, /export/stream)
   // 2. Get unsequenced ops (seq=null) in createdAt order (for sequencing)
   await db.schema
-    .createIndex('operations_seq_idx')
+    .createIndex('operations_seq_createdat_idx')
     .on('operations')
     .columns(['seq', 'createdAt'])
     .execute()
@@ -22,7 +22,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
-  await db.schema.dropIndex('operations_seq_idx').execute()
+  await db.schema.dropIndex('operations_seq_createdat_idx').execute()
   await db.schema.alterTable('operations').dropColumn('seq').execute()
   await sql`DROP SEQUENCE plc_seq_sequence`.execute(db)
 }
