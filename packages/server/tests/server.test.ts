@@ -220,6 +220,7 @@ describe('PLC server', () => {
     expect(
       auditable.every((op) => check.is(op, plc.def.exportedOp)),
     ).toBeTruthy()
+    expect(auditable.every((op) => (op as any).seq === undefined)).toBeTruthy()
   })
 
   it('retrieves the did doc', async () => {
@@ -289,6 +290,7 @@ describe('PLC server', () => {
     expect(data.length).toEqual(32)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
+      expect((data[i] as any).seq).toBeUndefined()
     }
   })
 
