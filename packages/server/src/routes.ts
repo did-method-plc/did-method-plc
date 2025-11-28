@@ -36,10 +36,28 @@ export const createRouter = (ctx: AppContext): express.Router => {
       throw new ServerError(400, 'Invalid count parameter')
     }
     const count = Math.min(parsedCount, 1000)
+
     const afterParam =
       typeof req.query.after === 'string' ? req.query.after : undefined
-    const after = afterParam ? new Date(afterParam) : undefined
-    const ops = await ctx.db.exportOps(count, after)
+    const isNumeric = afterParam && /^\d+$/.test(afterParam)
+
+    let ops: plc.ExportedOpWithSeq[] | plc.ExportedOp[]
+    if (isNumeric) {
+      // after is integer seq
+      const after = parseInt(afterParam, 10)
+      if (isNaN(after) || after < 0) {
+        throw new ServerError(400, 'Invalid after parameter')
+      }
+      ops = await ctx.db.exportOpsSeq(count, after)
+    } else {
+      // after is timestamp
+      const after = afterParam ? new Date(afterParam) : undefined
+      if (after !== undefined && isNaN(after.getTime())) {
+        throw new ServerError(400, 'Invalid after parameter')
+      }
+      ops = await ctx.db.exportOps(count, after)
+    }
+
     res.setHeader('content-type', 'application/jsonlines')
     res.status(200)
     for (let i = 0; i < ops.length; i++) {

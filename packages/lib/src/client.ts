@@ -80,6 +80,20 @@ export class Client {
     return lines.map((l) => JSON.parse(l))
   }
 
+  async exportSeq(
+    after?: number,
+    count?: number,
+  ): Promise<t.ExportedOpWithSeq[]> {
+    const url = new URL(`${this.url}/export`)
+    url.searchParams.append('afterSeq', (after || 0).toString(10))
+    if (count !== undefined) {
+      url.searchParams.append('count', count.toString(10))
+    }
+    const res = await axios.get(url.toString())
+    const lines = res.data.split('\n')
+    return lines.map((l) => JSON.parse(l))
+  }
+
   async createDid(opts: {
     signingKey: string
     handle: string

@@ -81,6 +81,13 @@ export class MockDatabase implements PlcDatabase {
     return []
   }
 
+  async exportOpsSeq(
+    _count: number,
+    _after: number,
+  ): Promise<plc.ExportedOp[]> {
+    return []
+  }
+
   async removeInvalidOps(
     _did: string,
     _cid: string,

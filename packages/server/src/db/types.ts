@@ -16,6 +16,7 @@ export interface PlcDatabase {
   ): Promise<plc.IndexedOperation[]>
   lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null>
   exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]>
+  exportOpsSeq(count: number, after: number): Promise<plc.ExportedOpWithSeq[]>
   removeInvalidOps(
     did: string,
     cid: string,
@@ -32,7 +33,7 @@ export interface OperationsTable {
   cid: string
   nullified: boolean
   createdAt: Generated<Date> // Note: we do not currently make use of the Generated feature, it could be removed in future
-  seq?: number
+  seq: number | null
 }
 
 export type OperationsTableEntry = Selectable<OperationsTable>
