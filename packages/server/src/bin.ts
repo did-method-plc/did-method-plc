@@ -1,6 +1,7 @@
 import './env'
 import { Database, PlcDatabase } from './db'
 import PlcServer from '.'
+import { SequencerLeader } from './sequencer'
 
 const waitForDb = async (
   db: Database,
@@ -27,6 +28,7 @@ const run = async () => {
     const dbUrl = process.env.DATABASE_URL
 
     let db: PlcDatabase
+    let leader: SequencerLeader | undefined
     if (dbUrl) {
       console.log('[*] Connecting to database...')
       const pgDb = Database.postgres({ url: dbUrl })
@@ -38,6 +40,14 @@ const run = async () => {
       console.log('[*] Running migrations...')
       await pgDb.migrateToLatestOrThrow()
       db = pgDb
+
+      // Start sequencer leader
+      console.log('[*] Starting sequencer leader...')
+      leader = new SequencerLeader(pgDb)
+      leader.run().catch((err) => {
+        console.error('Sequencer leader error:', err)
+      })
+      console.log('[*] Sequencer leader started')
     } else {
       db = Database.mock()
     }
@@ -56,6 +66,7 @@ const run = async () => {
     // Graceful shutdown
     const shutdown = async () => {
       console.log('\nShutting down...')
+      leader?.destroy()
       await plc.destroy()
       process.exit(0)
     }

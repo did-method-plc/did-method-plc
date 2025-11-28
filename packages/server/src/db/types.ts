@@ -1,5 +1,5 @@
 import * as plc from '@did-plc/lib'
-import { Generated } from 'kysely'
+import { Generated, Selectable } from 'kysely'
 
 export interface PlcDatabase {
   close(): Promise<void>
@@ -32,7 +32,12 @@ export interface OperationsTable {
   cid: string
   nullified: boolean
   createdAt: Generated<Date> // Note: we do not currently make use of the Generated feature, it could be removed in future
+  seq?: number
 }
+
+export type OperationsTableEntry = Selectable<OperationsTable>
+
+export const PLC_SEQ_SEQUENCE = 'plc_seq_sequence'
 
 export interface AdminLogsTable {
   id: Generated<number>
