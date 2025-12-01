@@ -6,6 +6,13 @@ export type OutboxOpts = {
   maxBufferSize: number
 }
 
+export class OutboxError extends Error {
+  constructor(msg: string) {
+    super(msg)
+    Object.setPrototypeOf(this, OutboxError.prototype)
+  }
+}
+
 export class Outbox {
   private caughtUp = false
   lastSeen = -1
@@ -33,6 +40,10 @@ export class Outbox {
   ): AsyncGenerator<SeqEvt> {
     // Phase 1: Backfill historical events
     if (backfillCursor !== undefined) {
+      const firstSeq = await this.sequencer.firstAvailableSeq()
+      if (backfillCursor < firstSeq) {
+        throw new OutboxError('Cursor too old for streaming')
+      }
       for await (const evt of this.getBackfill(backfillCursor)) {
         if (signal?.aborted) return
         this.lastSeen = evt.seq
@@ -88,7 +99,7 @@ export class Outbox {
         }
       } catch (err) {
         if (err instanceof AsyncBufferFullError) {
-          throw new Error('Stream consumer too slow')
+          throw new OutboxError('Stream consumer too slow')
         } else {
           throw err
         }

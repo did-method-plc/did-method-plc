@@ -6,7 +6,7 @@ import { ServerError } from './error'
 import { AppContext } from './context'
 import { assertValidIncomingOp } from './constraints'
 import { timingSafeStringEqual } from './util'
-import { Outbox } from './sequencer'
+import { Outbox, OutboxError } from './sequencer'
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
@@ -113,6 +113,10 @@ export const createRouter = (ctx: AppContext): express.Router => {
             ws.send(JSON.stringify(evt))
           }
         } catch (err) {
+          if (err instanceof OutboxError) {
+            // consumer too slow, or stale cursor
+            ws.close(1000, err.message)
+          }
           if (!abortController.signal.aborted) {
             req.log.error({ err }, 'error streaming events')
           }
