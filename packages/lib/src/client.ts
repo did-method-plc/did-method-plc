@@ -85,7 +85,7 @@ export class Client {
     count?: number,
   ): Promise<t.ExportedOpWithSeq[]> {
     const url = new URL(`${this.url}/export`)
-    url.searchParams.append('afterSeq', (after || 0).toString(10))
+    url.searchParams.append('after', (after || 0).toString(10))
     if (count !== undefined) {
       url.searchParams.append('count', count.toString(10))
     }
