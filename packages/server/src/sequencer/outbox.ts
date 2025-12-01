@@ -41,7 +41,7 @@ export class Outbox {
     // Phase 1: Backfill historical events
     if (backfillCursor !== undefined) {
       const firstSeq = await this.sequencer.firstAvailableSeq()
-      if (backfillCursor < firstSeq) {
+      if (backfillCursor < firstSeq - 1) {
         throw new OutboxError('Cursor too old for streaming')
       }
       for await (const evt of this.getBackfill(backfillCursor)) {
