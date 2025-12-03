@@ -225,12 +225,14 @@ describe('sequencer', () => {
 
   describe('SequencerLeader', () => {
     it('assigns sequence numbers to pending events', async () => {
+      const TEST_DID = 'did:plc:testseqassignment'
+
       // Insert an event without sequence number
       await db.db.transaction().execute(async (tx) => {
         await tx
           .insertInto('operations')
           .values({
-            did: 'did:plc:test123',
+            did: TEST_DID,
             operation: { type: 'plc_tombstone', prev: 'abc', sig: 'blah' },
             cid: 'bafytest',
             createdAt: new Date(),
@@ -245,23 +247,41 @@ describe('sequencer', () => {
       // Verify event has sequence number
       const events = await sequencer.requestSeqRange({})
       const lastEvent = events[events.length - 1]
+      expect(lastEvent.did).toEqual(TEST_DID) // make sure it's the same event
       expect(lastEvent.seq).toBeGreaterThan(0)
     })
 
-    it('maintains insertion order when assigning sequences', async () => {
-      // Create multiple events quickly
-      const promises: Promise<string>[] = []
-      for (let i = 0; i < 5; i++) {
-        promises.push(createDid(client))
-      }
-      await Promise.all(promises)
+    it('maintains strict monotonicity when assigning sequences', async () => {
+      const TEST_DID = 'did:plc:testmonotonic'
+
+      // Create multiple events in a single txn, with artificially identical timestamps
+      const now = new Date()
+      await db.db.transaction().execute(async (tx) => {
+        for (let i = 0; i < 5; i++) {
+          await tx
+            .insertInto('operations')
+            .values({
+              did: TEST_DID,
+              operation: { type: 'plc_tombstone', prev: 'abc', sig: 'blah' },
+              cid: 'bafytest123' + i, // avoid violating unique constraint
+              createdAt: now,
+              nullified: false,
+            })
+            .execute()
+        }
+      })
       await waitForSequencing()
 
-      // Verify events are in order
+      // Verify events have monotonic seqs and are returned in seq order
       const events = await sequencer.requestSeqRange({})
+      let seenCount = 0
       for (let i = 1; i < events.length; i++) {
         expect(events[i].seq).toBeGreaterThan(events[i - 1].seq)
+        if (events[i].did == TEST_DID) {
+          seenCount++
+        }
       }
+      expect(seenCount).toEqual(5) // check we saw our own events
     })
   })
 

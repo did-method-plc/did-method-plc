@@ -112,15 +112,15 @@ describe('/export/stream endpoint', () => {
     await createDid(client)
     await waitForSequencing()
 
-    // Get all events to find a cursor
-    const allEvents = await db.db
+    // Find the first cursor
+    const { seq } = await db.db
       .selectFrom('operations')
-      .selectAll()
+      .select('seq')
       .where('seq', 'is not', null)
       .orderBy('seq', 'asc')
-      .execute()
-
-    const cursor = allEvents[0].seq! // Start from first event
+      .limit(1)
+      .executeTakeFirstOrThrow()
+    const cursor = seq!
 
     const ws = new WebSocket(`${wsUrl}?cursor=${cursor}`)
     const receivedEvents: any[] = []
