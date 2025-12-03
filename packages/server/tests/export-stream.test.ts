@@ -290,4 +290,16 @@ describe('/export/stream endpoint', () => {
       expect(streamedMsgs[i].cid).toEqual(exportData[i].cid)
     }
   })
+
+  it('rejects cursors from the future', async () => {
+    const ws = new WebSocket(`${wsUrl}?cursor=99999999`)
+    const closeReason = await new Promise<string>((resolve, reject) => {
+      ws.on('error', reject)
+      ws.on('close', (code, reason) => {
+        resolve(reason.toString())
+      })
+      setTimeout(reject, 1000)
+    })
+    expect(closeReason).toBe('Cursor is from the future')
+  })
 })

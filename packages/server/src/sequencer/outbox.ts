@@ -40,10 +40,20 @@ export class Outbox {
   ): AsyncGenerator<SeqEvt> {
     // Phase 1: Backfill historical events
     if (backfillCursor !== undefined) {
-      const firstSeq = await this.sequencer.firstAvailableSeq()
-      if (backfillCursor < firstSeq - 1) {
+      const [next, curr] = await Promise.all([
+        this.sequencer.next(backfillCursor),
+        this.sequencer.curr(),
+      ])
+      if (backfillCursor > (curr?.seq ?? 0)) {
+        throw new OutboxError('Cursor is from the future')
+      }
+      const backfillTime = new Date(
+        Date.now() - this.sequencer.catchupDurationMs,
+      )
+      if (next && next.createdAt < backfillTime) {
         throw new OutboxError('Cursor too old for streaming')
       }
+
       for await (const evt of this.getBackfill(backfillCursor)) {
         if (signal?.aborted) return
         this.lastSeen = evt.seq

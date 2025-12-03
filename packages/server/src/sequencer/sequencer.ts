@@ -72,27 +72,6 @@ export class Sequencer
     return result ?? null
   }
 
-  async firstAvailableSeq(): Promise<number> {
-    // A future implementation may have a separate table for sequencing, trimmed periodically,
-    // enforcing a hard limit on how far back you can seek back into the sequence.
-
-    // This query figures out what that limit *would* be, allowing us to change the implementation
-    // in future without changing the observable API behaviour.
-
-    const dateThreshold = new Date(
-      new Date().getTime() - this.catchupDurationMs,
-    )
-    const res = await this.db.db
-      .selectFrom('operations')
-      .select(['seq'])
-      .where('seq', 'is not', null)
-      .where('createdAt', '>', dateThreshold)
-      .orderBy('createdAt', 'asc')
-      .limit(1)
-      .executeTakeFirst()
-    return res?.seq || 0
-  }
-
   async requestSeqRange(opts: {
     earliestSeq?: number
     latestSeq?: number
