@@ -255,6 +255,7 @@ describe('/export/stream endpoint', () => {
       expect(parsed.seq).not.toBeNull()
       expect(parsed.type).toBe('indexed_op')
       expect(parsed.nullified).toBeUndefined()
+      expect(plc.exportedOpWithSeq.safeParse(parsed).success).toBeTruthy()
     }
   })
 

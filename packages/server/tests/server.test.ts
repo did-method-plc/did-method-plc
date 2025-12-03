@@ -295,6 +295,7 @@ describe('PLC server', () => {
       expect((data[i] as any).seq).toBeUndefined()
       expect((data[i] as any).type).toBeUndefined()
       expect(typeof data[i].nullified).toBe('boolean')
+      expect(plc.exportedOp.safeParse(data[i]).success).toBeTruthy()
     }
   })
 
