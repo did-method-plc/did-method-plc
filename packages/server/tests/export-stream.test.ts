@@ -255,4 +255,35 @@ describe('/export/stream endpoint', () => {
       expect(parsed.type).toBe('indexed_op')
     }
   })
+
+  it('sends the same operations as /export?after=<seq>, in the same order', async () => {
+    const curr = await server.ctx.sequencer.curr()
+    const latestSeq = curr!.seq
+
+    const ws = new WebSocket(`${wsUrl}?cursor=0`)
+    const streamedOps: plc.CompatibleOpOrTombstone[] = []
+
+    await new Promise<void>((resolve, reject) => {
+      ws.on('error', reject)
+      ws.on('message', (data: Buffer) => {
+        const msg = JSON.parse(data.toString())
+        streamedOps.push(msg.operation)
+        if (msg.seq === latestSeq) {
+          resolve()
+        }
+      })
+      setTimeout(reject, 1000)
+    })
+    ws.close()
+
+    expect(streamedOps.length).toBeGreaterThan(0)
+
+    const exportData = await client.export() // assumes everything fits in first page
+    const exportOps = exportData.map((msg) => msg.operation)
+
+    expect(streamedOps.length).toEqual(exportOps.length)
+    for (let i = 0; i < streamedOps.length; i++) {
+      expect(streamedOps[i]).toEqual(exportOps[i])
+    }
+  })
 })

@@ -1,4 +1,3 @@
-import { P256Keypair } from '@atproto/crypto'
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
