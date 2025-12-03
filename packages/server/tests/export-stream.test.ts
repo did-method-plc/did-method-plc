@@ -1,7 +1,6 @@
-import { P256Keypair } from '@atproto/crypto'
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { CloseFn, runTestServer, TestServerInfo } from './_util'
+import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
 import { Database } from '../src'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader'
 import WebSocket from 'ws'
@@ -35,18 +34,6 @@ describe('/export/stream endpoint', () => {
       await close()
     }
   })
-
-  const createDid = async (): Promise<string> => {
-    const key = await P256Keypair.create()
-    const did = await client.createDid({
-      signingKey: key.did(),
-      rotationKeys: [key.did()],
-      handle: `stream${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      pds: 'https://example.com',
-      signer: key,
-    })
-    return did
-  }
 
   const waitForSequencing = async (maxWait = 5000): Promise<void> => {
     const start = Date.now()
@@ -92,7 +79,7 @@ describe('/export/stream endpoint', () => {
     })
 
     // Create a DID after connection is open
-    await createDid()
+    await createDid(client)
     await waitForSequencing()
 
     // Wait for event to arrive
@@ -109,8 +96,8 @@ describe('/export/stream endpoint', () => {
 
   it('backfills from cursor', async () => {
     // Create some events first
-    await createDid()
-    await createDid()
+    await createDid(client)
+    await createDid(client)
     await waitForSequencing()
 
     // Get all events to find a cursor
@@ -207,7 +194,7 @@ describe('/export/stream endpoint', () => {
     }
 
     // Create an event
-    await createDid()
+    await createDid(client)
     await waitForSequencing()
 
     // Wait for events to propagate
@@ -236,7 +223,7 @@ describe('/export/stream endpoint', () => {
     ws.terminate()
 
     // Create events after disconnect - server should handle gracefully
-    await createDid()
+    await createDid(client)
     await waitForSequencing()
 
     // If we get here without errors, cleanup worked
@@ -257,7 +244,7 @@ describe('/export/stream endpoint', () => {
     })
 
     // Create events
-    await createDid()
+    await createDid(client)
     await waitForSequencing()
     await wait(200)
 

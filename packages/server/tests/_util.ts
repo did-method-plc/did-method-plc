@@ -1,6 +1,8 @@
 import { AddressInfo } from 'net'
 import PlcServer, { AppContext } from '../src'
+import { Client as plcClient } from '@did-plc/lib'
 import Database from '../src/db'
+import { P256Keypair } from '@atproto/crypto'
 
 export type CloseFn = () => Promise<void>
 export type TestServerInfo = {
@@ -39,4 +41,16 @@ export const runTestServer = async (opts: {
       await plc.destroy()
     },
   }
+}
+
+export const createDid = async (client: plcClient): Promise<string> => {
+  const key = await P256Keypair.create()
+  const did = await client.createDid({
+    signingKey: key.did(),
+    rotationKeys: [key.did()],
+    handle: `stream${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    pds: 'https://example.com',
+    signer: key,
+  })
+  return did
 }

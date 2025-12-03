@@ -1,7 +1,7 @@
 import { P256Keypair } from '@atproto/crypto'
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { CloseFn, runTestServer, TestServerInfo } from './_util'
+import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
 import { Database, Sequencer, Outbox, SeqEvt } from '../src'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader'
 
@@ -38,19 +38,6 @@ describe('sequencer', () => {
       await close()
     }
   })
-
-  // Utility function to create a new DID (generates a sequenced event)
-  const createDid = async (): Promise<string> => {
-    const key = await P256Keypair.create()
-    const did = await client.createDid({
-      signingKey: key.did(),
-      rotationKeys: [key.did()],
-      handle: `user${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      pds: 'https://example.com',
-      signer: key,
-    })
-    return did
-  }
 
   // Utility to wait for sequencer leader to catch up
   const waitForSequencing = async (maxWait = 5000): Promise<void> => {
@@ -148,7 +135,7 @@ describe('sequencer', () => {
   describe('Sequencer', () => {
     it('starts and tracks last seen correctly', async () => {
       // Create an event
-      await createDid()
+      await createDid(client)
       await waitForSequencing()
 
       const curr = await sequencer.curr()
@@ -164,14 +151,14 @@ describe('sequencer', () => {
 
     it('fetches next event after cursor', async () => {
       // Create a new event
-      await createDid()
+      await createDid(client)
       await waitForSequencing()
 
       const prevCurr = await sequencer.curr()
       expect(prevCurr).not.toBeNull()
 
       // Create another event
-      await createDid()
+      await createDid(client)
       await waitForSequencing()
 
       const next = await sequencer.next(prevCurr!.seq!)
@@ -223,7 +210,7 @@ describe('sequencer', () => {
       sequencer.on('events', listener)
 
       // Create a new DID to generate an event
-      await createDid()
+      await createDid(client)
       await waitForSequencing()
 
       // Wait for event to be emitted
@@ -265,7 +252,7 @@ describe('sequencer', () => {
       // Create multiple events quickly
       const promises: Promise<string>[] = []
       for (let i = 0; i < 5; i++) {
-        promises.push(createDid())
+        promises.push(createDid(client))
       }
       await Promise.all(promises)
       await waitForSequencing()
@@ -286,7 +273,7 @@ describe('sequencer', () => {
       // Create events
       const createPromise = (async () => {
         for (let i = 0; i < count; i++) {
-          await createDid()
+          await createDid(client)
         }
         await waitForSequencing()
       })()
@@ -313,7 +300,7 @@ describe('sequencer', () => {
       // Start reading and creating events concurrently
       const createPromise = (async () => {
         for (let i = 0; i < count; i++) {
-          await createDid()
+          await createDid(client)
         }
         await waitForSequencing()
       })()
@@ -346,7 +333,7 @@ describe('sequencer', () => {
 
       const createPromise = (async () => {
         for (let i = 0; i < count; i++) {
-          await createDid()
+          await createDid(client)
         }
         await waitForSequencing()
       })()
@@ -373,7 +360,7 @@ describe('sequencer', () => {
 
       const createPromise = (async () => {
         for (let i = 0; i < count; i++) {
-          await createDid()
+          await createDid(client)
         }
         await waitForSequencing()
       })()
@@ -406,7 +393,7 @@ describe('sequencer', () => {
 
       const createPromise = (async () => {
         for (let i = 0; i < count; i++) {
-          await createDid()
+          await createDid(client)
         }
         await waitForSequencing()
       })()
@@ -441,7 +428,7 @@ describe('sequencer', () => {
 
       const createPromise = (async () => {
         for (let i = 0; i < count; i++) {
-          await createDid()
+          await createDid(client)
         }
         await waitForSequencing()
       })()
@@ -466,7 +453,7 @@ describe('sequencer', () => {
     it('respects abort signal during backfill', async () => {
       // Create several events first to have something to backfill
       for (let i = 0; i < 5; i++) {
-        await createDid()
+        await createDid(client)
       }
       await waitForSequencing()
 
@@ -502,7 +489,7 @@ describe('sequencer', () => {
       // Create a new event - must happen after gen is started to be caught
       const eventCreated = (async () => {
         await wait(50) // Small delay to ensure gen is ready
-        await createDid()
+        await createDid(client)
         await waitForSequencing()
       })()
 
