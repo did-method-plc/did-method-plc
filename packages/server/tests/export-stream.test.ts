@@ -51,6 +51,18 @@ describe('/export/stream endpoint', () => {
     throw new Error('Timed out waiting for sequencing')
   }
 
+  const waitForWsToMaybeClose = async (ws: WebSocket): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      ws.on('error', () => {
+        resolve()
+      })
+      ws.on('close', () => {
+        resolve()
+      })
+      setTimeout(resolve, 1000)
+    })
+  }
+
   it('connects via WebSocket', async () => {
     const ws = new WebSocket(wsUrl)
 
@@ -136,15 +148,7 @@ describe('/export/stream endpoint', () => {
   it('rejects invalid cursor parameter', async () => {
     const ws = new WebSocket(`${wsUrl}?cursor=invalid`)
 
-    await new Promise<void>((resolve) => {
-      ws.on('error', () => {
-        resolve()
-      })
-      ws.on('close', () => {
-        resolve()
-      })
-      setTimeout(resolve, 1000)
-    })
+    await waitForWsToMaybeClose(ws)
 
     // Connection should fail or close
     expect(ws.readyState).not.toBe(WebSocket.OPEN)
@@ -153,15 +157,7 @@ describe('/export/stream endpoint', () => {
   it('rejects negative cursor parameter', async () => {
     const ws = new WebSocket(`${wsUrl}?cursor=-1`)
 
-    await new Promise<void>((resolve) => {
-      ws.on('error', () => {
-        resolve()
-      })
-      ws.on('close', () => {
-        resolve()
-      })
-      setTimeout(resolve, 1000)
-    })
+    await waitForWsToMaybeClose(ws)
 
     expect(ws.readyState).not.toBe(WebSocket.OPEN)
   })
