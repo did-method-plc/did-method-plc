@@ -2,6 +2,8 @@ import { Leader } from '../db/leader'
 import Database from '../db'
 import { sql } from 'kysely'
 import { PLC_SEQ_SEQUENCE } from '../db/types'
+import { leaderLogger as log } from '../logger'
+import { wait, jitter } from '@atproto/common'
 
 const SEQUENCER_LEADER_ID = 1100
 
@@ -19,14 +21,31 @@ export class SequencerLeader {
     this.pollIntervalMs = opts.pollIntervalMs ?? 50
   }
 
-  async run(): Promise<{ ran: boolean }> {
-    return this.leader.run(async ({ signal }) => {
-      // Poll frequently
-      while (!(signal.aborted || this.destroyed)) {
-        await this.sequenceOutgoing()
-        await wait(this.pollIntervalMs)
+  async run() {
+    while (!this.destroyed) {
+      try {
+        const { ran } = await this.leader.run(async ({ signal }) => {
+          // Poll frequently
+          while (!(signal.aborted || this.destroyed)) {
+            await this.sequenceOutgoing()
+            await wait(this.pollIntervalMs)
+          }
+        })
+        if (ran && !this.destroyed) {
+          // should be unreachable
+          throw new Error(
+            'Sequencer leader completed, but should be persistent',
+          )
+        }
+      } catch (err) {
+        log.error({ err }, 'sequence leader errored')
+      } finally {
+        if (!this.destroyed) {
+          // retry, with jitter
+          await wait(1000 + jitter(500))
+        }
       }
-    })
+    }
   }
 
   async sequenceOutgoing(): Promise<void> {
@@ -62,5 +81,3 @@ export class SequencerLeader {
     this.leader.destroy()
   }
 }
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
