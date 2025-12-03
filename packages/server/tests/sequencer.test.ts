@@ -479,7 +479,7 @@ describe('sequencer', () => {
       expect(abortController.signal.aborted).toBe(true)
     })
 
-    it('streams from the beginning when no cursor provided', async () => {
+    it('streams from live when no cursor provided', async () => {
       const outbox = new Outbox(sequencer)
       const abortController = new AbortController()
 
