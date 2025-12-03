@@ -95,7 +95,7 @@ export const exportedOpWithSeq = z.object({
   createdAt: z.string(),
   seq: z.number(),
 })
-export type ExportedOpWithSeq = z.infer<typeof exportedOp>
+export type ExportedOpWithSeq = z.infer<typeof exportedOpWithSeq>
 
 export const didDocVerificationMethod = z.object({
   id: z.string(),
