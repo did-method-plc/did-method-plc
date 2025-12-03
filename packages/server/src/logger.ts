@@ -19,6 +19,10 @@ export const leaderLogger = logger.child({
   name: 'SequencerLeader',
 })
 
+export const seqLogger = logger.child({
+  name: 'Sequencer',
+})
+
 export const loggerMiddleware = pinoHttp({
   logger,
 })

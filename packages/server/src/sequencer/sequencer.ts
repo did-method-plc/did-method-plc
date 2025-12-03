@@ -2,6 +2,7 @@ import { EventEmitter } from 'events'
 import Database from '../db'
 import { OperationsTableEntry } from '../db/types'
 import { SeqEvt } from './events'
+import { seqLogger as log } from '../logger'
 
 export interface SequencerEmitter {
   on(event: 'events', listener: (evts: SeqEvt[]) => void): this
@@ -117,7 +118,7 @@ export class Sequencer
         this.lastSeen = evts.at(-1)?.seq ?? this.lastSeen
       }
     } catch (err) {
-      console.error('Sequencer failed to poll', err)
+      log.error({ err, lastSeen: this.lastSeen }, 'sequencer failed to poll db')
     } finally {
       this.polling = false
     }
