@@ -212,7 +212,7 @@ describe('PLC server', () => {
   it('retrieves the auditable operation log', async () => {
     const log = await client.getOperationLog(did1)
     const auditable = await client.getAuditableLog(did1)
-    // has one nullifed op
+    // has one nullified op
     expect(auditable.length).toBe(log.length + 1)
     expect(auditable.filter((op) => op.nullified).length).toBe(1)
     expect(auditable.at(-2)?.nullified).toBe(true)
@@ -290,7 +290,11 @@ describe('PLC server', () => {
     expect(data.length).toEqual(32)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
+
+      // check structure
       expect((data[i] as any).seq).toBeUndefined()
+      expect((data[i] as any).type).toBeUndefined()
+      expect(typeof data[i].nullified).toBe('boolean')
     }
   })
 

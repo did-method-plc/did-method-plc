@@ -231,7 +231,7 @@ export class Database implements PlcDatabase {
     // Note: this may include unsequenced ops (seq=null)
     let builder = this.db
       .selectFrom('operations')
-      .selectAll()
+      .select(['did', 'cid', 'createdAt', 'operation', 'nullified'])
       .orderBy('createdAt', 'asc')
       .orderBy(sql`cid COLLATE "C"`, 'asc')
       .limit(count)
@@ -241,7 +241,6 @@ export class Database implements PlcDatabase {
     const res = await builder.execute()
     return res.map((row) => ({
       ...row,
-      seq: undefined,
       createdAt: row.createdAt.toISOString(),
     }))
   }
@@ -252,7 +251,7 @@ export class Database implements PlcDatabase {
   ): Promise<plc.ExportedOpWithSeq[]> {
     const res = await this.db
       .selectFrom('operations')
-      .selectAll()
+      .select(['did', 'cid', 'seq', 'createdAt', 'operation'])
       .orderBy('seq', 'asc')
       .where('seq', '>', after) // Note: this implicitly excludes seq=null
       .limit(count)
@@ -261,6 +260,7 @@ export class Database implements PlcDatabase {
     return res.map((row) => ({
       ...row,
       seq: row.seq as number,
+      type: 'indexed_op',
       createdAt: row.createdAt.toISOString(),
     }))
   }

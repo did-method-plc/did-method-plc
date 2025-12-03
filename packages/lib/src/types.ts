@@ -91,9 +91,9 @@ export const exportedOpWithSeq = z.object({
   did: z.string(),
   operation: compatibleOpOrTombstone,
   cid: z.string(),
-  nullified: z.boolean(),
   createdAt: z.string(),
   seq: z.number(),
+  type: z.literal('indexed_op'),
 })
 export type ExportedOpWithSeq = z.infer<typeof exportedOpWithSeq>
 
