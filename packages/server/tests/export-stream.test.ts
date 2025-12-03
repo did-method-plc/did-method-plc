@@ -1,7 +1,7 @@
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
-import { Database } from '../src'
+import { Database, SeqEvt } from '../src'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader'
 import WebSocket from 'ws'
 
@@ -250,9 +250,10 @@ describe('/export/stream endpoint', () => {
     expect(messages.length).toBeGreaterThan(0)
 
     for (const msg of messages) {
-      const parsed = JSON.parse(msg)
+      const parsed: SeqEvt = JSON.parse(msg)
       expect(parsed.seq).toBeDefined()
       expect(parsed.type).toBe('indexed_op')
+      expect((parsed as any).nullified).toBeUndefined()
     }
   })
 
@@ -261,13 +262,13 @@ describe('/export/stream endpoint', () => {
     const latestSeq = curr!.seq
 
     const ws = new WebSocket(`${wsUrl}?cursor=0`)
-    const streamedOps: plc.CompatibleOpOrTombstone[] = []
+    const streamedMsgs: SeqEvt[] = []
 
     await new Promise<void>((resolve, reject) => {
       ws.on('error', reject)
       ws.on('message', (data: Buffer) => {
         const msg = JSON.parse(data.toString())
-        streamedOps.push(msg.operation)
+        streamedMsgs.push(msg)
         if (msg.seq === latestSeq) {
           resolve()
         }
@@ -276,14 +277,17 @@ describe('/export/stream endpoint', () => {
     })
     ws.close()
 
-    expect(streamedOps.length).toBeGreaterThan(0)
+    expect(streamedMsgs.length).toBeGreaterThan(0)
 
     const exportData = await client.export() // assumes everything fits in first page
-    const exportOps = exportData.map((msg) => msg.operation)
 
-    expect(streamedOps.length).toEqual(exportOps.length)
-    for (let i = 0; i < streamedOps.length; i++) {
-      expect(streamedOps[i]).toEqual(exportOps[i])
+    expect(streamedMsgs.length).toEqual(exportData.length)
+    for (let i = 0; i < streamedMsgs.length; i++) {
+      expect(streamedMsgs[i].seq).toEqual(exportData[i].seq)
+      expect(streamedMsgs[i].operation).toEqual(exportData[i].operation)
+      expect(streamedMsgs[i].createdAt).toEqual(exportData[i].createdAt)
+      expect(streamedMsgs[i].did).toEqual(exportData[i].did)
+      expect(streamedMsgs[i].cid).toEqual(exportData[i].cid)
     }
   })
 })
