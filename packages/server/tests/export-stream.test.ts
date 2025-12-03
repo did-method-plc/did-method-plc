@@ -280,19 +280,8 @@ describe('/export/stream endpoint', () => {
     expect(streamedMsgs.length).toBeGreaterThan(0)
 
     const exportData = await client.export() // assumes everything fits in first page
-
     expect(streamedMsgs.length).toEqual(exportData.length)
-    for (let i = 0; i < streamedMsgs.length; i++) {
-      expect(streamedMsgs[i].seq).toEqual(exportData[i].seq)
-      expect(streamedMsgs[i].operation).toEqual(exportData[i].operation)
-      expect(streamedMsgs[i].createdAt).toEqual(exportData[i].createdAt)
-      expect(streamedMsgs[i].did).toEqual(exportData[i].did)
-      expect(streamedMsgs[i].cid).toEqual(exportData[i].cid)
-
-      // additional tests for /export format
-      expect((exportData[i] as any).nullified).toBeUndefined()
-      expect(exportData[i].type).toBe('indexed_op')
-    }
+    expect(streamedMsgs).toEqual(exportData)
   })
 
   it('rejects cursors from the future', async () => {
