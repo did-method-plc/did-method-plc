@@ -78,7 +78,7 @@ describe('/export/stream endpoint', () => {
 
   it('streams events in real-time', async () => {
     const ws = new WebSocket(wsUrl)
-    const receivedEvents: any[] = []
+    const receivedEvents: SeqEvt[] = []
 
     await new Promise<void>((resolve, reject) => {
       ws.on('open', resolve)
@@ -120,10 +120,10 @@ describe('/export/stream endpoint', () => {
       .orderBy('seq', 'asc')
       .limit(1)
       .executeTakeFirstOrThrow()
-    const cursor = seq!
+    const cursor = seq as number
 
     const ws = new WebSocket(`${wsUrl}?cursor=${cursor}`)
-    const receivedEvents: any[] = []
+    const receivedEvents: SeqEvt[] = []
 
     await new Promise<void>((resolve, reject) => {
       ws.on('open', resolve)
@@ -250,16 +250,16 @@ describe('/export/stream endpoint', () => {
     expect(messages.length).toBeGreaterThan(0)
 
     for (const msg of messages) {
-      const parsed: SeqEvt = JSON.parse(msg)
+      const parsed = JSON.parse(msg)
       expect(parsed.seq).toBeDefined()
+      expect(parsed.seq).not.toBeNull()
       expect(parsed.type).toBe('indexed_op')
-      expect((parsed as any).nullified).toBeUndefined()
+      expect(parsed.nullified).toBeUndefined()
     }
   })
 
   it('sends the same operations as /export?after=<seq>, in the same order', async () => {
-    const curr = await server.ctx.sequencer.curr()
-    const latestSeq = curr!.seq
+    const latestSeq = await sequencerLeader.lastSeq()
 
     const ws = new WebSocket(`${wsUrl}?cursor=0`)
     const streamedMsgs: SeqEvt[] = []

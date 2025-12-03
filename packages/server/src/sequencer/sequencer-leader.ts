@@ -21,6 +21,10 @@ export class SequencerLeader {
     this.pollIntervalMs = opts.pollIntervalMs ?? 50
   }
 
+  get isLeader() {
+    return !!this.leader.session
+  }
+
   async run() {
     while (!this.destroyed) {
       try {
@@ -74,6 +78,17 @@ export class SequencerLeader {
       .whereRef('did', '=', 'update_did')
       .whereRef('cid', '=', 'update_cid')
       .execute()
+  }
+
+  async lastSeq(): Promise<number> {
+    const res = await this.db.db
+      .selectFrom('operations')
+      .select('seq')
+      .where('seq', 'is not', null)
+      .orderBy('seq', 'desc')
+      .limit(1)
+      .executeTakeFirst()
+    return res?.seq ?? 0
   }
 
   destroy(): void {

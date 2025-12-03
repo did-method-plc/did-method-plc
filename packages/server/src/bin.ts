@@ -2,6 +2,7 @@ import './env'
 import { Database, PlcDatabase } from './db'
 import PlcServer from '.'
 import { SequencerLeader } from './sequencer'
+import { leaderLogger } from './logger'
 
 const waitForDb = async (
   db: Database,
@@ -29,6 +30,7 @@ const run = async () => {
 
     let db: PlcDatabase
     let leader: SequencerLeader | undefined
+    let statsInterval: NodeJS.Timer | undefined
     if (dbUrl) {
       console.log('[*] Connecting to database...')
       const pgDb = Database.postgres({ url: dbUrl })
@@ -48,6 +50,17 @@ const run = async () => {
         console.error('Sequencer leader error:', err)
       })
       console.log('[*] Sequencer leader started')
+
+      statsInterval = setInterval(async () => {
+        if (leader?.isLeader) {
+          try {
+            const seq = await leader.lastSeq()
+            leaderLogger.info({ seq }, 'sequencer leader stats')
+          } catch (err) {
+            leaderLogger.error({ err }, 'error getting last seq')
+          }
+        }
+      }, 5000)
     } else {
       db = Database.mock()
     }
@@ -67,6 +80,7 @@ const run = async () => {
     const shutdown = async () => {
       console.log('\nShutting down...')
       leader?.destroy()
+      clearInterval(statsInterval)
       await plc.destroy()
       process.exit(0)
     }

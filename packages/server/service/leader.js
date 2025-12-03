@@ -21,9 +21,21 @@ const main = async () => {
     console.error('Sequencer leader error:', err)
   })
 
+  statsInterval = setInterval(async () => {
+    if (leader?.isLeader) {
+      try {
+        const seq = await leader.lastSeq()
+        leaderLogger.info({ seq }, 'sequencer leader stats')
+      } catch (err) {
+        leaderLogger.error({ err }, 'error getting last seq')
+      }
+    }
+  }, 500)
+
   // Graceful shutdown (see also https://aws.amazon.com/blogs/containers/graceful-shutdowns-with-ecs/)
   process.on('SIGTERM', async () => {
-    await leader.destroy()
+    leader.destroy()
+    clearInterval(statsInterval)
   })
 }
 
