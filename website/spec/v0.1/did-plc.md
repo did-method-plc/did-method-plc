@@ -234,7 +234,7 @@ The HTTP endpoint `https://plc.directory/export` returns data in [JSON lines](ht
 
 When `after` is an integer, each JSON line has the following fields:
 
-- `type` (string): A string with fixed value `indexed_op`.
+- `type` (string): A string with fixed value `sequenced_op`.
 - `operation` (object): A valid PLC create or update operation.
 - `did` (string): The corresponding `did:plc:` identifier.
 - `cid` (string): The computed CID of the `operation` value.
@@ -255,7 +255,7 @@ This format is referred to as the legacy export format. Its use is discouraged a
 
 Legacy response entries are sorted in `createdAt` order, and the `createdAt` value of the final JSON line can be used as the `after` cursor to retrieve the next page of results.
 
-NOTE: If the `after` query parameter is not set, the response format defaults to the legacy format. Request `after=0` to retrieve the first page of results in the non-legacy format.
+NOTE: If the `after` query parameter is not set, the response format defaults to the legacy format, returning the first page of results. Request `after=0` to retrieve the first page of results in the `sequenced_op` format.
 
 NOTE: Legacy responses order operations by `createdAt`, while non-legacy responses order operations by `seq`. These orders may be slightly different! In either case, operations for a particular DID will always be in the same order relative to each other. In other words, if you isolated the operations for a single DID, the `seq` order and the `createdAt` orders are identical.
 
