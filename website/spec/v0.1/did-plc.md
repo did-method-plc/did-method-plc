@@ -265,7 +265,7 @@ The [WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) endpoint at `wss:
 
 When a client connects with no parameters set, the WebSocket streams newly accepted operations after the time of connection.
 
-The `cursor` parameter may be set to a previously-seen sequence number, to allow the client to "catch up" on earlier operations (starting with the first operation with greater `seq` than the passed `cursor` value). Once the client has caught up, the WebSocket will continue to stream new operations in real-time. The PLC directory may place limits on how far back the cursor value can go (see close reasons below), and in such cases clients are advised to fall back to the paginated `/export` API.
+The `cursor` parameter may be set to a previously-seen sequence number, to allow the client to "catch up" on earlier operations (starting with the first operation with greater `seq` than the passed `cursor` value). Once the client has caught up, the WebSocket will continue to stream new operations in real-time. The PLC directory may place limits on how far back the cursor value can go (see close reasons below), and in such cases clients are advised to fall back to the paginated `/export` API. A typical catch-up limit may be on the order of 7 days.
 
 In certain error conditions, the server will close the connection with a "reason" string (as specified in [RFC-6455 Section 7.1.6](https://datatracker.ietf.org/doc/html/rfc6455#section-7.1.6)). The following close reasons are specified:
 
