@@ -1,7 +1,7 @@
 'use strict' /* eslint-disable */
 
 require('dd-trace/init') // Only works with commonjs
-const { Database, SequencerLeader } = require('..')
+const { Database, SequencerLeader, leaderLogger } = require('..')
 
 const main = async () => {
   const dbCreds = JSON.parse(process.env.DB_CREDS_JSON)
@@ -17,9 +17,7 @@ const main = async () => {
     poolIdleTimeoutMs: dbPoolIdleTimeoutMs,
   })
   const leader = new SequencerLeader(db)
-  leader.run().catch((err) => {
-    console.error('Sequencer leader error:', err)
-  })
+  leader.run()
 
   const statsInterval = setInterval(async () => {
     if (leader?.isLeader) {
