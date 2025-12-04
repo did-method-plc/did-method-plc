@@ -241,6 +241,7 @@ export class Database implements PlcDatabase {
     const res = await builder.execute()
     return res.map((row) => ({
       ...row,
+      seq: undefined,
       createdAt: row.createdAt.toISOString(),
     }))
   }
