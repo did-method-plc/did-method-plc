@@ -269,9 +269,9 @@ The `cursor` parameter may be set to a previously-seen sequence number, to allow
 
 In certain error conditions, the server will close the connection with a "reason" string (as specified in [RFC-6455 Section 7.1.6](https://datatracker.ietf.org/doc/html/rfc6455#section-7.1.6)). The following close reasons are specified:
 
-- `Cursor is from the future`
-- `Cursor too old for streaming`
-- `Stream consumer too slow`
+- `FutureCursor` (The cursor value is too high)
+- `OutdatedCursor` (The cursor value is too low - before the catch-up limit)
+- `ConsumerTooSlow` (The stream consumer is not receiving messages fast enough to keep up with real-time)
 
 ### Sequence Number Semantics
 
