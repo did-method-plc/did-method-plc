@@ -243,7 +243,7 @@ When `after` is an integer, each JSON line has the following fields:
 
 The `seq` value of the final JSON line can be used as the `after` cursor value to retrieve the next page of results.
 
-Alternatively, when `after` is a timestamp string (in `YYYY-MM-DDTHH:mm:ss.sssZ` format), each JSON line has the following fields:
+For legacy compatibility reasons, when `after` is a timestamp string (in `YYYY-MM-DDTHH:mm:ss.sssZ` format), each JSON line has the following fields:
 
 - `operation` (object): A valid PLC create or update operation.
 - `did` (string): The corresponding `did:plc:` identifier.
@@ -251,9 +251,9 @@ Alternatively, when `after` is a timestamp string (in `YYYY-MM-DDTHH:mm:ss.sssZ`
 - `createdAt` (string): The timestamp corresponding to when the operation was accepted by the directory, in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
 - `nullified` (boolean): Whether the directory considers this operation to have been nullified (per "Key Rotation & Account Recovery" section).
 
-This format is referred to as the legacy export format.
+This format is referred to as the legacy export format. Its use is discouraged and it may be deprecated in the future.
 
-The returned entries are sorted in `createdAt` order, and the `createdAt` value of the final JSON line can be used as the `after` cursor to retrieve the next page of results.
+Legacy response entries are sorted in `createdAt` order, and the `createdAt` value of the final JSON line can be used as the `after` cursor to retrieve the next page of results.
 
 NOTE: If the `after` query parameter is not set, the response format defaults to the legacy format. Request `after=0` to retrieve the first page of results in the non-legacy format.
 
