@@ -22,6 +22,7 @@ import { Sequencer, SequencerOptions } from './sequencer'
 export * from './db'
 export * from './context'
 export * from './sequencer'
+export * from './logger'
 
 export class PlcServer {
   public ctx: AppContext
