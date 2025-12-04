@@ -21,7 +21,7 @@ const main = async () => {
     console.error('Sequencer leader error:', err)
   })
 
-  statsInterval = setInterval(async () => {
+  const statsInterval = setInterval(async () => {
     if (leader?.isLeader) {
       try {
         const seq = await leader.lastSeq()
