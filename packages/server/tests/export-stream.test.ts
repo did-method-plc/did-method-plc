@@ -1,7 +1,7 @@
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
-import { Database, SeqEvt } from '../src'
+import { CloseReason, Database, SeqEvt } from '../src'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader'
 import WebSocket from 'ws'
 
@@ -294,6 +294,6 @@ describe('/export/stream endpoint', () => {
       })
       setTimeout(reject, 1000)
     })
-    expect(closeReason).toBe('Cursor is from the future')
+    expect(closeReason).toBe(CloseReason.FutureCursor)
   })
 })

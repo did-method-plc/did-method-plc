@@ -6,8 +6,14 @@ export type OutboxOpts = {
   maxBufferSize: number
 }
 
+export const enum CloseReason {
+  FutureCursor = 'FutureCursor',
+  OutdatedCursor = 'OutdatedCursor',
+  ConsumerTooSlow = 'ConsumerTooSlow',
+}
+
 export class OutboxError extends Error {
-  constructor(msg: string) {
+  constructor(msg: CloseReason) {
     super(msg)
     Object.setPrototypeOf(this, OutboxError.prototype)
   }
@@ -45,13 +51,13 @@ export class Outbox {
         this.sequencer.curr(),
       ])
       if (backfillCursor > (curr?.seq ?? 0)) {
-        throw new OutboxError('Cursor is from the future')
+        throw new OutboxError(CloseReason.FutureCursor)
       }
       const backfillTime = new Date(
         Date.now() - this.sequencer.catchupDurationMs,
       )
       if (next && next.createdAt < backfillTime) {
-        throw new OutboxError('Cursor too old for streaming')
+        throw new OutboxError(CloseReason.OutdatedCursor)
       }
 
       for await (const evt of this.getBackfill(backfillCursor)) {
@@ -109,7 +115,7 @@ export class Outbox {
         }
       } catch (err) {
         if (err instanceof AsyncBufferFullError) {
-          throw new OutboxError('Stream consumer too slow')
+          throw new OutboxError(CloseReason.ConsumerTooSlow)
         } else {
           throw err
         }

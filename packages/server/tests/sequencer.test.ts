@@ -1,7 +1,7 @@
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
-import { Database, Sequencer, Outbox, SeqEvt } from '../src'
+import { Database, Sequencer, Outbox, SeqEvt, CloseReason } from '../src'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader'
 
 describe('sequencer', () => {
@@ -429,7 +429,9 @@ describe('sequencer', () => {
         await readFromGenerator(gen, caughtUp(outbox))
       }
 
-      await expect(overloadBuffer()).rejects.toThrow('Stream consumer too slow')
+      await expect(overloadBuffer()).rejects.toThrow(
+        CloseReason.ConsumerTooSlow,
+      )
 
       // Update lastSeen from db
       const fromDb = await loadFromDb(lastSeen)
