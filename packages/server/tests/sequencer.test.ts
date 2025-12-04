@@ -218,7 +218,9 @@ describe('sequencer', () => {
       sequencer.off('events', listener)
 
       expect(receivedEvents.length).toBeGreaterThan(0)
-      expect(receivedEvents[receivedEvents.length - 1].type).toBe('sequenced_op')
+      expect(receivedEvents[receivedEvents.length - 1].type).toBe(
+        'sequenced_op',
+      )
     })
   })
 
