@@ -106,7 +106,7 @@ describe('sequencer', () => {
 
     return rows.map((row) => ({
       seq: row.seq as number,
-      type: 'indexed_op',
+      type: 'sequenced_op',
       did: row.did,
       operation: row.operation,
       cid: row.cid,
@@ -218,7 +218,7 @@ describe('sequencer', () => {
       sequencer.off('events', listener)
 
       expect(receivedEvents.length).toBeGreaterThan(0)
-      expect(receivedEvents[receivedEvents.length - 1].type).toBe('indexed_op')
+      expect(receivedEvents[receivedEvents.length - 1].type).toBe('sequenced_op')
     })
   })
 

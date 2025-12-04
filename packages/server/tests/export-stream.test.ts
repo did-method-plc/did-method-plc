@@ -101,7 +101,7 @@ describe('/export/stream endpoint', () => {
 
     expect(receivedEvents.length).toBeGreaterThan(0)
     expect(receivedEvents[0].seq).toBeDefined()
-    expect(receivedEvents[0].type).toBe('indexed_op')
+    expect(receivedEvents[0].type).toBe('sequenced_op')
     expect(receivedEvents[0].operation).toBeDefined()
     expect(receivedEvents[0].did).toMatch(/^did:plc:/)
   })
@@ -253,7 +253,7 @@ describe('/export/stream endpoint', () => {
       const parsed = JSON.parse(msg)
       expect(parsed.seq).toBeDefined()
       expect(parsed.seq).not.toBeNull()
-      expect(parsed.type).toBe('indexed_op')
+      expect(parsed.type).toBe('sequenced_op')
       expect(parsed.nullified).toBeUndefined()
       expect(plc.exportedOpWithSeq.safeParse(parsed).success).toBeTruthy()
     }

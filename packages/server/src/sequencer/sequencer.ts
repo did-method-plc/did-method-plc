@@ -98,7 +98,7 @@ export class Sequencer
 
     return rows.map((row) => ({
       seq: row.seq as number,
-      type: 'indexed_op',
+      type: 'sequenced_op',
       did: row.did,
       operation: row.operation,
       cid: row.cid,

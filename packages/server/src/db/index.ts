@@ -260,7 +260,7 @@ export class Database implements PlcDatabase {
     return res.map((row) => ({
       ...row,
       seq: row.seq as number,
-      type: 'indexed_op',
+      type: 'sequenced_op',
       createdAt: row.createdAt.toISOString(),
     }))
   }

@@ -93,7 +93,7 @@ export const exportedOpWithSeq = z.object({
   cid: z.string(),
   createdAt: z.string(),
   seq: z.number(),
-  type: z.literal('indexed_op'),
+  type: z.literal('sequenced_op'),
 })
 export type ExportedOpWithSeq = z.infer<typeof exportedOpWithSeq>
 
