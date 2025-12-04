@@ -255,7 +255,7 @@ This format is referred to as the legacy export format.
 
 The returned entries are sorted in `createdAt` order, and the `createdAt` value of the final JSON line can be used as the `after` cursor to retrieve the next page of results.
 
-NOTE: If the `after` query parameter is not set, the response format defaults to the legacy format. You must explicitly request `after=0` to retrieve the first page of results in the non-legacy format.
+NOTE: If the `after` query parameter is not set, the response format defaults to the legacy format. Request `after=0` to retrieve the first page of results in the non-legacy format.
 
 NOTE: Legacy responses order operations by `createdAt`, while non-legacy responses order operations by `seq`. These orders may be slightly different! In either case, operations for a particular DID will always be in the same order relative to each other. In other words, if you isolated the operations for a single DID, the `seq` order and the `createdAt` orders are identical.
 
@@ -265,7 +265,7 @@ The [WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) endpoint at `wss:
 
 When a client connects with no parameters set, the WebSocket streams newly accepted operations, with minimal latency.
 
-The `cursor` parameter may be set to a previously-seen sequence number, to "catch up" on earlier operations (starting with the first operation with greater `seq` than the passed `cursor` value). Once the client has caught up, the WebSocket will continue to stream new operations. The PLC directory may place limits on how far back the cursor value can go (see close reasons below), and in such cases clients are advised to fall back to the paginated `/export` API.
+The `cursor` parameter may be set to a previously-seen sequence number, to allow the client to "catch up" on earlier operations (starting with the first operation with greater `seq` than the passed `cursor` value). Once the client has caught up, the WebSocket will continue to stream new operations in real-time. The PLC directory may place limits on how far back the cursor value can go (see close reasons below), and in such cases clients are advised to fall back to the paginated `/export` API.
 
 In certain error conditions, the server will close the connection with a "reason" string (as specified in [RFC-6455 Section 7.1.6](https://datatracker.ietf.org/doc/html/rfc6455#section-7.1.6)). The following close reasons are specified:
 
