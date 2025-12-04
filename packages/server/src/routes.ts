@@ -1,10 +1,12 @@
 import { CID } from 'multiformats/cid'
 import express from 'express'
+import { WebSocket } from 'ws'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import { AppContext } from './context'
 import { assertValidIncomingOp } from './constraints'
 import { timingSafeStringEqual } from './util'
+import { Outbox, OutboxError } from './sequencer'
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
@@ -27,13 +29,35 @@ export const createRouter = (ctx: AppContext): express.Router => {
 
   // Export ops in the form of paginated json lines
   router.get('/export', async function (req, res) {
-    const parsedCount = req.query.count ? parseInt(req.query.count, 10) : 1000
+    const countParam =
+      typeof req.query.count === 'string' ? req.query.count : undefined
+    const parsedCount = countParam ? parseInt(countParam, 10) : 1000
     if (isNaN(parsedCount) || parsedCount < 1) {
       throw new ServerError(400, 'Invalid count parameter')
     }
     const count = Math.min(parsedCount, 1000)
-    const after = req.query.after ? new Date(req.query.after) : undefined
-    const ops = await ctx.db.exportOps(count, after)
+
+    const afterParam =
+      typeof req.query.after === 'string' ? req.query.after : undefined
+    const isNumeric = afterParam && /^\d+$/.test(afterParam)
+
+    let ops: plc.ExportedOpWithSeq[] | plc.ExportedOp[]
+    if (isNumeric) {
+      // after is integer seq
+      const after = parseInt(afterParam, 10)
+      if (isNaN(after) || after < 0) {
+        throw new ServerError(400, 'Invalid after parameter')
+      }
+      ops = await ctx.db.exportOpsSeq(count, after)
+    } else {
+      // after is timestamp
+      const after = afterParam ? new Date(afterParam) : undefined
+      if (after !== undefined && isNaN(after.getTime())) {
+        throw new ServerError(400, 'Invalid after parameter')
+      }
+      ops = await ctx.db.exportOps(count, after)
+    }
+
     res.setHeader('content-type', 'application/jsonlines')
     res.status(200)
     for (let i = 0; i < ops.length; i++) {
@@ -44,6 +68,65 @@ export const createRouter = (ctx: AppContext): express.Router => {
       res.write(line)
     }
     res.end()
+  })
+
+  // Stream sequenced operations over WebSocket
+  router.get('/export/stream', async function (req, _res) {
+    if (!req.headers.upgrade || !req.ws) {
+      throw new ServerError(426, 'upgrade required')
+    }
+
+    const cursorParam =
+      typeof req.query.cursor === 'string' ? req.query.cursor : undefined
+    const cursor = cursorParam ? parseInt(cursorParam, 10) : undefined
+    if (cursor !== undefined && (isNaN(cursor) || cursor < 0)) {
+      throw new ServerError(400, 'Invalid cursor parameter')
+    }
+
+    req.ws.handled = true
+    ctx.wss.handleUpgrade(
+      req,
+      req.ws.socket,
+      req.ws.head,
+      async function (ws: WebSocket) {
+        const abortController = new AbortController()
+        const outbox = new Outbox(ctx.sequencer)
+
+        ws.on('close', () => {
+          abortController.abort()
+        })
+
+        ws.on('error', (err) => {
+          req.log.error({ err }, 'websocket error')
+          abortController.abort()
+        })
+
+        try {
+          for await (const evt of outbox.events(
+            cursor,
+            abortController.signal,
+          )) {
+            if (ws.readyState !== WebSocket.OPEN) {
+              break
+            }
+            // Note: each event is sent in a separate websocket message
+            ws.send(JSON.stringify(evt))
+          }
+        } catch (err) {
+          if (err instanceof OutboxError) {
+            // consumer too slow, or stale cursor
+            ws.close(1000, err.message)
+          }
+          if (!abortController.signal.aborted) {
+            req.log.error({ err }, 'error streaming events')
+          }
+        } finally {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.close()
+          }
+        }
+      },
+    )
   })
 
   // Get data for a DID document

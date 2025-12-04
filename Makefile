@@ -40,3 +40,8 @@ deps: ## Installs dependent libs using 'yarn install'
 run-dev-plc: ## Run PLC server "dev" config (needs local PostgreSQL)
 	if [ ! -f "packages/server/.dev.env" ]; then cp packages/server/example.dev.env packages/server/.dev.env; fi
 	cd packages/server; ENV=dev yarn run start | yarn exec pino-pretty
+
+.PHONY: run-dev-plc-with-db
+run-dev-plc-with-db: ## Run PLC server "dev" config, with ephemeral postgres
+	if [ ! -f "packages/server/.dev.env" ]; then cp packages/server/example.dev.env packages/server/.dev.env; fi
+	cd packages/server; ENV=dev ./pg/with-test-db.sh yarn run start | yarn exec pino-pretty

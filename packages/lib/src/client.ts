@@ -67,11 +67,9 @@ export class Client {
     }
   }
 
-  async export(after?: string, count?: number): Promise<t.ExportedOp[]> {
+  async export(after?: number, count?: number): Promise<t.ExportedOpWithSeq[]> {
     const url = new URL(`${this.url}/export`)
-    if (after) {
-      url.searchParams.append('after', after)
-    }
+    url.searchParams.append('after', (after || 0).toString(10))
     if (count !== undefined) {
       url.searchParams.append('count', count.toString(10))
     }

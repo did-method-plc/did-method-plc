@@ -3,9 +3,8 @@ import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TEST_ADMIN_SECRET } from './_util'
 import { check } from '@atproto/common'
-import { AppContext, Database } from '../src'
+import { Database } from '../src'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
-import exp from 'constants'
 
 describe('PLC server', () => {
   let handle1 = 'at://alice.example.com'
@@ -213,7 +212,7 @@ describe('PLC server', () => {
   it('retrieves the auditable operation log', async () => {
     const log = await client.getOperationLog(did1)
     const auditable = await client.getAuditableLog(did1)
-    // has one nullifed op
+    // has one nullified op
     expect(auditable.length).toBe(log.length + 1)
     expect(auditable.filter((op) => op.nullified).length).toBe(1)
     expect(auditable.at(-2)?.nullified).toBe(true)
@@ -285,12 +284,18 @@ describe('PLC server', () => {
   })
 
   it('exports the data set', async () => {
-    const data = await client.export()
+    const res = await axios.get(`${client.url}/export`) // "legacy" non-sequenced export
+    const data = res.data.split('\n').map(JSON.parse)
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
     expect(data.length).toEqual(32)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
+
+      // check structure
       expect((data[i] as any).seq).toBeUndefined()
+      expect((data[i] as any).type).toBeUndefined()
+      expect(typeof data[i].nullified).toBe('boolean')
+      expect(plc.exportedOp.safeParse(data[i]).success).toBeTruthy()
     }
   })
 

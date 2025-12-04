@@ -87,6 +87,16 @@ export const exportedOp = z.object({
 })
 export type ExportedOp = z.infer<typeof exportedOp>
 
+export const exportedOpWithSeq = z.object({
+  did: z.string(),
+  operation: compatibleOpOrTombstone,
+  cid: z.string(),
+  createdAt: z.string(),
+  seq: z.number(),
+  type: z.literal('sequenced_op'),
+})
+export type ExportedOpWithSeq = z.infer<typeof exportedOpWithSeq>
+
 export const didDocVerificationMethod = z.object({
   id: z.string(),
   type: z.string(),
@@ -120,5 +130,6 @@ export const def = {
   compatibleOpOrTombstone,
   indexedOperation,
   exportedOp,
+  exportedOpWithSeq,
   didDocument,
 }

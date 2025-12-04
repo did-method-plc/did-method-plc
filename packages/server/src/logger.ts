@@ -15,6 +15,14 @@ const logger = process.env.LOG_DESTINATION
   ? pino(config, pino.destination(process.env.LOG_DESTINATION))
   : pino(config)
 
+export const leaderLogger = logger.child({
+  name: 'SequencerLeader',
+})
+
+export const seqLogger = logger.child({
+  name: 'Sequencer',
+})
+
 export const loggerMiddleware = pinoHttp({
   logger,
 })
