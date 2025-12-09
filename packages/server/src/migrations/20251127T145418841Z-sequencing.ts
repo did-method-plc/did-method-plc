@@ -18,10 +18,13 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Note: Probably want `CREATE INDEX CONCURRENTLY` for prod
 
   // used during sequencing (most valuable when the sequencer-leader has fallen behind)
-  await sql`CREATE INDEX operations_unsequenced_idx ON operations ("createdAt", cid COLLATE "C") WHERE seq=NULL`.execute(
+  await sql`CREATE INDEX operations_unsequenced_idx ON operations ("createdAt") WHERE seq IS NULL`.execute(
     db,
   )
   // ditto re: CONCURRENTLY
+
+  // NOTE: the above index was initially tested as ("createdAt", cid COLLATE "C"), but the postgres query planner was not using it effectively.
+  // Using a covering index of ("createdAt", cid COLLATE "C", did) might work even better, but it has not yet been tested in prod, and the existing index is working well enough.
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
