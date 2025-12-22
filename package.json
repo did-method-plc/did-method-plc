@@ -39,6 +39,7 @@
     "prettier-config-standard": "^5.0.0",
     "ts-jest": "^28.0.5",
     "ts-node": "^10.8.2",
+    "tsx": "^4.21.0",
     "typescript": "^4.8.4"
   },
   "workspaces": {

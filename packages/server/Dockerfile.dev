@@ -1,0 +1,14 @@
+FROM node:18-alpine
+
+RUN corepack enable
+
+RUN apk add --update dumb-init
+
+WORKDIR /app
+
+# NOTE plc's transitive dependencies go here: if that changes, this needs to be updated.
+COPY ./packages/lib ./packages/lib
+COPY ./packages/server ./packages/server
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["packages/server/bin/dev.sh"]
