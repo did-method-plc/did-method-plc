@@ -1,7 +1,7 @@
 
 # `did:plc` Method Specification
 
-**Version:** v0.2.1 (October 2025)
+**Version:** v0.3.0 (December 2025)
 
 DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
@@ -222,13 +222,62 @@ To fully validate a DID document against the operation log:
     - if no key matches, there has been a trust violation; the PLC server should never have accepted the operation
 - verify the correctness of "nullified" operations and the current active operation log using the rules around rotation keys and recovery windows
 
-The complete log of operations for all DIDs on the PLC server can be enumerated efficiently:
 
-- HTTP endpoint: `https://plc.directory/export`
-- output format: [JSON lines](https://jsonlines.org/)
-- `count` query parameter, as an integer, maximum 1000 lines per request
-- `after` query parameter, based on `createdAt` timestamp, for pagination
+### Bulk Export
 
+The complete log of operations for all DIDs on the PLC server can be enumerated efficiently.
+
+The HTTP endpoint `https://plc.directory/export` returns data in [JSON lines](https://jsonlines.org/) format. It supports two query parameters:
+
+- `count`: An integer, maximum 1000 lines per request.
+- `after`: The cursor for pagination, either an integer or a timestamp string (see below).
+
+When `after` is an integer, each JSON line has the following fields:
+
+- `type` (string): A string with fixed value `sequenced_op`.
+- `operation` (object): A valid PLC create, update, or tombstone operation.
+- `did` (string): The corresponding `did:plc:` identifier.
+- `cid` (string): The computed CID of the `operation` value.
+- `createdAt` (string): The timestamp corresponding to when the operation was accepted by the directory, in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
+- `seq` (integer): A sequence number. The returned entries have strictly monotonic sequence numbers. (See also: "Sequence Number Semantics")
+
+The `seq` value of the final JSON line can be used as the `after` cursor value to retrieve the next page of results.
+
+For legacy compatibility reasons, when `after` is a timestamp string (in `YYYY-MM-DDTHH:mm:ss.sssZ` format), each JSON line has the following fields:
+
+- `operation` (object): A valid PLC create, update, or tombstone operation.
+- `did` (string): The corresponding `did:plc:` identifier.
+- `cid` (string): The computed CID of the `operation` value.
+- `createdAt` (string): The timestamp corresponding to when the operation was accepted by the directory, in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
+- `nullified` (boolean): Whether the directory considers this operation to have been nullified (per "Key Rotation & Account Recovery" section).
+
+This format is referred to as the legacy export format. Its use is discouraged and it may be deprecated in the future.
+
+Legacy response entries are sorted in `createdAt` order, and the `createdAt` value of the final JSON line can be used as the `after` cursor to retrieve the next page of results.
+
+NOTE: If the `after` query parameter is not set, the response format defaults to the legacy format, returning the first page of results. Request `after=0` to retrieve the first page of results in the `sequenced_op` format.
+
+NOTE: Legacy responses order operations by `createdAt`, while non-legacy responses order operations by `seq`. These orders may be slightly different! In either case, operations for a particular DID will always be in the same order relative to each other. In other words, if you isolated the operations for a single DID, the `seq` order and the `createdAt` orders are identical.
+
+### Export Streaming WebSocket
+
+The [WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) endpoint at `wss://plc.directory/export/stream` returns a stream of JSON objects in the same format as the (non-legacy) `/export` endpoint. JSON objects are delimited by the WebSocket message framing layer (*not* newlines).
+
+When a client connects with no parameters set, the WebSocket streams newly accepted operations after the time of connection.
+
+The `cursor` parameter may be set to a previously-seen sequence number, to allow the client to "catch up" on earlier operations (starting with the first operation with greater `seq` than the passed `cursor` value). Once the client has caught up, the WebSocket will continue to stream new operations in real-time. The PLC directory may place limits on how far back the cursor value can go (see close reasons below), and in such cases clients are advised to fall back to the paginated `/export` API. A typical catch-up limit may be on the order of 7 days.
+
+In certain error conditions, the server will close the connection with a "reason" string (as specified in [RFC-6455 Section 7.1.6](https://datatracker.ietf.org/doc/html/rfc6455#section-7.1.6)). The following close reasons are specified:
+
+- `FutureCursor` (The cursor value is too high)
+- `OutdatedCursor` (The cursor value is too low - before the catch-up limit)
+- `ConsumerTooSlow` (The stream consumer is not receiving messages fast enough to keep up with real-time)
+
+### Sequence Number Semantics
+
+The PLC directory service assigns sequence numbers (`seq`) to all accepted operations. These sequence numbers should be seen as an annotation of the authenticated data (similarly to `createdAt` timestamps), and not an intrinsic property of the operations themselves. Sequence numbers are only visible in `/export*` API responses, and they exist to facilitate pagination/cursoring through these endpoints.
+
+A PLC mirror or replica service could plausibly assign different sequence numbers to the same operations, so long as the operation ordering is internally consistent.
 
 ## Example
 
@@ -405,6 +454,12 @@ A "DID PLC history explorer" web interface would make the public nature of the D
 It is conceivable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also conceivable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
 
 ## Changelog
+
+### 2025-12-04 (v0.3.0)
+
+- Introduces `/export/stream` WebSocket endpoint
+
+- Existing `/export` endpoint supports using sequence numbers for pagination, with a new response format.
 
 ### 2025-10-22 (v0.2.1)
 
