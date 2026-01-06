@@ -235,7 +235,7 @@ The HTTP endpoint `https://plc.directory/export` returns data in [JSON lines](ht
 When `after` is an integer, each JSON line has the following fields:
 
 - `type` (string): A string with fixed value `sequenced_op`.
-- `operation` (object): A valid PLC create or update operation.
+- `operation` (object): A valid PLC create, update, or tombstone operation.
 - `did` (string): The corresponding `did:plc:` identifier.
 - `cid` (string): The computed CID of the `operation` value.
 - `createdAt` (string): The timestamp corresponding to when the operation was accepted by the directory, in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
@@ -245,7 +245,7 @@ The `seq` value of the final JSON line can be used as the `after` cursor value t
 
 For legacy compatibility reasons, when `after` is a timestamp string (in `YYYY-MM-DDTHH:mm:ss.sssZ` format), each JSON line has the following fields:
 
-- `operation` (object): A valid PLC create or update operation.
+- `operation` (object): A valid PLC create, update, or tombstone operation.
 - `did` (string): The corresponding `did:plc:` identifier.
 - `cid` (string): The computed CID of the `operation` value.
 - `createdAt` (string): The timestamp corresponding to when the operation was accepted by the directory, in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
@@ -275,7 +275,7 @@ In certain error conditions, the server will close the connection with a "reason
 
 ### Sequence Number Semantics
 
-The PLC directory service assigns sequence numbers (`seq`) to all accepted operations (either creates or updates). These sequence numbers should be seen as an annotation of the authenticated data (similarly to `createdAt` timestamps), and not an intrinsic property of the operations themselves. Sequence numbers are only visible in `/export*` API responses, and they exist to facilitate pagination/cursoring through these endpoints.
+The PLC directory service assigns sequence numbers (`seq`) to all accepted operations. These sequence numbers should be seen as an annotation of the authenticated data (similarly to `createdAt` timestamps), and not an intrinsic property of the operations themselves. Sequence numbers are only visible in `/export*` API responses, and they exist to facilitate pagination/cursoring through these endpoints.
 
 A PLC mirror or replica service could plausibly assign different sequence numbers to the same operations, so long as the operation ordering is internally consistent.
 
