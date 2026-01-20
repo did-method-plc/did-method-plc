@@ -2382,6 +2382,23 @@
   resolved "https://registry.npmjs.org/@types/parse-json/-/parse-json-4.0.0.tgz"
   integrity sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==
 
+"@types/pg-cursor@^2.7.2":
+  version "2.7.2"
+  resolved "https://registry.yarnpkg.com/@types/pg-cursor/-/pg-cursor-2.7.2.tgz#0b1f80685a48940d48c742c48c10f9a923290e76"
+  integrity sha512-m3xT8bVFCvx98LuzbvXyuCdT/Hjdd/v8ml4jL4K1QF70Y8clOfCFdgoaEB1FWdcSwcpoFYZTJQaMD9/GQ27efQ==
+  dependencies:
+    "@types/node" "*"
+    "@types/pg" "*"
+
+"@types/pg@*":
+  version "8.16.0"
+  resolved "https://registry.yarnpkg.com/@types/pg/-/pg-8.16.0.tgz#b7af0d642752340b7c9de1c33afd9bc5c5f0ebeb"
+  integrity sha512-RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==
+  dependencies:
+    "@types/node" "*"
+    pg-protocol "*"
+    pg-types "^2.2.0"
+
 "@types/pg@^8.6.5":
   version "8.6.5"
   resolved "https://registry.npmjs.org/@types/pg/-/pg-8.6.5.tgz"
@@ -6809,6 +6826,11 @@ pg-connection-string@^2.5.0:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/pg-connection-string/-/pg-connection-string-2.5.0.tgz#538cadd0f7e603fc09a12590f3b8a452c2c0cf34"
   integrity sha512-r5o/V/ORTA6TmUnyWZR9nCj1klXCO2CEKNRlVuJptZe85QuhFayC7WeMic7ndayT5IRIR0S0xFxFi2ousartlQ==
+
+pg-cursor@^2.16.1:
+  version "2.16.2"
+  resolved "https://registry.yarnpkg.com/pg-cursor/-/pg-cursor-2.16.2.tgz#a1bc870403303a9436932c0d6a4c27b05abbb287"
+  integrity sha512-OzGiSg/71d6h3ls//WRBLaCj3hMHBOuAqCNe8FvU4poZu36hR7y4ZKFVu+JfFIEAVr6CibHai5lg53QJlYZAJw==
 
 pg-int8@1.0.1:
   version "1.0.1"

@@ -1,5 +1,6 @@
 import { Kysely, Migrator, PostgresDialect, sql } from 'kysely'
 import { Pool as PgPool, types as pgTypes } from 'pg'
+import Cursor from 'pg-cursor'
 import { CID } from 'multiformats/cid'
 import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
@@ -52,7 +53,7 @@ export class Database implements PlcDatabase {
     }
 
     const db = new Kysely<DatabaseSchema>({
-      dialect: new PostgresDialect({ pool }),
+      dialect: new PostgresDialect({ pool, cursor: Cursor }),
     })
 
     return new Database(db, schema)
