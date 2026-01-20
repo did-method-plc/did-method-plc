@@ -129,6 +129,65 @@ export const createRouter = (ctx: AppContext): express.Router => {
     )
   })
 
+  // Bulk lookup of multiple DIDs
+  const MAX_BULK_DIDS = 1000
+  router.post('/dids', async function (req, res) {
+    const { dids } = req.body
+    if (!Array.isArray(dids)) {
+      throw new ServerError(400, 'dids must be an array')
+    }
+    if (dids.length === 0) {
+      throw new ServerError(400, 'dids array must not be empty')
+    }
+    if (dids.length > MAX_BULK_DIDS) {
+      throw new ServerError(400, `Too many DIDs (max ${MAX_BULK_DIDS})`)
+    }
+
+    // Validate all DIDs are strings with correct prefix
+    for (const did of dids) {
+      if (typeof did !== 'string') {
+        throw new ServerError(400, 'Each DID must be a string')
+      }
+      if (!did.startsWith('did:plc:')) {
+        throw new ServerError(400, `Invalid DID format: ${did}`)
+      }
+    }
+
+    res.setHeader('content-type', 'application/jsonlines')
+    res.status(200)
+
+    // Stream results from database, tracking found DIDs
+    const requestedDids = new Set(dids)
+    const foundDids = new Set<string>()
+    let first = true
+
+    for await (const { did, operation } of ctx.db.streamLastOpsForDids(dids)) {
+      if (!first) res.write('\n')
+      first = false
+      foundDids.add(did)
+
+      const data = plc.opToData(did, operation)
+      if (data === null) {
+        // Tombstoned
+        res.write(JSON.stringify({ did, document: null, tombstoned: true }))
+      } else {
+        const doc = plc.formatDidDoc(data)
+        res.write(JSON.stringify({ did, document: doc }))
+      }
+    }
+
+    // Emit notFound entries for DIDs not in database
+    for (const did of requestedDids) {
+      if (!foundDids.has(did)) {
+        if (!first) res.write('\n')
+        first = false
+        res.write(JSON.stringify({ did, document: null, notFound: true }))
+      }
+    }
+
+    res.end()
+  })
+
   // Get data for a DID document
   router.get('/:did', async function (req, res) {
     const { did } = req.params

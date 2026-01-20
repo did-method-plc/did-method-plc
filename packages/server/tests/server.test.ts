@@ -299,6 +299,76 @@ describe('PLC server', () => {
     }
   })
 
+  describe('POST /dids (bulk lookup)', () => {
+    it('returns multiple DID documents', async () => {
+      // did1 is tombstoned, did2 is active
+      const res = await axios.post(`${client.url}/dids`, { dids: [did1, did2] })
+      expect(res.status).toBe(200)
+      expect(res.headers['content-type']).toContain('application/jsonlines')
+
+      const lines = res.data.split('\n').map(JSON.parse)
+      expect(lines.length).toBe(2)
+
+      // did1 is tombstoned
+      expect(lines[0].did).toBe(did1)
+      expect(lines[0].document).toBeNull()
+      expect(lines[0].tombstoned).toBe(true)
+
+      // did2 is active
+      expect(lines[1].did).toBe(did2)
+      expect(lines[1].document).toBeDefined()
+      expect(lines[1].document.id).toBe(did2)
+    })
+
+    it('returns notFound for non-existent DIDs', async () => {
+      const nonExistent = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaa'
+      const res = await axios.post(`${client.url}/dids`, {
+        dids: [did2, nonExistent],
+      })
+      expect(res.status).toBe(200)
+
+      const lines = res.data.split('\n').map(JSON.parse)
+      expect(lines.length).toBe(2)
+
+      expect(lines[0].did).toBe(did2)
+      expect(lines[0].document).toBeDefined()
+
+      expect(lines[1].did).toBe(nonExistent)
+      expect(lines[1].document).toBeNull()
+      expect(lines[1].notFound).toBe(true)
+    })
+
+    it('rejects empty dids array', async () => {
+      const promise = axios.post(`${client.url}/dids`, { dids: [] })
+      await expect(promise).rejects.toThrow(AxiosError)
+    })
+
+    it('rejects non-array dids', async () => {
+      const promise = axios.post(`${client.url}/dids`, { dids: 'not-an-array' })
+      await expect(promise).rejects.toThrow(AxiosError)
+    })
+
+    it('rejects invalid DID format', async () => {
+      const promise = axios.post(`${client.url}/dids`, {
+        dids: ['not-a-valid-did'],
+      })
+      await expect(promise).rejects.toThrow(AxiosError)
+    })
+
+    it('returns all requested DIDs', async () => {
+      const res = await axios.post(`${client.url}/dids`, {
+        dids: [did2, did1],
+      })
+      const lines = res.data.split('\n').map(JSON.parse)
+      const returnedDids = lines.map((l: { did: string }) => l.did)
+
+      // All requested DIDs should be in the response
+      expect(returnedDids).toContain(did1)
+      expect(returnedDids).toContain(did2)
+      expect(returnedDids.length).toBe(2)
+    })
+  })
+
   it('disallows create v1s', async () => {
     const createV1 = await plc.deprecatedSignCreate(
       {
