@@ -227,6 +227,30 @@ export class Database implements PlcDatabase {
     return res?.operation ?? null
   }
 
+  async *streamLastOpsForDids(
+    dids: string[],
+  ): AsyncGenerator<{ did: string; operation: plc.CompatibleOpOrTombstone }> {
+    if (dids.length === 0) return
+
+    const stream = this.db
+      .selectFrom('operations')
+      .select(['did', 'operation'])
+      .where('did', 'in', dids)
+      .where('nullified', '=', false)
+      .orderBy('did', 'asc')
+      .orderBy('createdAt', 'desc')
+      .stream()
+
+    // Track seen DIDs to only yield the most recent operation per DID
+    const seen = new Set<string>()
+    for await (const row of stream) {
+      if (!seen.has(row.did)) {
+        seen.add(row.did)
+        yield { did: row.did, operation: row.operation }
+      }
+    }
+  }
+
   async exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]> {
     // Note: this may include unsequenced ops (seq=null)
     let builder = this.db
