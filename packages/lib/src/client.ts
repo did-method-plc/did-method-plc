@@ -19,7 +19,7 @@ export class Client {
     const res = await fetch(url)
     if (!res.ok) {
       const data = await res.json().catch(() => undefined)
-      throw new PlcClientError(res.status, data, 'HTTP error ${res.status}')
+      throw new PlcClientError(res.status, data, `HTTP error ${res.status}`)
      }
      return res.json()
   }
@@ -60,7 +60,7 @@ export class Client {
     })
     if (!res.ok) {
       const data = await res.json().catch(() => undefined)
-      throw new PlcClientError(res.status, data, 'HTTP error ${res.status}')
+      throw new PlcClientError(res.status, data, `HTTP error ${res.status}`)
   }
 
   async export(after?: number, count?: number): Promise<t.ExportedOpWithSeq[]> {
@@ -72,7 +72,7 @@ export class Client {
     const res = await fetch(url.toString())
     if (!res.ok) {
       const data = await res.text().catch(() => undefined)
-      throw new PlcClientError(res.status, data, 'HTTP error ${res.status}')
+      throw new PlcClientError(res.status, data, `HTTP error ${res.status}`)
     }
     const text = await res.text()
     const lines = text.split('\n').filter(Boolean)
