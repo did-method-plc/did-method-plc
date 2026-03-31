@@ -1,6 +1,5 @@
 import { check, cidForCbor } from '@atproto/common'
 import { Keypair } from '@atproto/crypto'
-import axios, { AxiosError } from 'axios'
 import {
   atprotoOp,
   createUpdateOp,
@@ -17,15 +16,12 @@ export class Client {
   constructor(public url: string) {}
 
   private async makeGetReq(url: string) {
-    try {
-      const res = await axios.get(url)
-      return res.data
-    } catch (err) {
-      if (!axios.isAxiosError(err)) {
-        throw err
-      }
-      throw PlcClientError.fromAxiosError(err)
-    }
+    const res = await fetch(url)
+    if (!res.ok) {
+      const data = await res.json().catch(() => undefined)
+      throw new PlcClientError(res.status, data, 'HTTP error ${res.status}')
+     }
+     return res.json()
   }
 
   async getDocument(did: string): Promise<t.DidDocument> {
@@ -57,14 +53,14 @@ export class Client {
   }
 
   async sendOperation(did: string, op: t.OpOrTombstone) {
-    try {
-      await axios.post(this.postOpUrl(did), op)
-    } catch (err) {
-      if (!axios.isAxiosError(err)) {
-        throw err
-      }
-      throw PlcClientError.fromAxiosError(err)
-    }
+    const res = await fetch(this.postOpUrl(did), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(op),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => undefined)
+      throw new PlcClientError(res.status, data, 'HTTP error ${res.status}')
   }
 
   async export(after?: number, count?: number): Promise<t.ExportedOpWithSeq[]> {
@@ -73,8 +69,13 @@ export class Client {
     if (count !== undefined) {
       url.searchParams.append('count', count.toString(10))
     }
-    const res = await axios.get(url.toString())
-    const lines = res.data.split('\n')
+    const res = await fetch(url.toString())
+    if (!res.ok) {
+      const data = await res.text().catch(() => undefined)
+      throw new PlcClientError(res.status, data, 'HTTP error ${res.status}')
+    }
+    const text = await res.text()
+    const lines = text.split('\n').filter(Boolean)
     return lines.map((l) => JSON.parse(l))
   }
 
@@ -152,14 +153,6 @@ export class PlcClientError extends Error {
     public message: string,
   ) {
     super(message)
-  }
-
-  static fromAxiosError(err: AxiosError) {
-    return new PlcClientError(
-      err.response?.status || 500,
-      err.response?.data,
-      err.message,
-    )
   }
 }
 
