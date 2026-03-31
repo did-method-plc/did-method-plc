@@ -285,7 +285,10 @@ describe('PLC server', () => {
   it('exports the data set', async () => {
     const res = await fetch(`${client.url}/export`) // "legacy" non-sequenced export
     if (!res.ok) throw new Error(`HTTP error ${res.status}`)
-    const data = (await res.text()).split('\n').filter(Boolean).map((l) => JSON.parse(l))
+    const data = (await res.text())
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l))
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
     expect(data.length).toEqual(32)
     for (let i = 1; i < data.length; i++) {
