@@ -20,8 +20,8 @@ export class Client {
     if (!res.ok) {
       const data = await res.json().catch(() => undefined)
       throw new PlcClientError(res.status, data, `HTTP error ${res.status}`)
-     }
-     return res.json()
+    }
+    return res.json()
   }
 
   async getDocument(did: string): Promise<t.DidDocument> {
@@ -61,6 +61,7 @@ export class Client {
     if (!res.ok) {
       const data = await res.json().catch(() => undefined)
       throw new PlcClientError(res.status, data, `HTTP error ${res.status}`)
+    }
   }
 
   async export(after?: number, count?: number): Promise<t.ExportedOpWithSeq[]> {
