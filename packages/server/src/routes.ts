@@ -1,12 +1,18 @@
-import { CID } from 'multiformats/cid'
+import { pipeline } from 'node:stream/promises'
 import express from 'express'
-import { WebSocket } from 'ws'
+import { WebSocket, createWebSocketStream } from 'ws'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error'
 import { AppContext } from './context'
 import { assertValidIncomingOp } from './constraints'
-import { timingSafeStringEqual } from './util'
+import { stringify, timingSafeStringEqual } from './util'
 import { Outbox, OutboxError } from './sequencer'
+
+// Once a websocket has this much data buffered, we wait for it to flush
+// before sending more events. Slow consumers then apply backpressure into
+// the outbox, which closes them if they fall too far behind — rather than
+// buffering events in process memory without bound.
+const MAX_WS_BUFFERED_BYTES = 256 * 1024
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
@@ -96,33 +102,33 @@ export const createRouter = (ctx: AppContext): express.Router => {
           abortController.abort()
         })
 
-        ws.on('error', (err) => {
-          req.log.error({ err }, 'websocket error')
-          abortController.abort()
+        // Note: each event is sent in a separate websocket message.
+        // OutboxErrors (stale cursor, consumer too slow) close the socket
+        // gracefully with a reason, rather than erroring the pipeline, which
+        // would abruptly terminate the socket without a close frame.
+        async function* outboxEvents() {
+          try {
+            yield* outbox.events(cursor, abortController.signal)
+          } catch (err) {
+            if (err instanceof OutboxError) {
+              ws.close(1000, err.message)
+              return
+            }
+            throw err
+          }
+        }
+
+        // decodeStrings: false so events are sent as text frames, not binary
+        const websocket = createWebSocketStream(ws, {
+          decodeStrings: false,
+          writableHighWaterMark: MAX_WS_BUFFERED_BYTES,
         })
 
         try {
-          for await (const evt of outbox.events(
-            cursor,
-            abortController.signal,
-          )) {
-            if (ws.readyState !== WebSocket.OPEN) {
-              break
-            }
-            // Note: each event is sent in a separate websocket message
-            ws.send(JSON.stringify(evt))
-          }
+          await pipeline(outboxEvents(), stringify, websocket)
         } catch (err) {
-          if (err instanceof OutboxError) {
-            // consumer too slow, or stale cursor
-            ws.close(1000, err.message)
-          }
           if (!abortController.signal.aborted) {
             req.log.error({ err }, 'error streaming events')
-          }
-        } finally {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.close()
           }
         }
       },

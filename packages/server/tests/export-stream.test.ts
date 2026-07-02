@@ -287,13 +287,48 @@ describe('/export/stream endpoint', () => {
 
   it('rejects cursors from the future', async () => {
     const ws = new WebSocket(`${wsUrl}?cursor=99999999`)
-    const closeReason = await new Promise<string>((resolve, reject) => {
-      ws.on('error', reject)
-      ws.on('close', (code, reason) => {
-        resolve(reason.toString())
-      })
-      setTimeout(reject, 1000)
-    })
+    const [closeCode, closeReason] = await new Promise<[number, string]>(
+      (resolve, reject) => {
+        ws.on('error', reject)
+        ws.on('close', (code, reason) => {
+          resolve([code, reason.toString()])
+        })
+        setTimeout(reject, 1000)
+      },
+    )
+    expect(closeCode).toBe(1000)
     expect(closeReason).toBe(CloseReason.FutureCursor)
+  })
+
+  it('rejects outdated cursors', async () => {
+    const did = await createDid(client)
+    await waitForSequencing()
+
+    // Backdate this operation beyond the one-week backfill window, so that a
+    // cursor pointing just before it is considered outdated
+    const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)
+    await db.db
+      .updateTable('operations')
+      .set({ createdAt: eightDaysAgo })
+      .where('did', '=', did)
+      .execute()
+    const { seq } = await db.db
+      .selectFrom('operations')
+      .select('seq')
+      .where('did', '=', did)
+      .executeTakeFirstOrThrow()
+
+    const ws = new WebSocket(`${wsUrl}?cursor=${(seq as number) - 1}`)
+    const [closeCode, closeReason] = await new Promise<[number, string]>(
+      (resolve, reject) => {
+        ws.on('error', reject)
+        ws.on('close', (code, reason) => {
+          resolve([code, reason.toString()])
+        })
+        setTimeout(reject, 1000)
+      },
+    )
+    expect(closeCode).toBe(1000)
+    expect(closeReason).toBe(CloseReason.OutdatedCursor)
   })
 })

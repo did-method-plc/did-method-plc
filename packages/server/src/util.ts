@@ -17,3 +17,11 @@ export const timingSafeStringEqual = (a: string, b: string): boolean => {
 
   return timingSafeEqual(bufA, bufB)
 }
+
+export async function* stringify(
+  iterable: AsyncIterable<unknown>,
+): AsyncIterable<string> {
+  for await (const item of iterable) {
+    yield JSON.stringify(item)
+  }
+}
