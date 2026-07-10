@@ -76,6 +76,17 @@ export class MockDatabase implements PlcDatabase {
     return op.operation
   }
 
+  async *streamLastOpsForDids(
+    dids: string[],
+  ): AsyncGenerator<{ did: string; operation: plc.CompatibleOpOrTombstone }> {
+    for (const did of dids) {
+      const op = await this.lastOpForDid(did)
+      if (op) {
+        yield { did, operation: op }
+      }
+    }
+  }
+
   // disabled in mocks
   async exportOps(_count: number, _after?: Date): Promise<plc.ExportedOp[]> {
     return []

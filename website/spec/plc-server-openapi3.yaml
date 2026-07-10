@@ -182,6 +182,59 @@ paths:
                 $ref: '#/components/schemas/LogEntry'
         '400':
           $ref: '#/components/responses/400BadRequest'
+  /dids:
+    post:
+      description: "Bulk lookup of multiple DID documents in a single request, in JSON Lines format"
+      operationId: BulkLookupDids
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dids
+              properties:
+                dids:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 1000
+                  description: "Array of DID identifiers to look up"
+              example:
+                dids:
+                  - "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+                  - "did:plc:z72i7hdynmk6r22z27h6tvur"
+      responses:
+        '200':
+          description: "Success, returned DID documents"
+          content:
+            application/jsonlines:
+              description: "Newline-delimited JSON, with one result object per line for each requested DID"
+              schema:
+                $ref: '#/components/schemas/BulkLookupResult'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+      x-codeSamples:
+        - lang: Shell
+          label: curl
+          source: |
+            curl -s -X POST https://plc.directory/dids \
+              -H "Content-Type: application/json" \
+              -d '{"dids":["did:plc:ewvi7nxzyoun6zhxrhs64oiz","did:plc:z72i7hdynmk6r22z27h6tvur"]}'
+        - lang: Python
+          label: Python
+          source: |
+            import requests
+
+            resp = requests.post(
+                "https://plc.directory/dids",
+                json={"dids": ["did:plc:ewvi7nxzyoun6zhxrhs64oiz", "did:plc:z72i7hdynmk6r22z27h6tvur"]}
+            )
+            resp.raise_for_status()
+            for line in resp.text.strip().split("\n"):
+                print(line)
 
 components:
   responses:
@@ -454,5 +507,41 @@ components:
                 type: string
             example:
               id: "#atproto_pds"
+              type: "AtprotoPersonalDataServer"
+              serviceEndpoint: "https://bsky.social"
+
+    BulkLookupResult:
+      type: object
+      required:
+        - did
+        - document
+      properties:
+        did:
+          type: string
+          description: "The DID that was looked up"
+        document:
+          oneOf:
+            - $ref: '#/components/schemas/DidDocument'
+            - type: "null"
+          description: "The resolved DID document, or null if not found/tombstoned"
+        notFound:
+          type: boolean
+          description: "True if the DID was not found in the directory"
+        tombstoned:
+          type: boolean
+          description: "True if the DID has been tombstoned (deactivated)"
+      example:
+        did: "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+        document:
+          id: "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+          alsoKnownAs:
+            - "at://atproto.com"
+          verificationMethod:
+            - id: "did:plc:ewvi7nxzyoun6zhxrhs64oiz#atproto"
+              type: "Multikey"
+              controller: "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+              publicKeyMultibase: "zQ3shXjHeiBuRCKmM36cuYnm7YEMzhGnCmCyW92sRJ9pribSF"
+          service:
+            - id: "#atproto_pds"
               type: "AtprotoPersonalDataServer"
               serviceEndpoint: "https://bsky.social"

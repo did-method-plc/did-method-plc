@@ -1,5 +1,6 @@
 import { Kysely, Migrator, PostgresDialect, sql } from 'kysely'
 import { Pool as PgPool, types as pgTypes } from 'pg'
+import Cursor from 'pg-cursor'
 import { CID } from 'multiformats/cid'
 import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
@@ -52,7 +53,7 @@ export class Database implements PlcDatabase {
     }
 
     const db = new Kysely<DatabaseSchema>({
-      dialect: new PostgresDialect({ pool }),
+      dialect: new PostgresDialect({ pool, cursor: Cursor }),
     })
 
     return new Database(db, schema)
@@ -225,6 +226,30 @@ export class Database implements PlcDatabase {
       .limit(1)
       .executeTakeFirst()
     return res?.operation ?? null
+  }
+
+  async *streamLastOpsForDids(
+    dids: string[],
+  ): AsyncGenerator<{ did: string; operation: plc.CompatibleOpOrTombstone }> {
+    if (dids.length === 0) return
+
+    const stream = this.db
+      .selectFrom('operations')
+      .select(['did', 'operation'])
+      .where('did', 'in', dids)
+      .where('nullified', '=', false)
+      .orderBy('did', 'asc')
+      .orderBy('createdAt', 'desc')
+      .stream()
+
+    // Track seen DIDs to only yield the most recent operation per DID
+    const seen = new Set<string>()
+    for await (const row of stream) {
+      if (!seen.has(row.did)) {
+        seen.add(row.did)
+        yield { did: row.did, operation: row.operation }
+      }
+    }
   }
 
   async exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]> {

@@ -15,6 +15,9 @@ export interface PlcDatabase {
     includeNull?: boolean,
   ): Promise<plc.IndexedOperation[]>
   lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null>
+  streamLastOpsForDids(
+    dids: string[],
+  ): AsyncGenerator<{ did: string; operation: plc.CompatibleOpOrTombstone }>
   exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]>
   exportOpsSeq(count: number, after: number): Promise<plc.ExportedOpWithSeq[]>
   removeInvalidOps(

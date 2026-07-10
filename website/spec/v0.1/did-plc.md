@@ -259,6 +259,37 @@ NOTE: If the `after` query parameter is not set, the response format defaults to
 
 NOTE: Legacy responses order operations by `createdAt`, while non-legacy responses order operations by `seq`. These orders may be slightly different! In either case, operations for a particular DID will always be in the same order relative to each other. In other words, if you isolated the operations for a single DID, the `seq` order and the `createdAt` orders are identical.
 
+### Bulk DID Lookup
+
+The HTTP endpoint `https://plc.directory/dids` allows bulk lookup of DID documents in a single request, reducing HTTP overhead when revalidating many DIDs.
+
+**Request:**
+- Method: `POST`
+- Content-Type: `application/json`
+- Body: `{ "dids": ["did:plc:abc...", "did:plc:xyz..."] }`
+- Maximum of 1,000 DIDs per request
+
+**Response:**
+- Content-Type: `application/jsonlines`
+- Each line is a JSON object with the following fields:
+  - `did` (string): The requested DID identifier
+  - `document` (object or null): The resolved DID document, or `null` if not found or tombstoned
+  - `notFound` (boolean, optional): Present and `true` if the DID was not found in the directory
+  - `tombstoned` (boolean, optional): Present and `true` if the DID has been deactivated
+
+Example request:
+```bash
+curl -X POST https://plc.directory/dids \
+  -H "Content-Type: application/json" \
+  -d '{"dids":["did:plc:ewvi7nxzyoun6zhxrhs64oiz","did:plc:z72i7hdynmk6r22z27h6tvur"]}'
+```
+
+Example response:
+```jsonl
+{"did":"did:plc:ewvi7nxzyoun6zhxrhs64oiz","document":{"@context":[...],"id":"did:plc:ewvi7nxzyoun6zhxrhs64oiz",...}}
+{"did":"did:plc:z72i7hdynmk6r22z27h6tvur","document":null,"notFound":true}
+```
+
 ### Export Streaming WebSocket
 
 The [WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) endpoint at `wss://plc.directory/export/stream` returns a stream of JSON objects in the same format as the (non-legacy) `/export` endpoint. JSON objects are delimited by the WebSocket message framing layer (*not* newlines).
@@ -454,6 +485,10 @@ A "DID PLC history explorer" web interface would make the public nature of the D
 It is conceivable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also conceivable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
 
 ## Changelog
+
+### 2026-01-20 (vn.e.x.t)
+
+- Introduces `POST /dids` endpoint for bulk DID document lookup
 
 ### 2025-12-04 (v0.3.0)
 
