@@ -37,7 +37,7 @@ export function assertValidIncomingOp(
   if (op.alsoKnownAs.length > MAX_AKA_ENTRIES) {
     throw new ServerError(
       400,
-      `To many alsoKnownAs entries (max ${MAX_AKA_ENTRIES})`,
+      `Too many alsoKnownAs entries (max ${MAX_AKA_ENTRIES})`,
     )
   }
   const akaDupe = new Set<string>()
@@ -71,7 +71,7 @@ export function assertValidIncomingOp(
   if (serviceEntries.length > MAX_SERVICE_ENTRIES) {
     throw new ServerError(
       400,
-      `To many service entries (max ${MAX_SERVICE_ENTRIES})`,
+      `Too many service entries (max ${MAX_SERVICE_ENTRIES})`,
     )
   }
   for (const [id, service] of serviceEntries) {
@@ -142,7 +142,7 @@ export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
       if (withinWeek >= WEEK_LIMIT) {
         throw new ServerError(
           400,
-          `To many operations within last week (max ${WEEK_LIMIT})`,
+          `Too many operations within last week (max ${WEEK_LIMIT})`,
         )
       }
     }
@@ -151,7 +151,7 @@ export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
       if (withinDay >= DAY_LIMIT) {
         throw new ServerError(
           400,
-          `To many operations within last day (max ${DAY_LIMIT})`,
+          `Too many operations within last day (max ${DAY_LIMIT})`,
         )
       }
     }
@@ -160,7 +160,7 @@ export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
       if (withinHour >= HOUR_LIMIT) {
         throw new ServerError(
           400,
-          `To many operations within last hour (max ${HOUR_LIMIT})`,
+          `Too many operations within last hour (max ${HOUR_LIMIT})`,
         )
       }
     }
