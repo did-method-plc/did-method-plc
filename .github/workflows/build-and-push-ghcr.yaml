@@ -9,7 +9,9 @@ env:
 
 jobs:
   plc-container-ghcr:
-    if: github.repository == 'did-method-plc/did-method-plc'
+    # IMAGE_NAME is ${{ github.repository }}, so each fork publishes to its own
+    # ghcr namespace (e.g. ghcr.io/fil-forge/did-method-plc). No repo guard is
+    # needed; PR builds are prevented from pushing by the `push:` condition below.
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,8 +38,13 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # A colon is illegal in a Docker tag, so the old `prefix=plc:` produced
+          # an unpullable reference. Emit a branch tag (e.g. `main`), release
+          # tags, and a bare full-SHA tag for precise pinning.
           tags: |
-            type=sha,enable=true,priority=100,prefix=plc:,suffix=,format=long
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,prefix=,format=long
 
       - name: Build and push Docker image
         id: build-and-push
