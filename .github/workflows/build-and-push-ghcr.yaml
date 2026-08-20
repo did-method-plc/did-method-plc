@@ -72,6 +72,11 @@ jobs:
       # The receiver opens a pull request pinning the digest with auto-merge
       # enabled, and HCP applies dev on every commit to infra-central's `main`,
       # so merging it is what deploys. Prod pins are promoted by hand.
+      #
+      # This workflow has no `concurrency` guard, so two pushes to `main` build
+      # side by side and finish in whatever order the arm64 legs happen to take.
+      # Last dispatch wins at the receiver, so the tip check below is what keeps
+      # an older build from repinning dev behind a newer one.
       - name: Resolve the source pull request
         if: github.ref == 'refs/heads/main' && github.repository == 'fil-forge/did-method-plc'
         id: source
@@ -94,8 +99,29 @@ jobs:
           owner: fil-forge
           repositories: infra-central
 
-      - name: Request a digest bump in the Forge Central "dev" environment
+      # Kept adjacent to the dispatch so the window between the two is as
+      # small as it can be. The bot token cannot read this repository, so the
+      # tip comes from GITHUB_TOKEN.
+      - name: Confirm this commit is still the tip of main
         if: github.ref == 'refs/heads/main' && github.repository == 'fil-forge/did-method-plc'
+        id: tip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tip=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
+          if [ "$tip" = "$GITHUB_SHA" ]; then
+            echo "is_tip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_tip=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::main has moved to $tip; leaving the dev pin to that build"
+          fi
+
+      - name: Request a digest bump in the Forge Central "dev" environment
+        if: |
+          github.ref == 'refs/heads/main'
+          && github.repository == 'fil-forge/did-method-plc'
+          && steps.tip.outputs.is_tip == 'true'
         env:
           GH_TOKEN: ${{ steps.bot.outputs.token }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
