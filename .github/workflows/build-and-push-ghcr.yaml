@@ -70,8 +70,9 @@ jobs:
       # other refs and forks publish to their own namespace and stop there.
       #
       # The receiver opens a pull request pinning the digest with auto-merge
-      # enabled, and HCP applies dev on every commit to infra-central's `main`,
-      # so merging it is what deploys. Prod pins are promoted by hand.
+      # enabled, and infra-central's "Check and deploy" runs `tofu apply` on
+      # dev/apps on every push to its `main`, so merging it is what deploys.
+      # Prod pins are promoted by hand.
       #
       # This workflow has no `concurrency` guard, so two pushes to `main` build
       # side by side and finish in whatever order the arm64 legs happen to take.
