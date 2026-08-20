@@ -17,6 +17,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      pull-requests: read
 
     steps:
       - name: Checkout repository
@@ -62,3 +63,56 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # The dev stage of Forge Central pins this image by digest rather than
+      # following the `main` tag, so the run that published it is the one that
+      # knows what to deploy. Only fil-forge's `main` builds feed that stage;
+      # other refs and forks publish to their own namespace and stop there.
+      #
+      # The receiver opens a pull request pinning the digest with auto-merge
+      # enabled, and HCP applies dev on every commit to infra-central's `main`,
+      # so merging it is what deploys. Prod pins are promoted by hand.
+      - name: Resolve the source pull request
+        if: github.ref == 'refs/heads/main' && github.repository == 'fil-forge/did-method-plc'
+        id: source
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          pr_url=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+            --jq 'map(select(.merged_at != null)) | .[0].html_url // ""')
+          echo "pr_url=$pr_url" >> "$GITHUB_OUTPUT"
+
+      # Needs the FORGE_BOT_APP_ID variable and FORGE_BOT_PRIVATE_KEY secret.
+      - name: Mint fil-forge-bot token
+        if: github.ref == 'refs/heads/main' && github.repository == 'fil-forge/did-method-plc'
+        id: bot
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.FORGE_BOT_APP_ID }}
+          private-key: ${{ secrets.FORGE_BOT_PRIVATE_KEY }}
+          owner: fil-forge
+          repositories: infra-central
+
+      - name: Request a digest bump in the Forge Central "dev" environment
+        if: github.ref == 'refs/heads/main' && github.repository == 'fil-forge/did-method-plc'
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          PR_URL: ${{ steps.source.outputs.pr_url }}
+        run: |
+          set -euo pipefail
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] \
+            || { echo "::error::unexpected digest: '$DIGEST'"; exit 1; }
+          jq -n \
+            --arg service plc \
+            --arg digest "$DIGEST" \
+            --arg source_repo "$GITHUB_REPOSITORY" \
+            --arg commit "$GITHUB_SHA" \
+            --arg pr_url "$PR_URL" \
+            --arg run_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{event_type: "bump-deployed-image",
+              client_payload: {service: $service, digest: $digest,
+                               source_repo: $source_repo, commit: $commit,
+                               pr_url: $pr_url, run_url: $run_url}}' \
+            | gh api --method POST repos/fil-forge/infra-central/dispatches --input -
