@@ -388,6 +388,25 @@ describe('PLC server', () => {
     expect(removedOps).toEqual([res.operation]) // should return the removed op
   })
 
+  it('rejects non-PLC identifiers without querying the database', async () => {
+    const lastOpForDid = jest.spyOn(db, 'lastOpForDid')
+    const invalidDid = 'did:web:pluralistic.net'
+
+    try {
+      const res = await axios.get(`${client.url}/${invalidDid}`, {
+        validateStatus: () => true,
+      })
+
+      expect(res.status).toEqual(404)
+      expect(res.data).toEqual({
+        message: `DID not registered: ${invalidDid}`,
+      })
+      expect(lastOpForDid).not.toHaveBeenCalled()
+    } finally {
+      lastOpForDid.mockRestore()
+    }
+  })
+
   it('healthcheck succeeds when database is available.', async () => {
     const res = await client.health()
     expect(res).toEqual({ version: '0.0.0' })

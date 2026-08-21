@@ -7,12 +7,14 @@ export const handler: ErrorRequestHandler = (err, req, res, next) => {
     err = ServerError.fromPlcError(err)
   }
 
-  req.log.info(
-    err,
-    ServerError.is(err)
-      ? 'handled server error'
-      : 'unexpected internal server error',
-  )
+  if (ServerError.is(err) && err.status < 500) {
+    req.log.debug(
+      { error: { message: err.message, status: err.status } },
+      'handled server error',
+    )
+  } else {
+    req.log.error(err, 'unexpected internal server error')
+  }
   if (res.headersSent) {
     return next(err)
   }

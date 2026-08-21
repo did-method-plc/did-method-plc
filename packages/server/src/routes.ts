@@ -13,6 +13,22 @@ import { Outbox, OutboxError } from './sequencer'
 // the outbox, which closes them if they fall too far behind — rather than
 // buffering events in process memory without bound.
 const MAX_WS_BUFFERED_BYTES = 256 * 1024
+const PLC_DID_RE = /^did:plc:[a-z2-7]{24}$/
+
+// Invalid DID methods are a common crawler input. Preserve the existing 404
+// response while avoiding a database round trip and Error stack allocation.
+const requirePlcDid: express.RequestHandler<{ did: string }> = (
+  req,
+  res,
+  next,
+) => {
+  const { did } = req.params
+  if (!PLC_DID_RE.test(did)) {
+    res.status(404).json({ message: `DID not registered: ${did}` })
+    return
+  }
+  next()
+}
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
@@ -136,7 +152,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get data for a DID document
-  router.get('/:did', async function (req, res) {
+  router.get('/:did', requirePlcDid, async function (req, res) {
     const { did } = req.params
     const last = await ctx.db.lastOpForDid(did)
     if (!last) {
@@ -152,7 +168,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get data for a DID document
-  router.get('/:did/data', async function (req, res) {
+  router.get('/:did/data', requirePlcDid, async function (req, res) {
     const { did } = req.params
     const last = await ctx.db.lastOpForDid(did)
     if (!last) {
@@ -166,7 +182,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get operation log for a DID
-  router.get('/:did/log', async function (req, res) {
+  router.get('/:did/log', requirePlcDid, async function (req, res) {
     const { did } = req.params
     const log = await ctx.db.opsForDid(did)
     if (log.length === 0) {
@@ -176,7 +192,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get operation log for a DID
-  router.get('/:did/log/audit', async function (req, res) {
+  router.get('/:did/log/audit', requirePlcDid, async function (req, res) {
     const { did } = req.params
     const ops = await ctx.db.indexedOpsForDid(did, true)
     if (ops.length === 0) {
@@ -192,7 +208,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   })
 
   // Get the most recent operation in the log for a DID
-  router.get('/:did/log/last', async function (req, res) {
+  router.get('/:did/log/last', requirePlcDid, async function (req, res) {
     const { did } = req.params
     const last = await ctx.db.lastOpForDid(did)
     if (!last) {
