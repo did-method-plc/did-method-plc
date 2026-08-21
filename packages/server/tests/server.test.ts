@@ -388,22 +388,30 @@ describe('PLC server', () => {
     expect(removedOps).toEqual([res.operation]) // should return the removed op
   })
 
-  it('rejects non-PLC identifiers without querying the database', async () => {
+  it('rejects non-PLC identifiers before querying the database', async () => {
     const lastOpForDid = jest.spyOn(db, 'lastOpForDid')
-    const invalidDid = 'did:web:pluralistic.net'
+    const opsForDid = jest.spyOn(db, 'opsForDid')
+    const indexedOpsForDid = jest.spyOn(db, 'indexedOpsForDid')
+    const invalidDid = 'did:web:example.com'
 
     try {
-      const res = await axios.get(`${client.url}/${invalidDid}`, {
-        validateStatus: () => true,
-      })
+      for (const path of ['', '/data', '/log', '/log/audit', '/log/last']) {
+        const res = await axios.get(`${client.url}/${invalidDid}${path}`, {
+          validateStatus: () => true,
+        })
 
-      expect(res.status).toEqual(404)
-      expect(res.data).toEqual({
-        message: `DID not registered: ${invalidDid}`,
-      })
+        expect(res.status).toEqual(400)
+        expect(res.data).toEqual({
+          message: `Resolution of non-PLC DIDs not supported: ${invalidDid}`,
+        })
+      }
       expect(lastOpForDid).not.toHaveBeenCalled()
+      expect(opsForDid).not.toHaveBeenCalled()
+      expect(indexedOpsForDid).not.toHaveBeenCalled()
     } finally {
       lastOpForDid.mockRestore()
+      opsForDid.mockRestore()
+      indexedOpsForDid.mockRestore()
     }
   })
 
