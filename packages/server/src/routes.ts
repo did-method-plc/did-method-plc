@@ -13,6 +13,19 @@ import { Outbox, OutboxError } from './sequencer'
 // the outbox, which closes them if they fall too far behind — rather than
 // buffering events in process memory without bound.
 const MAX_WS_BUFFERED_BYTES = 256 * 1024
+const PLC_DID_RE = /^did:plc:[a-z2-7]{24}$/
+
+// Invalid DID methods are a common crawler input. Reject them before a
+// database round trip with a response that distinguishes unsupported methods
+// from unregistered PLC DIDs.
+const assertPlcDid = (did: string): void => {
+  if (!PLC_DID_RE.test(did)) {
+    throw new ServerError(
+      400,
+      `Resolution of non-PLC DIDs not supported: ${did}`,
+    )
+  }
+}
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
@@ -138,6 +151,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Get data for a DID document
   router.get('/:did', async function (req, res) {
     const { did } = req.params
+    assertPlcDid(did)
     const last = await ctx.db.lastOpForDid(did)
     if (!last) {
       throw new ServerError(404, `DID not registered: ${did}`)
@@ -154,6 +168,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Get data for a DID document
   router.get('/:did/data', async function (req, res) {
     const { did } = req.params
+    assertPlcDid(did)
     const last = await ctx.db.lastOpForDid(did)
     if (!last) {
       throw new ServerError(404, `DID not registered: ${did}`)
@@ -168,6 +183,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Get operation log for a DID
   router.get('/:did/log', async function (req, res) {
     const { did } = req.params
+    assertPlcDid(did)
     const log = await ctx.db.opsForDid(did)
     if (log.length === 0) {
       throw new ServerError(404, `DID not registered: ${did}`)
@@ -178,6 +194,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Get operation log for a DID
   router.get('/:did/log/audit', async function (req, res) {
     const { did } = req.params
+    assertPlcDid(did)
     const ops = await ctx.db.indexedOpsForDid(did, true)
     if (ops.length === 0) {
       throw new ServerError(404, `DID not registered: ${did}`)
@@ -194,6 +211,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   // Get the most recent operation in the log for a DID
   router.get('/:did/log/last', async function (req, res) {
     const { did } = req.params
+    assertPlcDid(did)
     const last = await ctx.db.lastOpForDid(did)
     if (!last) {
       throw new ServerError(404, `DID not registered: ${did}`)

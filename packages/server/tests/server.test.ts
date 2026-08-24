@@ -388,6 +388,33 @@ describe('PLC server', () => {
     expect(removedOps).toEqual([res.operation]) // should return the removed op
   })
 
+  it('rejects non-PLC identifiers before querying the database', async () => {
+    const lastOpForDid = jest.spyOn(db, 'lastOpForDid')
+    const opsForDid = jest.spyOn(db, 'opsForDid')
+    const indexedOpsForDid = jest.spyOn(db, 'indexedOpsForDid')
+    const invalidDid = 'did:web:example.com'
+
+    try {
+      for (const path of ['', '/data', '/log', '/log/audit', '/log/last']) {
+        const res = await axios.get(`${client.url}/${invalidDid}${path}`, {
+          validateStatus: () => true,
+        })
+
+        expect(res.status).toEqual(400)
+        expect(res.data).toEqual({
+          message: `Resolution of non-PLC DIDs not supported: ${invalidDid}`,
+        })
+      }
+      expect(lastOpForDid).not.toHaveBeenCalled()
+      expect(opsForDid).not.toHaveBeenCalled()
+      expect(indexedOpsForDid).not.toHaveBeenCalled()
+    } finally {
+      lastOpForDid.mockRestore()
+      opsForDid.mockRestore()
+      indexedOpsForDid.mockRestore()
+    }
+  })
+
   it('healthcheck succeeds when database is available.', async () => {
     const res = await client.health()
     expect(res).toEqual({ version: '0.0.0' })
