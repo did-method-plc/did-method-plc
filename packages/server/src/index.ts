@@ -1,5 +1,6 @@
 import './types.js'
 
+import compression from 'compression'
 import express from 'express'
 import cors from 'cors'
 import http from 'http'
@@ -12,7 +13,6 @@ import type { HttpTerminator } from 'http-terminator'
 import { createHttpTerminator } from 'http-terminator'
 import type { PlcDatabase } from './db/types.js'
 import { Socket } from 'net'
-import type Database from './db/index.js'
 import type { SequencerOptions } from './sequencer/index.js'
 import { Sequencer } from './sequencer/index.js'
 
@@ -41,6 +41,7 @@ export class PlcServer {
   }): PlcServer {
     const app = express()
     app.use(cors())
+    app.use(compression())
 
     app.use(loggerMiddleware)
     // Must come after loggerMiddleware: the body parser rejects malformed and
@@ -49,7 +50,7 @@ export class PlcServer {
     app.use(express.json({ limit: '100kb' }))
 
     // Initialize sequencer
-    const sequencer = new Sequencer(opts.db as Database, opts.sequencer)
+    const sequencer = new Sequencer(opts.db, opts.sequencer)
 
     const ctx = new AppContext({
       db: opts.db,

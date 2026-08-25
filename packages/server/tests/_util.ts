@@ -2,14 +2,14 @@ import type { AddressInfo } from 'net'
 import type { AppContext } from '../src/index.js'
 import PlcServer from '../src/index.js'
 import type { Client as plcClient } from '@did-plc/lib'
-import Database from '../src/db/index.js'
+import PgDatabase from '../src/db/index.js'
 import { P256Keypair } from '@atproto/crypto'
 
 export type CloseFn = () => Promise<void>
 export type TestServerInfo = {
   ctx: AppContext
   url: string
-  db: Database
+  db: PgDatabase
   close: CloseFn
 }
 
@@ -24,7 +24,7 @@ export const runTestServer = async (opts: {
     throw new Error('No postgres url provided')
   }
 
-  const db = Database.postgres({
+  const db = PgDatabase.create({
     url: dbUrl,
     schema: dbSchema,
   })

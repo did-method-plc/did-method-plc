@@ -3,14 +3,14 @@ import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import type { CloseFn, TestServerInfo } from './_util.js'
 import { runTestServer, createDid } from './_util.js'
-import type { Database, Sequencer, SeqEvt } from '../src/index.js'
+import type { PgDatabase, Sequencer, SeqEvt } from '../src/index.js'
 import { Outbox, CloseReason } from '../src/index.js'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader.js'
 
 describe('sequencer', () => {
   let server: TestServerInfo
   let close: CloseFn
-  let db: Database
+  let db: PgDatabase
   let sequencer: Sequencer
   let sequencerLeader: SequencerLeader
   let client: plc.Client

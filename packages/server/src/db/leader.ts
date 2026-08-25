@@ -1,5 +1,5 @@
 import { sql } from 'kysely'
-import type Database from './index.js'
+import type PgDatabase from './index.js'
 
 export class Leader {
   session: LeaderSession | null = null
@@ -7,7 +7,7 @@ export class Leader {
 
   constructor(
     public id: number,
-    public db: Database,
+    public db: PgDatabase,
   ) {}
 
   async run<T>(

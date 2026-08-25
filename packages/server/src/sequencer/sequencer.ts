@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events'
-import type Database from '../db/index.js'
-import type { OperationsTableEntry } from '../db/types.js'
+import type { OperationsTableEntry, PlcDatabase } from '../db/types.js'
 import type { SeqEvt } from './events.js'
 import { seqLogger as log } from '../logger.js'
 
@@ -29,7 +28,7 @@ export class Sequencer
   catchupDurationMs: number
 
   constructor(
-    public db: Database,
+    readonly db: PlcDatabase,
     opts: SequencerOptions = {},
   ) {
     super()
@@ -54,26 +53,11 @@ export class Sequencer
   }
 
   async curr(): Promise<OperationsTableEntry | null> {
-    const result = await this.db.db
-      .selectFrom('operations')
-      .selectAll()
-      .where('seq', 'is not', null)
-      .orderBy('seq', 'desc')
-      .limit(1)
-      .executeTakeFirst()
-    return result ?? null
+    return this.db.curr()
   }
 
   async next(cursor: number): Promise<OperationsTableEntry | null> {
-    const result = await this.db.db
-      .selectFrom('operations')
-      .selectAll()
-      .where('seq', 'is not', null)
-      .where('seq', '>', cursor)
-      .limit(1)
-      .orderBy('seq', 'asc')
-      .executeTakeFirst()
-    return result ?? null
+    return this.db.next(cursor)
   }
 
   async requestSeqRange(opts: {
@@ -81,32 +65,7 @@ export class Sequencer
     latestSeq?: number
     limit?: number
   }): Promise<SeqEvt[]> {
-    let builder = this.db.db
-      .selectFrom('operations')
-      .selectAll()
-      .where('seq', 'is not', null)
-      .orderBy('seq', 'asc')
-
-    if (opts.earliestSeq !== undefined) {
-      builder = builder.where('seq', '>', opts.earliestSeq)
-    }
-    if (opts.latestSeq !== undefined) {
-      builder = builder.where('seq', '<=', opts.latestSeq)
-    }
-    if (opts.limit !== undefined) {
-      builder = builder.limit(opts.limit)
-    }
-
-    const rows = await builder.execute()
-
-    return rows.map((row) => ({
-      seq: row.seq as number,
-      type: 'sequenced_op',
-      did: row.did,
-      operation: row.operation,
-      cid: row.cid,
-      createdAt: row.createdAt.toISOString(),
-    }))
+    return this.db.requestSeqRange(opts)
   }
 
   async pollDb(): Promise<void> {

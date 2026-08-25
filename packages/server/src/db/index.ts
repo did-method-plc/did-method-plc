@@ -6,8 +6,11 @@ import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from '../error.js'
 import * as migrations from '../migrations/index.js'
-import type { DatabaseSchema, PlcDatabase } from './types.js'
-import MockDatabase from './mock.js'
+import type {
+  DatabaseSchema,
+  OperationsTableEntry,
+  PlcDatabase,
+} from './types.js'
 import { enforceOpsRateLimit } from '../constraints.js'
 
 // pg is CJS and its named exports are not statically detectable by
@@ -18,11 +21,11 @@ const { Pool: PgPool, types: pgTypes } = pg
 export * from './mock.js'
 export * from './types.js'
 
-export class Database implements PlcDatabase {
+export class PgDatabase implements PlcDatabase {
   migrator: Migrator
   constructor(
-    public db: Kysely<DatabaseSchema>,
-    public schema?: string,
+    readonly db: Kysely<DatabaseSchema>,
+    readonly schema?: string,
   ) {
     this.migrator = new Migrator({
       db,
@@ -35,7 +38,7 @@ export class Database implements PlcDatabase {
     })
   }
 
-  static postgres(opts: PgOptions): Database {
+  static create(opts: PgOptions): PgDatabase {
     const { schema } = opts
     const pool = new PgPool({
       connectionString: opts.url,
@@ -64,11 +67,7 @@ export class Database implements PlcDatabase {
       dialect: new PostgresDialect({ pool }),
     })
 
-    return new Database(db, schema)
-  }
-
-  static mock(): MockDatabase {
-    return new MockDatabase()
+    return new PgDatabase(db, schema)
   }
 
   async close(): Promise<void> {
@@ -352,6 +351,62 @@ export class Database implements PlcDatabase {
     // return a copy of the invalid ops
     return invalidOps.map((op) => op.operation)
   }
+
+  async curr(): Promise<OperationsTableEntry | null> {
+    const result = await this.db
+      .selectFrom('operations')
+      .selectAll()
+      .where('seq', 'is not', null)
+      .orderBy('seq', 'desc')
+      .limit(1)
+      .executeTakeFirst()
+    return result ?? null
+  }
+
+  async next(cursor: number): Promise<OperationsTableEntry | null> {
+    const result = await this.db
+      .selectFrom('operations')
+      .selectAll()
+      .where('seq', 'is not', null)
+      .where('seq', '>', cursor)
+      .limit(1)
+      .orderBy('seq', 'asc')
+      .executeTakeFirst()
+    return result ?? null
+  }
+
+  async requestSeqRange(opts: {
+    earliestSeq?: number
+    latestSeq?: number
+    limit?: number
+  }): Promise<plc.ExportedOpWithSeq[]> {
+    let builder = this.db
+      .selectFrom('operations')
+      .selectAll()
+      .where('seq', 'is not', null)
+      .orderBy('seq', 'asc')
+
+    if (opts.earliestSeq !== undefined) {
+      builder = builder.where('seq', '>', opts.earliestSeq)
+    }
+    if (opts.latestSeq !== undefined) {
+      builder = builder.where('seq', '<=', opts.latestSeq)
+    }
+    if (opts.limit !== undefined) {
+      builder = builder.limit(opts.limit)
+    }
+
+    const rows = await builder.execute()
+
+    return rows.map((row) => ({
+      seq: row.seq as number,
+      type: 'sequenced_op',
+      did: row.did,
+      operation: row.operation,
+      cid: row.cid,
+      createdAt: row.createdAt.toISOString(),
+    }))
+  }
 }
 
 export type PgOptions = {
@@ -362,4 +417,4 @@ export type PgOptions = {
   poolIdleTimeoutMs?: number
 }
 
-export default Database
+export default PgDatabase
