@@ -1,11 +1,11 @@
 import './env'
-import { Database, PlcDatabase } from './db'
+import { MockDatabase, PgDatabase, PlcDatabase } from './db'
 import PlcServer from '.'
 import { SequencerLeader } from './sequencer'
 import { leaderLogger } from './logger'
 
 const waitForDb = async (
-  db: Database,
+  db: PgDatabase,
   maxRetries = 30,
   delayMs = 1000,
 ): Promise<void> => {
@@ -33,7 +33,7 @@ const run = async () => {
     let statsInterval: NodeJS.Timer | undefined
     if (dbUrl) {
       console.log('[*] Connecting to database...')
-      const pgDb = Database.postgres({ url: dbUrl })
+      const pgDb = PgDatabase.create({ url: dbUrl })
 
       // Wait for database to be ready (useful when testing via ./pg/with-test-db.sh )
       console.log('[*] Waiting for database to be ready...')
@@ -62,7 +62,8 @@ const run = async () => {
         }
       }, 5000)
     } else {
-      db = Database.mock()
+      console.log('[*] No DATABASE_URL provided, using mock database')
+      db = MockDatabase.create()
     }
 
     const envPort = parseInt(process.env.PORT || '')

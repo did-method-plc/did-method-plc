@@ -2,10 +2,10 @@ import { cidForCbor, DAY } from '@atproto/common'
 import { Secp256k1Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { Kysely } from 'kysely'
-import { Database } from '../../src'
+import { PgDatabase } from '../../src'
 
 describe('refactor migration', () => {
-  let db: Database
+  let db: PgDatabase
   let rawDb: Kysely<any>
 
   beforeAll(async () => {
@@ -13,7 +13,7 @@ describe('refactor migration', () => {
     if (!dbUrl) {
       throw new Error('No postgres url provided')
     }
-    db = Database.postgres({
+    db = PgDatabase.create({
       url: dbUrl,
       schema: 'migration_refactor',
     })

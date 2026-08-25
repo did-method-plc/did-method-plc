@@ -1,11 +1,11 @@
 import { sql } from 'kysely'
-import Database from './index'
+import PgDatabase from './index'
 
 export class Leader {
   session: LeaderSession | null = null
   isLockingDb = false
 
-  constructor(public id: number, public db: Database) {}
+  constructor(public id: number, public db: PgDatabase) {}
 
   async run<T>(
     task: (ctx: { signal: AbortSignal }) => Promise<T>,

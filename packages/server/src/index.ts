@@ -1,28 +1,22 @@
-// catch errors that get thrown in async route handlers
-// this is a relatively non-invasive change to express
-// they get handled in the error.handler middleware
-// leave at top of file before importing Routes
-import 'express-async-errors'
 import './types'
 
-import express from 'express'
-import cors from 'cors'
-import http from 'http'
-import events from 'events'
-import * as error from './error'
-import createRouter from './routes'
-import { loggerMiddleware } from './logger'
-import AppContext from './context'
+import * as compression from 'compression'
+import * as cors from 'cors'
+import * as express from 'express'
 import { createHttpTerminator, HttpTerminator } from 'http-terminator'
-import { PlcDatabase } from './db/types'
-import { Socket } from 'net'
-import Database from './db'
+import * as events from 'node:events'
+import http from 'node:http'
+import AppContext from './context'
+import { PlcDatabase } from './db'
+import { handler as errorHandler } from './error'
+import { loggerMiddleware } from './logger'
+import createRouter from './routes'
 import { Sequencer, SequencerOptions } from './sequencer'
 
-export * from './db'
 export * from './context'
-export * from './sequencer'
+export * from './db'
 export * from './logger'
+export * from './sequencer'
 
 export class PlcServer {
   public ctx: AppContext
@@ -45,11 +39,12 @@ export class PlcServer {
     const app = express()
     app.use(express.json({ limit: '100kb' }))
     app.use(cors())
+    app.use(compression())
 
     app.use(loggerMiddleware)
 
     // Initialize sequencer
-    const sequencer = new Sequencer(opts.db as Database, opts.sequencer)
+    const sequencer = new Sequencer(opts.db, opts.sequencer)
 
     const ctx = new AppContext({
       db: opts.db,
@@ -60,7 +55,7 @@ export class PlcServer {
     })
 
     app.use('/', createRouter(ctx))
-    app.use(error.handler)
+    app.use(errorHandler)
 
     // Must be the last middleware, used to clean up websocket requests to unhandled routes
     app.use((req, res, next): void => {
