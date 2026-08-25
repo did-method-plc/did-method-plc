@@ -8,7 +8,7 @@ packages/*/coverage
 .vscode/
 .DS_Store
 *.log
-tsconfig.build.tsbuildinfo
+*.tsbuildinfo
 .env
 .*.env
 \#*\#

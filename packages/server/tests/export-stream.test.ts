@@ -1,14 +1,14 @@
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
-import { CloseReason, Database, SeqEvt } from '../src'
+import { CloseReason, PgDatabase, SeqEvt } from '../src'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader'
-import WebSocket from 'ws'
+import { WebSocket } from 'ws'
 
 describe('/export/stream endpoint', () => {
   let server: TestServerInfo
   let close: CloseFn
-  let db: Database
+  let db: PgDatabase
   let sequencerLeader: SequencerLeader
   let client: plc.Client
   let wsUrl: string

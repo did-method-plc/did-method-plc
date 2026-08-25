@@ -1,13 +1,20 @@
 import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from '../error'
-import { PlcDatabase } from './types'
-import { CID } from 'multiformats/cid'
+import { OperationsTableEntry, PlcDatabase } from './types'
 
 type Contents = Record<string, plc.IndexedOperation[]>
 
+type LoggedOp = plc.IndexedOperation & { seq: number }
+
 export class MockDatabase implements PlcDatabase {
   contents: Contents = {}
+  private opLog: LoggedOp[] = []
+  private seq = 0
+
+  static create(): MockDatabase {
+    return new MockDatabase()
+  }
 
   async close(): Promise<void> {}
   async healthCheck(): Promise<void> {}
@@ -33,13 +40,16 @@ export class MockDatabase implements PlcDatabase {
         `Proposed prev does not match the most recent operation`,
       )
     }
-    this.contents[did].push({
+    const indexedOp: LoggedOp = {
       did,
       operation: proposed,
       cid,
       nullified: false,
       createdAt: proposedDate,
-    })
+      seq: ++this.seq,
+    }
+    this.contents[did].push(indexedOp)
+    this.opLog.push(indexedOp)
 
     if (nullified.length > 0) {
       for (let i = 0; i < this.contents[did].length; i++) {
@@ -94,6 +104,55 @@ export class MockDatabase implements PlcDatabase {
   ): Promise<plc.CompatibleOpOrTombstone[]> {
     throw new Error('not implemented in mock')
   }
+
+  async curr(): Promise<OperationsTableEntry | null> {
+    const last = this.opLog.at(-1)
+    if (!last) return null
+    return toTableEntry(last)
+  }
+
+  async next(cursor: number): Promise<OperationsTableEntry | null> {
+    const found = this.opLog.find((op) => op.seq > cursor)
+    if (!found) return null
+    return toTableEntry(found)
+  }
+
+  async requestSeqRange(opts: {
+    earliestSeq?: number
+    latestSeq?: number
+    limit?: number
+  }): Promise<plc.ExportedOpWithSeq[]> {
+    const { earliestSeq, latestSeq, limit } = opts
+    let ops = this.opLog.filter(
+      (op) =>
+        (earliestSeq === undefined || op.seq > earliestSeq) &&
+        (latestSeq === undefined || op.seq <= latestSeq),
+    )
+    if (limit !== undefined) {
+      ops = ops.slice(0, limit)
+    }
+    return ops.map(
+      (op): plc.ExportedOpWithSeq => ({
+        type: 'sequenced_op',
+        did: op.did,
+        operation: op.operation,
+        cid: op.cid.toString(),
+        createdAt: op.createdAt.toISOString(),
+        seq: op.seq,
+      }),
+    )
+  }
 }
 
 export default MockDatabase
+
+function toTableEntry(op: LoggedOp): OperationsTableEntry {
+  return {
+    did: op.did,
+    operation: structuredClone(op.operation),
+    cid: op.cid.toString(),
+    nullified: op.nullified,
+    createdAt: new Date(op.createdAt),
+    seq: op.seq,
+  }
+}

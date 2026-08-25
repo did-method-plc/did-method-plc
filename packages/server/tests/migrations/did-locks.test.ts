@@ -2,18 +2,18 @@ import { cidForCbor, DAY } from '@atproto/common'
 import { Secp256k1Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { Kysely } from 'kysely'
-import { Database } from '../../src'
+import { PgDatabase } from '../../src'
 
 describe('did-locks migration', () => {
-  let db: Database
+  let db: PgDatabase
   let rawDb: Kysely<any>
 
   beforeAll(async () => {
-    const dbUrl = process.env.DATABASE_URL
+    const dbUrl = process.env.DATABASE_URL?.trim()
     if (!dbUrl) {
       throw new Error('No postgres url provided')
     }
-    db = Database.postgres({
+    db = PgDatabase.create({
       url: dbUrl,
       schema: 'migration_did_locks',
     })

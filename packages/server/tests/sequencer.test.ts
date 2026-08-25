@@ -1,13 +1,14 @@
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
-import { Database, Sequencer, Outbox, SeqEvt, CloseReason } from '../src'
+import { PgDatabase, Sequencer, Outbox, SeqEvt, CloseReason } from '../src'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader'
+import assert from 'node:assert'
 
 describe('sequencer', () => {
   let server: TestServerInfo
   let close: CloseFn
-  let db: Database
+  let db: PgDatabase
   let sequencer: Sequencer
   let sequencerLeader: SequencerLeader
   let client: plc.Client
@@ -154,15 +155,16 @@ describe('sequencer', () => {
       await waitForSequencing()
 
       const prevCurr = await sequencer.curr()
-      expect(prevCurr).not.toBeNull()
+      assert(prevCurr)
 
       // Create another event
       await createDid(client)
       await waitForSequencing()
 
-      const next = await sequencer.next(prevCurr!.seq!)
-      expect(next).not.toBeNull()
-      expect(next!.seq).toBeGreaterThan(prevCurr!.seq!)
+      assert(prevCurr.seq)
+      const next = await sequencer.next(prevCurr.seq)
+      assert(next)
+      expect(next.seq).toBeGreaterThan(prevCurr.seq)
     })
 
     it('requests a range of sequenced events', async () => {
@@ -443,11 +445,11 @@ describe('sequencer', () => {
     it('handles many concurrent connections', async () => {
       const count = 5
       const numConnections = 10
-      const outboxes: Outbox[] = []
 
-      for (let i = 0; i < numConnections; i++) {
-        outboxes.push(new Outbox(sequencer))
-      }
+      const outboxes = Array.from(
+        { length: numConnections },
+        () => new Outbox(sequencer),
+      )
 
       const createPromise = (async () => {
         for (let i = 0; i < count; i++) {

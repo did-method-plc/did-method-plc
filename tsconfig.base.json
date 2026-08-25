@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+
+    "checkJs": true,
+    "strict": true,
+    "noImplicitAny": false,
+
+    "declaration": true,
+    "declarationMap": true,
+    "noErrorTruncation": true,
+    "noLib": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "es2020",
+    "removeComments": true,
+    "sourceMap": true,
+    "module": "commonjs",
+    "jsx": "preserve",
+    "strictPropertyInitialization": false,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "lib": ["dom", "dom.iterable", "esnext", "webworker"],
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true
+  },
+  "typeAcquisition": {
+    "enable": false
+  }
+}

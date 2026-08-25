@@ -1,5 +1,5 @@
 import { Leader } from '../db/leader'
-import Database from '../db'
+import PgDatabase from '../db'
 import { sql } from 'kysely'
 import { PLC_SEQ_SEQUENCE } from '../db/types'
 import { leaderLogger as log } from '../logger'
@@ -16,7 +16,7 @@ export class SequencerLeader {
   destroyed = false
   pollIntervalMs: number
 
-  constructor(public db: Database, opts: SequencerLeaderOptions = {}) {
+  constructor(public db: PgDatabase, opts: SequencerLeaderOptions = {}) {
     this.leader = new Leader(SEQUENCER_LEADER_ID, db)
     this.pollIntervalMs = opts.pollIntervalMs ?? 50
   }

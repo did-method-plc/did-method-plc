@@ -3,7 +3,7 @@ import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TEST_ADMIN_SECRET } from './_util'
 import { check } from '@atproto/common'
-import { Database } from '../src'
+import { PgDatabase } from '../src'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
 describe('PLC server', () => {
@@ -12,7 +12,7 @@ describe('PLC server', () => {
   let atpPds = 'https://example.com'
 
   let close: CloseFn
-  let db: Database
+  let db: PgDatabase
   let client: plc.Client
 
   let signingKey: P256Keypair

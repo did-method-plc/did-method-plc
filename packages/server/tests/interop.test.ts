@@ -1,14 +1,11 @@
-import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer } from './_util'
-import { Database } from '../src'
-import { PlcClientError } from '@did-plc/lib'
+import { PgDatabase } from '../src'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
 describe('interop', () => {
   let close: CloseFn
-  let db: Database
-  let client: plc.Client
+  let db: PgDatabase
 
   const INTEROP_TESTS_DIR = path.join(
     __dirname,
@@ -25,7 +22,6 @@ describe('interop', () => {
 
     db = server.db
     close = server.close
-    client = new plc.Client(server.url)
   })
 
   afterAll(async () => {
