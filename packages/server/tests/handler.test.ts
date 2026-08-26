@@ -4,7 +4,7 @@ import { handler } from '../src/handler'
 import { ServerError } from '../src/error'
 
 const mockReq = () =>
-  ({ log: { debug: () => undefined } }) as unknown as Request
+  ({ log: { debug: () => undefined } } as unknown as Request)
 
 const mockRes = () => {
   const sent: { status?: number; body?: unknown } = {}
@@ -97,10 +97,8 @@ describe('handler()', () => {
   it('does not call next when the handler succeeds', async () => {
     const { res } = mockRes()
     const calls: unknown[] = []
-    handler(async () => undefined)(
-      mockReq(),
-      res,
-      (err?: unknown) => calls.push(err),
+    handler(async () => undefined)(mockReq(), res, (err?: unknown) =>
+      calls.push(err),
     )
     await flush()
 
