@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { CloseFn, runTestServer } from './_util'
+import type { CloseFn } from './_util.js'
+import { runTestServer } from './_util.js'
 
 describe('client errors', () => {
   let close: CloseFn

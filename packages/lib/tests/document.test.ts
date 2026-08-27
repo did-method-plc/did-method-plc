@@ -1,6 +1,6 @@
 import { P256Keypair, parseDidKey, Secp256k1Keypair } from '@atproto/crypto'
-import * as document from '../src/document'
-import * as t from '../src/types'
+import * as document from '../src/document.js'
+import type * as t from '../src/types.js'
 
 describe('document', () => {
   it('formats a valid DID document', async () => {

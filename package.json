@@ -1,5 +1,6 @@
 {
   "name": "did-method-plc",
+  "type": "module",
   "version": "0.0.1",
   "repository": "git@github.com:did-method-plc/did-method-plc.git",
   "author": "Bluesky Social PBC <hello@blueskyweb.xyz>",

@@ -1,5 +1,5 @@
-import pino from 'pino'
-import pinoHttp from 'pino-http'
+import { pino } from 'pino'
+import { pinoHttp } from 'pino-http'
 
 const enabledEnv = process.env.LOG_ENABLED
 const enabled =

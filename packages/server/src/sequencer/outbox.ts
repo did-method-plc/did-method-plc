@@ -1,6 +1,6 @@
 import { AsyncBuffer, AsyncBufferFullError } from '@atproto/common'
-import { Sequencer } from './sequencer'
-import { SeqEvt } from './events'
+import type { Sequencer } from './sequencer.js'
+import type { SeqEvt } from './events.js'
 
 export type OutboxOpts = {
   maxBufferSize: number

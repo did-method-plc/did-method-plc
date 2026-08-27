@@ -1,10 +1,11 @@
 import { cidForCbor, DAY, HOUR } from '@atproto/common'
-import { P256Keypair, Keypair, Secp256k1Keypair } from '@atproto/crypto'
-import { CID } from 'multiformats/cid'
-import { InvalidSignatureError, LateRecoveryError } from '../src'
-import * as data from '../src/data'
-import * as operations from '../src/operations'
-import * as t from '../src/types'
+import type { Keypair } from '@atproto/crypto'
+import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
+import type { CID } from 'multiformats/cid'
+import { InvalidSignatureError, LateRecoveryError } from '../src/index.js'
+import * as data from '../src/data.js'
+import * as operations from '../src/operations.js'
+import type * as t from '../src/types.js'
 
 describe('plc recovery', () => {
   let signingKey: Secp256k1Keypair

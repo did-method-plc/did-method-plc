@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events'
-import Database from '../db'
-import { OperationsTableEntry } from '../db/types'
-import { SeqEvt } from './events'
-import { seqLogger as log } from '../logger'
+import type Database from '../db/index.js'
+import type { OperationsTableEntry } from '../db/types.js'
+import type { SeqEvt } from './events.js'
+import { seqLogger as log } from '../logger.js'
 
 export interface SequencerEmitter {
   on(event: 'events', listener: (evts: SeqEvt[]) => void): this

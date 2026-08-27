@@ -2,14 +2,15 @@ import axios, { AxiosError } from 'axios'
 import { vi } from 'vitest'
 import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
-import { CloseFn, runTestServer, TEST_ADMIN_SECRET } from './_util'
+import type { CloseFn } from './_util.js'
+import { runTestServer, TEST_ADMIN_SECRET } from './_util.js'
 import { check } from '@atproto/common'
-import { Database } from '../src'
+import type { Database } from '../src/index.js'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
 describe('PLC server', () => {
   let handle1 = 'at://alice.example.com'
-  let handle2 = 'at://bob.example.com'
+  const handle2 = 'at://bob.example.com'
   let atpPds = 'https://example.com'
 
   let close: CloseFn

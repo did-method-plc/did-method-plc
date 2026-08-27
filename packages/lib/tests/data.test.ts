@@ -6,10 +6,10 @@ import {
   ImproperOperationError,
   InvalidSignatureError,
   MisorderedOperationError,
-} from '../src'
-import * as data from '../src/data'
-import * as operations from '../src/operations'
-import * as t from '../src/types'
+} from '../src/index.js'
+import * as data from '../src/data.js'
+import * as operations from '../src/operations.js'
+import * as t from '../src/types.js'
 
 describe('plc did data', () => {
   const ops: t.Operation[] = []

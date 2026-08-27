@@ -1,5 +1,6 @@
 {
   "name": "@did-plc/lib",
+  "type": "module",
   "version": "0.1.0",
   "license": "MIT",
   "description": "DID PLC Typescript Client Library",
@@ -24,8 +25,8 @@
     "verify": "run-p prettier lint",
     "verify:fix": "pnpm run prettier:fix && pnpm run lint:fix",
     "build": "tsc --build tsconfig.build.json",
-    "update-main-to-dist": "node ./update-pkg.js --update-main-to-dist",
-    "update-main-to-src": "node ./update-pkg.js --update-main-to-src",
+    "update-main-to-dist": "node ./update-pkg.cjs --update-main-to-dist",
+    "update-main-to-src": "node ./update-pkg.cjs --update-main-to-src",
     "prepublish": "npm run update-main-to-dist",
     "postpublish": "npm run update-main-to-src"
   },

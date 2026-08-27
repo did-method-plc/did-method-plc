@@ -1,6 +1,7 @@
 import { check, cidForCbor } from '@atproto/common'
-import { Keypair } from '@atproto/crypto'
-import axios, { AxiosError } from 'axios'
+import type { Keypair } from '@atproto/crypto'
+import type { AxiosError } from 'axios'
+import axios from 'axios'
 import {
   atprotoOp,
   createUpdateOp,
@@ -10,8 +11,8 @@ import {
   updateHandleOp,
   updatePdsOp,
   updateRotationKeysOp,
-} from './operations'
-import * as t from './types'
+} from './operations.js'
+import * as t from './types.js'
 
 export class Client {
   constructor(public url: string) {}

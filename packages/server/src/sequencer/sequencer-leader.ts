@@ -1,8 +1,8 @@
-import { Leader } from '../db/leader'
-import Database from '../db'
+import { Leader } from '../db/leader.js'
+import type Database from '../db/index.js'
 import { sql } from 'kysely'
-import { PLC_SEQ_SEQUENCE } from '../db/types'
-import { leaderLogger as log } from '../logger'
+import { PLC_SEQ_SEQUENCE } from '../db/types.js'
+import { leaderLogger as log } from '../logger.js'
 import { wait, jitter } from '@atproto/common'
 
 const SEQUENCER_LEADER_ID = 1100

@@ -1,5 +1,5 @@
 import { PlcError } from '@did-plc/lib'
-import { ErrorRequestHandler } from 'express'
+import type { ErrorRequestHandler } from 'express'
 
 export const handler: ErrorRequestHandler = (err, req, res, next) => {
   // normalize our PLC errors to server errors

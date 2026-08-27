@@ -1,7 +1,8 @@
-import { AddressInfo } from 'net'
-import PlcServer, { AppContext } from '../src'
-import { Client as plcClient } from '@did-plc/lib'
-import Database from '../src/db'
+import type { AddressInfo } from 'net'
+import type { AppContext } from '../src/index.js'
+import PlcServer from '../src/index.js'
+import type { Client as plcClient } from '@did-plc/lib'
+import Database from '../src/db/index.js'
 import { P256Keypair } from '@atproto/crypto'
 
 export type CloseFn = () => Promise<void>

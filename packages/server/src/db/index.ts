@@ -1,16 +1,22 @@
-import { Kysely, MigrationResult, Migrator, PostgresDialect, sql } from 'kysely'
-import { Pool as PgPool, types as pgTypes } from 'pg'
+import type { MigrationResult } from 'kysely'
+import { Kysely, Migrator, PostgresDialect, sql } from 'kysely'
+import pg from 'pg'
 import { CID } from 'multiformats/cid'
 import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { ServerError } from '../error'
-import * as migrations from '../migrations'
-import { DatabaseSchema, PlcDatabase } from './types'
-import MockDatabase from './mock'
-import { enforceOpsRateLimit } from '../constraints'
+import { ServerError } from '../error.js'
+import * as migrations from '../migrations/index.js'
+import type { DatabaseSchema, PlcDatabase } from './types.js'
+import MockDatabase from './mock.js'
+import { enforceOpsRateLimit } from '../constraints.js'
 
-export * from './mock'
-export * from './types'
+// pg is CJS and its named exports are not statically detectable by
+// cjs-module-lexer, so `import { Pool } from 'pg'` fails under Node's ESM
+// loader even though it typechecks.
+const { Pool: PgPool, types: pgTypes } = pg
+
+export * from './mock.js'
+export * from './types.js'
 
 export class Database implements PlcDatabase {
   migrator: Migrator
