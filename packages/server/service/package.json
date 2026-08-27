@@ -2,6 +2,7 @@
   "name": "plc-service",
   "private": true,
   "dependencies": {
+    "@did-plc/server": "workspace:^",
     "dd-trace": "^5.103.0"
   }
 }
