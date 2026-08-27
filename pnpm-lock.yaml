@@ -15,14 +15,14 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       '@types/node':
-        specifier: ^18.0.0
-        version: 18.11.11
+        specifier: ^22
+        version: 22.20.1
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.59.2
-        version: 8.68.0(@typescript-eslint/parser@8.68.0(eslint@10.9.1)(typescript@4.8.4))(eslint@10.9.1)(typescript@4.8.4)
+        version: 8.68.0(@typescript-eslint/parser@8.68.0(eslint@10.9.1)(typescript@5.9.3))(eslint@10.9.1)(typescript@5.9.3)
       '@typescript-eslint/parser':
         specifier: ^8.59.2
-        version: 8.68.0(eslint@10.9.1)(typescript@4.8.4)
+        version: 8.68.0(eslint@10.9.1)(typescript@5.9.3)
       dotenv:
         specifier: ^16.0.3
         version: 16.3.1
@@ -46,19 +46,19 @@ importers:
         version: 3.9.6
       ts-node:
         specifier: ^10.8.2
-        version: 10.9.1(@types/node@18.11.11)(typescript@4.8.4)
+        version: 10.9.1(@types/node@22.20.1)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^4.8.4
-        version: 4.8.4
+        specifier: ^5.9.0
+        version: 5.9.3
       typescript-eslint:
         specifier: ^8.59.2
-        version: 8.68.0(eslint@10.9.1)(typescript@4.8.4)
+        version: 8.68.0(eslint@10.9.1)(typescript@5.9.3)
       vitest:
         specifier: ^4.1.10
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@18.11.11)(vite@8.2.2(@types/node@18.11.11)(esbuild@0.27.2)(tsx@4.21.0))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.27.2)(tsx@4.21.0))
 
   packages/lib:
     dependencies:
@@ -773,6 +773,9 @@ packages:
 
   '@types/node@18.11.11':
     resolution: {integrity: sha512-KJ021B1nlQUBLopzZmPBVuGU9un7WJd/W4ya7Ih02B4Uwky5Nja0yGYav2EfYIk0RR2Q9oVhf60S2XR1BCWJ2g==}
+
+  '@types/node@22.20.1':
+    resolution: {integrity: sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==}
 
   '@types/pg@8.6.5':
     resolution: {integrity: sha512-tOkGtAqRVkHa/PVZicq67zuujI4Oorfglsr2IbKofDwBSysnaqSx7W1mDqFqdkGE6Fbgh+PZAl0r/BWON/mozw==}
@@ -2227,9 +2230,9 @@ packages:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
 
-  typescript@4.8.4:
-    resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}
-    engines: {node: '>=4.2.0'}
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
     hasBin: true
 
   uint8arrays@3.0.0:
@@ -2237,6 +2240,9 @@ packages:
 
   unbox-primitive@1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
+
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
   unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
@@ -2833,6 +2839,10 @@ snapshots:
 
   '@types/node@18.11.11': {}
 
+  '@types/node@22.20.1':
+    dependencies:
+      undici-types: 6.21.0
+
   '@types/pg@8.6.5':
     dependencies:
       '@types/node': 18.11.11
@@ -2862,40 +2872,40 @@ snapshots:
     dependencies:
       '@types/node': 18.11.11
 
-  '@typescript-eslint/eslint-plugin@8.68.0(@typescript-eslint/parser@8.68.0(eslint@10.9.1)(typescript@4.8.4))(eslint@10.9.1)(typescript@4.8.4)':
+  '@typescript-eslint/eslint-plugin@8.68.0(@typescript-eslint/parser@8.68.0(eslint@10.9.1)(typescript@5.9.3))(eslint@10.9.1)(typescript@5.9.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.68.0(eslint@10.9.1)(typescript@4.8.4)
+      '@typescript-eslint/parser': 8.68.0(eslint@10.9.1)(typescript@5.9.3)
       '@typescript-eslint/scope-manager': 8.68.0
-      '@typescript-eslint/type-utils': 8.68.0(eslint@10.9.1)(typescript@4.8.4)
-      '@typescript-eslint/utils': 8.68.0(eslint@10.9.1)(typescript@4.8.4)
+      '@typescript-eslint/type-utils': 8.68.0(eslint@10.9.1)(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.68.0(eslint@10.9.1)(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.68.0
       eslint: 10.9.1
       ignore: 7.0.6
       natural-compare: 1.4.0
-      ts-api-utils: 2.5.0(typescript@4.8.4)
-      typescript: 4.8.4
+      ts-api-utils: 2.5.0(typescript@5.9.3)
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.68.0(eslint@10.9.1)(typescript@4.8.4)':
+  '@typescript-eslint/parser@8.68.0(eslint@10.9.1)(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.68.0
       '@typescript-eslint/types': 8.68.0
-      '@typescript-eslint/typescript-estree': 8.68.0(typescript@4.8.4)
+      '@typescript-eslint/typescript-estree': 8.68.0(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.68.0
       debug: 4.4.3
       eslint: 10.9.1
-      typescript: 4.8.4
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/project-service@8.68.0(typescript@4.8.4)':
+  '@typescript-eslint/project-service@8.68.0(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.68.0(typescript@4.8.4)
+      '@typescript-eslint/tsconfig-utils': 8.68.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.68.0
       debug: 4.4.3
-      typescript: 4.8.4
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -2904,47 +2914,47 @@ snapshots:
       '@typescript-eslint/types': 8.68.0
       '@typescript-eslint/visitor-keys': 8.68.0
 
-  '@typescript-eslint/tsconfig-utils@8.68.0(typescript@4.8.4)':
+  '@typescript-eslint/tsconfig-utils@8.68.0(typescript@5.9.3)':
     dependencies:
-      typescript: 4.8.4
+      typescript: 5.9.3
 
-  '@typescript-eslint/type-utils@8.68.0(eslint@10.9.1)(typescript@4.8.4)':
+  '@typescript-eslint/type-utils@8.68.0(eslint@10.9.1)(typescript@5.9.3)':
     dependencies:
       '@typescript-eslint/types': 8.68.0
-      '@typescript-eslint/typescript-estree': 8.68.0(typescript@4.8.4)
-      '@typescript-eslint/utils': 8.68.0(eslint@10.9.1)(typescript@4.8.4)
+      '@typescript-eslint/typescript-estree': 8.68.0(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.68.0(eslint@10.9.1)(typescript@5.9.3)
       debug: 4.4.3
       eslint: 10.9.1
-      ts-api-utils: 2.5.0(typescript@4.8.4)
-      typescript: 4.8.4
+      ts-api-utils: 2.5.0(typescript@5.9.3)
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
   '@typescript-eslint/types@8.68.0': {}
 
-  '@typescript-eslint/typescript-estree@8.68.0(typescript@4.8.4)':
+  '@typescript-eslint/typescript-estree@8.68.0(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/project-service': 8.68.0(typescript@4.8.4)
-      '@typescript-eslint/tsconfig-utils': 8.68.0(typescript@4.8.4)
+      '@typescript-eslint/project-service': 8.68.0(typescript@5.9.3)
+      '@typescript-eslint/tsconfig-utils': 8.68.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.68.0
       '@typescript-eslint/visitor-keys': 8.68.0
       debug: 4.4.3
       minimatch: 10.2.6
       semver: 7.8.5
       tinyglobby: 0.2.17
-      ts-api-utils: 2.5.0(typescript@4.8.4)
-      typescript: 4.8.4
+      ts-api-utils: 2.5.0(typescript@5.9.3)
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.68.0(eslint@10.9.1)(typescript@4.8.4)':
+  '@typescript-eslint/utils@8.68.0(eslint@10.9.1)(typescript@5.9.3)':
     dependencies:
       '@eslint-community/eslint-utils': 4.10.1(eslint@10.9.1)
       '@typescript-eslint/scope-manager': 8.68.0
       '@typescript-eslint/types': 8.68.0
-      '@typescript-eslint/typescript-estree': 8.68.0(typescript@4.8.4)
+      '@typescript-eslint/typescript-estree': 8.68.0(typescript@5.9.3)
       eslint: 10.9.1
-      typescript: 4.8.4
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -2962,13 +2972,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.1
 
-  '@vitest/mocker@4.1.11(vite@8.2.2(@types/node@18.11.11)(esbuild@0.27.2)(tsx@4.21.0))':
+  '@vitest/mocker@4.1.11(vite@8.2.2(@types/node@22.20.1)(esbuild@0.27.2)(tsx@4.21.0))':
     dependencies:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.2.2(@types/node@18.11.11)(esbuild@0.27.2)(tsx@4.21.0)
+      vite: 8.2.2(@types/node@22.20.1)(esbuild@0.27.2)(tsx@4.21.0)
 
   '@vitest/pretty-format@4.1.11':
     dependencies:
@@ -4349,25 +4359,25 @@ snapshots:
 
   toidentifier@1.0.1: {}
 
-  ts-api-utils@2.5.0(typescript@4.8.4):
+  ts-api-utils@2.5.0(typescript@5.9.3):
     dependencies:
-      typescript: 4.8.4
+      typescript: 5.9.3
 
-  ts-node@10.9.1(@types/node@18.11.11)(typescript@4.8.4):
+  ts-node@10.9.1(@types/node@22.20.1)(typescript@5.9.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.9
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
-      '@types/node': 18.11.11
+      '@types/node': 22.20.1
       acorn: 8.8.0
       acorn-walk: 8.2.0
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
       make-error: 1.3.6
-      typescript: 4.8.4
+      typescript: 5.9.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
@@ -4392,18 +4402,18 @@ snapshots:
       media-typer: 0.3.0
       mime-types: 2.1.35
 
-  typescript-eslint@8.68.0(eslint@10.9.1)(typescript@4.8.4):
+  typescript-eslint@8.68.0(eslint@10.9.1)(typescript@5.9.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.68.0(@typescript-eslint/parser@8.68.0(eslint@10.9.1)(typescript@4.8.4))(eslint@10.9.1)(typescript@4.8.4)
-      '@typescript-eslint/parser': 8.68.0(eslint@10.9.1)(typescript@4.8.4)
-      '@typescript-eslint/typescript-estree': 8.68.0(typescript@4.8.4)
-      '@typescript-eslint/utils': 8.68.0(eslint@10.9.1)(typescript@4.8.4)
+      '@typescript-eslint/eslint-plugin': 8.68.0(@typescript-eslint/parser@8.68.0(eslint@10.9.1)(typescript@5.9.3))(eslint@10.9.1)(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.68.0(eslint@10.9.1)(typescript@5.9.3)
+      '@typescript-eslint/typescript-estree': 8.68.0(typescript@5.9.3)
+      '@typescript-eslint/utils': 8.68.0(eslint@10.9.1)(typescript@5.9.3)
       eslint: 10.9.1
-      typescript: 4.8.4
+      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
-  typescript@4.8.4: {}
+  typescript@5.9.3: {}
 
   uint8arrays@3.0.0:
     dependencies:
@@ -4415,6 +4425,8 @@ snapshots:
       has-bigints: 1.0.2
       has-symbols: 1.0.3
       which-boxed-primitive: 1.0.2
+
+  undici-types@6.21.0: {}
 
   unpipe@1.0.0: {}
 
@@ -4435,7 +4447,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite@8.2.2(@types/node@18.11.11)(esbuild@0.27.2)(tsx@4.21.0):
+  vite@8.2.2(@types/node@22.20.1)(esbuild@0.27.2)(tsx@4.21.0):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -4443,15 +4455,15 @@ snapshots:
       rolldown: 1.2.5
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 18.11.11
+      '@types/node': 22.20.1
       esbuild: 0.27.2
       fsevents: 2.3.3
       tsx: 4.21.0
 
-  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@18.11.11)(vite@8.2.2(@types/node@18.11.11)(esbuild@0.27.2)(tsx@4.21.0)):
+  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.27.2)(tsx@4.21.0)):
     dependencies:
       '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@8.2.2(@types/node@18.11.11)(esbuild@0.27.2)(tsx@4.21.0))
+      '@vitest/mocker': 4.1.11(vite@8.2.2(@types/node@22.20.1)(esbuild@0.27.2)(tsx@4.21.0))
       '@vitest/pretty-format': 4.1.11
       '@vitest/runner': 4.1.11
       '@vitest/snapshot': 4.1.11
@@ -4468,11 +4480,11 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 8.2.2(@types/node@18.11.11)(esbuild@0.27.2)(tsx@4.21.0)
+      vite: 8.2.2(@types/node@22.20.1)(esbuild@0.27.2)(tsx@4.21.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
-      '@types/node': 18.11.11
+      '@types/node': 22.20.1
     transitivePeerDependencies:
       - msw
 

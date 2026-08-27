@@ -30,7 +30,7 @@ const run = async () => {
 
     let db: PlcDatabase
     let leader: SequencerLeader | undefined
-    let statsInterval: NodeJS.Timer | undefined
+    let statsInterval: NodeJS.Timeout | undefined
     if (dbUrl) {
       console.log('[*] Connecting to database...')
       const pgDb = Database.postgres({ url: dbUrl })
