@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "tsx watch --inspect=0.0.0.0:12582 src/bin.ts",
     "start": "node dist/bin.js",
-    "test": "./pg/with-test-db.sh jest",
+    "test": "./pg/with-test-db.sh vitest run",
     "test:log": "cat test.log | pino-pretty",
     "prettier": "prettier --check src/",
     "prettier:fix": "prettier --write src/",
