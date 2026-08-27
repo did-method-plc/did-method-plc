@@ -21,6 +21,7 @@
     "@types/node": "^22",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "dotenv": "^16.0.3",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
@@ -31,7 +32,7 @@
     "prettier": "^3.9.6",
     "ts-node": "^10.8.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.59.2",
     "vitest": "^4.1.10"
   },
