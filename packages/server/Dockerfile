@@ -39,11 +39,11 @@ ENV NODE_ENV=production
 
 # https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md#non-root-user
 USER node
-# The service is ESM now, so dd-trace's CommonJS `require('dd-trace/init')`
-# no longer works -- it cannot install the ESM loader hook from an import.
-# initialize.mjs is the faithful replacement: it requires the same init.js
-# (guardrails and env-driven config unchanged) and registers the hook.
-CMD ["node", "--enable-source-maps", "--import", "dd-trace/initialize.mjs", "index.js"]
+# dd-trace is wired the same way as atproto's services (see
+# atproto/services/*/tracer.ts): --import a tracer module whose first
+# import installs the ESM loader hook. The CommonJS `require('dd-trace/init')`
+# this replaces cannot install that hook from an import.
+CMD ["node", "--enable-source-maps", "--import=./tracer.js", "index.js"]
 
 LABEL org.opencontainers.image.source=https://github.com/did-method-plc/did-method-plc
 LABEL org.opencontainers.image.description="DID PLC server"
