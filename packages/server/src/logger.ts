@@ -1,4 +1,4 @@
-import { pino } from 'pino'
+import { destination, pino } from 'pino'
 import { pinoHttp } from 'pino-http'
 
 const enabledEnv = process.env.LOG_ENABLED
@@ -12,7 +12,7 @@ const config = {
 }
 
 const logger = process.env.LOG_DESTINATION
-  ? pino(config, pino.destination(process.env.LOG_DESTINATION))
+  ? pino(config, destination(process.env.LOG_DESTINATION))
   : pino(config)
 
 export const leaderLogger = logger.child({

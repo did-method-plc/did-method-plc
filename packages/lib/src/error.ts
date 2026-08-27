@@ -5,7 +5,11 @@ export class PlcError extends Error {
   }
 
   static is(obj: unknown): obj is PlcError {
-    if (obj && typeof obj === 'object' && obj['plcError'] === true) {
+    if (
+      obj &&
+      typeof obj === 'object' &&
+      (obj as Record<string, unknown>)['plcError'] === true
+    ) {
       return true
     }
     return false

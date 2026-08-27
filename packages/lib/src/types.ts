@@ -76,34 +76,7 @@ export const indexedOperation = z.object({
   nullified: z.boolean(),
   createdAt: z.date(),
 })
-// `z.infer` cannot describe this schema. `cid` is a ZodEffects (`.refine()` +
-// `.transform()`), and zod 3's whole-object output aggregation mis-resolves it:
-// TypeScript 6 collapses the field to an optional `any`, TypeScript 7 leaks the
-// schema type itself into the output slot. Both make `cid` optional, which it
-// never is -- and `any` silently disabled every check against it.
-//
-// So declare the parse result by hand. `Verified` keeps it honest: `A extends
-// B` fails if a schema field's type drifts or the schema gains a key, and `B
-// extends Record<keyof A, unknown>` fails if the schema loses one.
-type Verified<A extends B, B extends Record<keyof A, unknown>> = A
-
-type IndexedOperationSchemaOutput = {
-  [K in keyof typeof indexedOperation.shape]: z.output<
-    (typeof indexedOperation.shape)[K]
-  >
-}
-
-export type IndexedOperation = Verified<
-  {
-    did: string
-    operation: CompatibleOpOrTombstone
-    // Per-field `z.output` still resolves this to `any`; pinned by hand.
-    cid: mf.CID
-    nullified: boolean
-    createdAt: Date
-  },
-  IndexedOperationSchemaOutput
->
+export type IndexedOperation = z.infer<typeof indexedOperation>
 
 export const exportedOp = z.object({
   did: z.string(),
