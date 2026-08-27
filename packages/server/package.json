@@ -22,7 +22,7 @@
     "test:log": "cat test.log | pino-pretty",
     "prettier": "prettier --check src/",
     "prettier:fix": "prettier --write src/",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint .",
     "lint:fix": "pnpm run lint --fix",
     "verify": "run-p prettier lint",
     "verify:fix": "pnpm run prettier:fix && pnpm run lint:fix",
@@ -54,6 +54,6 @@
     "@types/express": "^5.0.5",
     "@types/pg": "^8.6.5",
     "@types/ws": "^8.18.1",
-    "eslint-plugin-prettier": "^4.2.1"
+    "eslint-plugin-prettier": "^5.1.3"
   }
 }
