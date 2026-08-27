@@ -16,6 +16,16 @@
     "directory": "packages/server"
   },
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "tsx watch --inspect=0.0.0.0:12582 src/bin.ts",
     "start": "node dist/bin.js",
