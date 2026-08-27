@@ -9,6 +9,18 @@
   "engines": {
     "node": ">=22"
   },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=22.12.0",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.11.0",
+      "onFail": "error"
+    }
+  },
   "scripts": {
     "prepublish": "pnpm run build",
     "verify": "pnpm run --recursive --stream verify",

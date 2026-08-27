@@ -27,10 +27,10 @@ lint: ## Run style checks and verify syntax
 
 .PHONY: nvm-setup
 nvm-setup: ## Use NVM to install and activate node+pnpm
-	nvm install 24
-	nvm use 24
+	nvm install
+	nvm use
 	corepack enable
-	corepack prepare pnpm@11.11.0 --activate
+	corepack install
 
 .PHONY: deps
 deps: ## Installs dependent libs using 'pnpm install'
