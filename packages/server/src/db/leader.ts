@@ -5,7 +5,10 @@ export class Leader {
   session: LeaderSession | null = null
   isLockingDb = false
 
-  constructor(public id: number, public db: Database) {}
+  constructor(
+    public id: number,
+    public db: Database,
+  ) {}
 
   async run<T>(
     task: (ctx: { signal: AbortSignal }) => Promise<T>,

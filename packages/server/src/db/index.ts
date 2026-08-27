@@ -14,7 +14,10 @@ export * from './types'
 
 export class Database implements PlcDatabase {
   migrator: Migrator
-  constructor(public db: Kysely<DatabaseSchema>, public schema?: string) {
+  constructor(
+    public db: Kysely<DatabaseSchema>,
+    public schema?: string,
+  ) {
     this.migrator = new Migrator({
       db,
       migrationTableSchema: schema,

@@ -12,7 +12,10 @@ export class PlcError extends Error {
   }
 }
 export class ImproperOperationError extends PlcError {
-  constructor(public reason: string, public op: unknown) {
+  constructor(
+    public reason: string,
+    public op: unknown,
+  ) {
     super(`Improperly formatted operation, ${reason}: ${op}`)
   }
 }
@@ -46,7 +49,10 @@ export class InvalidSignatureError extends PlcError {
 }
 
 export class UnsupportedKeyError extends PlcError {
-  constructor(public key: string, public err: unknown) {
+  constructor(
+    public key: string,
+    public err: unknown,
+  ) {
     super(`Unsupported key type ${key}: ${err}`)
   }
 }

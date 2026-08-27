@@ -16,7 +16,10 @@ export class SequencerLeader {
   destroyed = false
   pollIntervalMs: number
 
-  constructor(public db: Database, opts: SequencerLeaderOptions = {}) {
+  constructor(
+    public db: Database,
+    opts: SequencerLeaderOptions = {},
+  ) {
     this.leader = new Leader(SEQUENCER_LEADER_ID, db)
     this.pollIntervalMs = opts.pollIntervalMs ?? 50
   }
