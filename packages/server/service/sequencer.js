@@ -1,7 +1,6 @@
-'use strict' /* eslint-disable */
+/* eslint-disable */
 
-require('dd-trace/init') // Only works with commonjs
-const { Database, SequencerLeader, leaderLogger } = require('@did-plc/server')
+import { Database, SequencerLeader, leaderLogger } from '@did-plc/server'
 
 const main = async () => {
   const dbCreds = JSON.parse(process.env.DB_CREDS_JSON)
