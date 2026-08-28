@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { Request, Response } from 'express'
 import { MisorderedOperationError } from '@did-plc/lib'
 import { handler } from '../src/handler.js'

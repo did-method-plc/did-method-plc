@@ -8,7 +8,6 @@ export default [
     ignores: [
       '**/dist/**',
       '**/node_modules/**',
-      '**/update-pkg.cjs',
       '**/vitest.config.ts',
       'eslint.config.js',
     ],

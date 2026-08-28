@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist", // Your outDir,
-    "emitDeclarationOnly": true,
+    "outDir": "./dist", // Your outDir
   },
   "include": ["./src", "__tests__/**/**.ts"],
   "references": [

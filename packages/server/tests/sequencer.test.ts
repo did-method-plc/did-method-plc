@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import type { CloseFn, TestServerInfo } from './_util.js'

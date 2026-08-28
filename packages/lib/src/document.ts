@@ -1,6 +1,5 @@
 import * as crypto from '@atproto/crypto'
 import type * as t from './types.js'
-import { UnsupportedKeyError } from './error.js'
 import type { ParsedMultikey } from '@atproto/crypto'
 
 export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {

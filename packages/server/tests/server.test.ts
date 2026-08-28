@@ -1,5 +1,5 @@
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import axios, { AxiosError } from 'axios'
-import { vi } from 'vitest'
 import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import type { CloseFn } from './_util.js'

@@ -39,11 +39,7 @@
     "verify:fix": "pnpm run prettier:fix && pnpm run lint:fix",
     "build": "tsc --build tsconfig.build.json",
     "migration:create": "ts-node ./bin/migration-create.ts",
-    "did:create": "ts-node ./bin/did-create.ts",
-    "update-main-to-dist": "node ./update-pkg.cjs --update-main-to-dist",
-    "update-main-to-src": "node ./update-pkg.cjs --update-main-to-src",
-    "prepublish": "npm run update-main-to-dist",
-    "postpublish": "npm run update-main-to-src"
+    "did:create": "ts-node ./bin/did-create.ts"
   },
   "dependencies": {
     "@atproto/common": "0.8.1",

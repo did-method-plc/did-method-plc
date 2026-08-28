@@ -15,7 +15,6 @@ COPY ./packages/server ./packages/server
 
 RUN pnpm install --frozen-lockfile
 RUN pnpm run --recursive --stream build
-RUN pnpm run --recursive --stream update-main-to-dist
 # Remove non-prod deps, hoisted so the runtime can resolve them.
 # The layout change makes pnpm re-create node_modules, which it will not do
 # without a TTY unless the purge confirmation is turned off.
