@@ -33,6 +33,10 @@ jobs:
           node-version: 24
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      # @did-plc/server imports @did-plc/lib by name, so lib's dist has to exist
+      # before vitest can resolve it. jest tolerated the missing entry; vitest
+      # does not.
+      - run: pnpm run build
       - run: pnpm run test
   verify:
     runs-on: ubuntu-latest
