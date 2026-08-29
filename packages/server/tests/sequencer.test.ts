@@ -450,11 +450,10 @@ describe('sequencer', () => {
     })
 
     it('does not replay events at or before the cursor', async () => {
-      // The sequencer polls from its own position and emits that whole range to
-      // every subscriber, so a subscriber whose cursor is already at the head
-      // can be handed events it has already seen. Re-emitting an
-      // already-sequenced range reproduces that without depending on poll
-      // timing.
+      // The sequencer's poll position is independent of any subscriber's
+      // cursor, so a subscriber that read ahead through the db sits in front of
+      // it and the next poll emits a range it has already seen. Winding the
+      // poll position back reproduces that without waiting on poll timing.
       const catchUp = await loadFromDb(lastSeen)
       lastSeen = catchUp.at(-1)?.seq ?? lastSeen
 
@@ -467,17 +466,26 @@ describe('sequencer', () => {
       })()
 
       // The generator body only runs on the first next(), and it registers its
-      // sequencer listener after backfill. Start reading first, then wait for
-      // that listener, or the emit below lands before anyone is subscribed.
+      // sequencer listener after backfill. Start reading first and wait for
+      // that listener, or the poll below lands before anyone is subscribed.
       const before = sequencer.listenerCount('events')
       const reading = readFromGenerator(gen, caughtUp(outbox), createPromise)
       while (sequencer.listenerCount('events') === before) {
         await wait(5)
       }
 
-      const overlapping = await loadFromDb(Math.max(lastSeen - 3, 0))
-      expect(overlapping.some((evt) => evt.seq <= lastSeen)).toBe(true)
-      sequencer.emit('events', overlapping)
+      const emitted: SeqEvt[] = []
+      const capture = (evts: SeqEvt[]) => {
+        emitted.push(...evts)
+      }
+      sequencer.on('events', capture)
+      sequencer.lastSeen = Math.max(lastSeen - 3, 0)
+      await sequencer.pollDb()
+      sequencer.off('events', capture)
+
+      // The poll has to have actually re-emitted something the subscriber saw,
+      // otherwise the assertion below passes for the wrong reason.
+      expect(emitted.some((evt) => evt.seq <= lastSeen)).toBe(true)
 
       const evts = await reading
       expect(evts.every((evt) => evt.seq > lastSeen)).toBe(true)
