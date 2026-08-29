@@ -170,7 +170,10 @@ describe('plc recovery', () => {
         operation: tombstone,
         cid,
         nullified: false,
-        createdAt: new Date(),
+        // Must be strictly before the proposed op's timestamp: assureValidNextOp
+        // requires timestamps to increase. Dating it with `new Date()` puts it
+        // in the same millisecond whenever signing below is fast enough.
+        createdAt: new Date(Date.now() - HOUR),
       },
     ]
     const rotateBack = await signOpForKeys(
