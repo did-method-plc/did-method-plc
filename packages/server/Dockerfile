@@ -1,4 +1,4 @@
-FROM node:24.18-alpine3.23 as build
+FROM node:24.18-alpine3.23 AS build
 
 RUN npm install -g pnpm@11.11.0
 
@@ -38,10 +38,8 @@ ENV NODE_ENV=production
 
 # https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md#non-root-user
 USER node
-# dd-trace is wired the same way as atproto's services (see
-# atproto/services/*/tracer.ts): --import a tracer module whose first
-# import installs the ESM loader hook. The CommonJS `require('dd-trace/init')`
-# this replaces cannot install that hook from an import.
+# tracer.js must be loaded with --import so its first import installs
+# dd-trace's ESM loader hook before any application module resolves.
 CMD ["node", "--enable-source-maps", "--import=./tracer.js", "index.js"]
 
 LABEL org.opencontainers.image.source=https://github.com/did-method-plc/did-method-plc

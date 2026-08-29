@@ -3,8 +3,7 @@
 import 'dd-trace/register.js'
 import ddTrace from 'dd-trace'
 
-// No options: plc passed none to `dd-trace/init` before the ESM conversion, so
-// this keeps tracer config env-driven and unchanged. atproto's bsync and ozone
-// additionally set `logInjection: true`; adopting that here would change log
-// output, so it is left as a separate decision.
+// Tracer configuration is env-driven (DD_*); no options are set here.
+// Enabling `logInjection` would add trace ids to every log record, which
+// changes log output, so it is a deliberate choice rather than a default.
 ddTrace.init()
