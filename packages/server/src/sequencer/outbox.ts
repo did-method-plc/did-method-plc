@@ -63,6 +63,13 @@ export class Outbox {
         throw new OutboxError(CloseReason.OutdatedCursor)
       }
 
+      // Seed the floor with the cursor. The sequencer emits from its own poll
+      // position, which can lag behind this subscriber's cursor, so without a
+      // floor the dedupe below admits events the subscriber has already seen.
+      // Backfill yielding nothing (cursor already at head) is exactly when that
+      // happens.
+      this.lastSeen = backfillCursor
+
       for await (const evt of this.getBackfill(backfillCursor)) {
         if (signal?.aborted) return
         this.lastSeen = evt.seq
