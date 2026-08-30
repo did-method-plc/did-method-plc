@@ -1,6 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
 import { PlcError } from '@did-plc/lib'
-import { ServerError } from './error.js'
+import { ServerError, releaseUnhandledUpgrade } from './error.js'
 
 export type RouteHandler = (req: Request, res: Response) => Promise<unknown>
 
@@ -28,6 +28,9 @@ export const handler =
             { error: { message: mapped.message, status: mapped.status } },
             'handled server error',
           )
+          if (releaseUnhandledUpgrade(req)) {
+            return
+          }
           res.status(mapped.status).json({ message: mapped.message })
           return
         }

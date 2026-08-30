@@ -1,5 +1,5 @@
 import { PlcError } from '@did-plc/lib'
-import type { ErrorRequestHandler } from 'express'
+import type { ErrorRequestHandler, Request } from 'express'
 
 export const handler: ErrorRequestHandler = (err, req, res, next) => {
   // normalize our PLC errors to server errors
@@ -15,6 +15,10 @@ export const handler: ErrorRequestHandler = (err, req, res, next) => {
   } else {
     req.log.error(err, 'unexpected internal server error')
   }
+  if (releaseUnhandledUpgrade(req)) {
+    return
+  }
+
   if (res.headersSent) {
     return next(err)
   }
@@ -23,6 +27,24 @@ export const handler: ErrorRequestHandler = (err, req, res, next) => {
   } else {
     return res.status(500).json({ message: 'Internal Server Error' })
   }
+}
+
+/**
+ * Releases the raw socket behind an upgrade request that no route took
+ * ownership of, and reports whether it did. Returns false for ordinary
+ * requests, which still want a normal response.
+ *
+ * Both error paths need this. Express skips plain middleware once an error is
+ * in flight, so the cleanup middleware at the end of the stack is unreachable
+ * from either of them, and an upgrade's `res` is a detached dummy that swallows
+ * whatever is written to it — leaving the client hanging until it times out.
+ */
+export const releaseUnhandledUpgrade = (req: Request): boolean => {
+  if (req.ws && req.ws.handled === false) {
+    req.ws.socket.destroy()
+    return true
+  }
+  return false
 }
 
 export class ServerError extends Error {
