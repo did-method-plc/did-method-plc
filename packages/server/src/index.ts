@@ -1,8 +1,3 @@
-// catch errors that get thrown in async route handlers
-// this is a relatively non-invasive change to express
-// they get handled in the error.handler middleware
-// leave at top of file before importing Routes
-import 'express-async-errors'
 import './types'
 
 import express from 'express'

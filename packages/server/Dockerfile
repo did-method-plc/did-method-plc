@@ -1,4 +1,4 @@
-FROM node:18-alpine as build
+FROM node:24.18-alpine3.23 as build
 
 # Move files into the image and install
 WORKDIR /app
@@ -15,7 +15,7 @@ WORKDIR packages/server/service
 RUN yarn install --frozen-lockfile > /dev/null
 
 # Uses assets from build stage to reduce build size
-FROM node:18-alpine
+FROM node:24.18-alpine3.23
 
 # RUN npm install -g yarn
 RUN apk add --update dumb-init
