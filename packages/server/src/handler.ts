@@ -1,6 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
 import { PlcError } from '@did-plc/lib'
-import { ServerError, releaseUnhandledUpgrade } from './error.js'
+import { ServerError, ownsUnhandledUpgrade } from './error.js'
 
 export type RouteHandler = (req: Request, res: Response) => Promise<unknown>
 
@@ -22,15 +22,19 @@ export const handler =
         await fn(req, res)
       } catch (err) {
         const mapped = PlcError.is(err) ? ServerError.fromPlcError(err) : err
-        if (ServerError.is(mapped) && mapped.status < 500 && !res.headersSent) {
+        // An unhandled upgrade has no usable response to answer on, so it is
+        // forwarded for error.handler to release instead of resolved here.
+        if (
+          ServerError.is(mapped) &&
+          mapped.status < 500 &&
+          !res.headersSent &&
+          !ownsUnhandledUpgrade(req)
+        ) {
           // Mirrors the log line error.handler emits for sub-500 errors.
           req.log.debug(
             { error: { message: mapped.message, status: mapped.status } },
             'handled server error',
           )
-          if (releaseUnhandledUpgrade(req)) {
-            return
-          }
           res.status(mapped.status).json({ message: mapped.message })
           return
         }

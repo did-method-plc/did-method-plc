@@ -39,12 +39,13 @@ export const handler: ErrorRequestHandler = (err, req, res, next) => {
  * from either of them, and an upgrade's `res` is a detached dummy that swallows
  * whatever is written to it — leaving the client hanging until it times out.
  */
-export const releaseUnhandledUpgrade = (req: Request): boolean => {
-  if (req.ws && req.ws.handled === false) {
-    req.ws.socket.destroy()
-    return true
-  }
-  return false
+export const ownsUnhandledUpgrade = (req: Request): boolean =>
+  req.ws !== undefined && req.ws.handled === false
+
+const releaseUnhandledUpgrade = (req: Request): boolean => {
+  if (!ownsUnhandledUpgrade(req)) return false
+  req.ws?.socket.destroy()
+  return true
 }
 
 export class ServerError extends Error {
