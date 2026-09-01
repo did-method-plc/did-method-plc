@@ -40,10 +40,13 @@ export class PlcServer {
     sequencer?: SequencerOptions
   }): PlcServer {
     const app = express()
-    app.use(express.json({ limit: '100kb' }))
     app.use(cors())
 
     app.use(loggerMiddleware)
+    // Must come after loggerMiddleware: the body parser rejects malformed and
+    // oversized bodies by handing the error straight to error.handler, which
+    // needs req.log to already be attached.
+    app.use(express.json({ limit: '100kb' }))
 
     // Initialize sequencer
     const sequencer = new Sequencer(opts.db as Database, opts.sequencer)
