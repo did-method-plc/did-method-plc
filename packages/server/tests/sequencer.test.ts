@@ -438,9 +438,59 @@ describe('sequencer', () => {
         CloseReason.ConsumerTooSlow,
       )
 
+      // overloadBuffer() rejects by design, and Promise.all short-circuits on
+      // rejection, so the 20 creations above can still be in flight here.
+      // Await them before resyncing, otherwise the cursor lands short and the
+      // stragglers are delivered to whichever test reads next.
+      await createPromise
+
       // Update lastSeen from db
       const fromDb = await loadFromDb(lastSeen)
       lastSeen = fromDb.at(-1)?.seq ?? lastSeen
+    })
+
+    it('does not replay events at or before the cursor', async () => {
+      // The sequencer's poll position is independent of any subscriber's
+      // cursor, so a subscriber that read ahead through the db sits in front of
+      // it and the next poll emits a range it has already seen. Winding the
+      // poll position back reproduces that without waiting on poll timing.
+      const catchUp = await loadFromDb(lastSeen)
+      lastSeen = catchUp.at(-1)?.seq ?? lastSeen
+
+      const outbox = new Outbox(sequencer)
+      const gen = outbox.events(lastSeen)
+
+      const createPromise = (async () => {
+        await createDid(client)
+        await waitForSequencing()
+      })()
+
+      // The generator body only runs on the first next(), and it registers its
+      // sequencer listener after backfill. Start reading first and wait for
+      // that listener, or the poll below lands before anyone is subscribed.
+      const before = sequencer.listenerCount('events')
+      const reading = readFromGenerator(gen, caughtUp(outbox), createPromise)
+      while (sequencer.listenerCount('events') === before) {
+        await wait(5)
+      }
+
+      const emitted: SeqEvt[] = []
+      const capture = (evts: SeqEvt[]) => {
+        emitted.push(...evts)
+      }
+      sequencer.on('events', capture)
+      sequencer.lastSeen = Math.max(lastSeen - 3, 0)
+      await sequencer.pollDb()
+      sequencer.off('events', capture)
+
+      // The poll has to have actually re-emitted something the subscriber saw,
+      // otherwise the assertion below passes for the wrong reason.
+      expect(emitted.some((evt) => evt.seq <= lastSeen)).toBe(true)
+
+      const evts = await reading
+      expect(evts.every((evt) => evt.seq > lastSeen)).toBe(true)
+
+      lastSeen = evts.at(-1)?.seq ?? lastSeen
     })
 
     it('handles many concurrent connections', async () => {
