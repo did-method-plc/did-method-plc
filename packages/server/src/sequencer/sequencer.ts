@@ -28,7 +28,10 @@ export class Sequencer
   pollIntervalMs: number
   catchupDurationMs: number
 
-  constructor(public db: Database, opts: SequencerOptions = {}) {
+  constructor(
+    public db: Database,
+    opts: SequencerOptions = {},
+  ) {
     super()
     // note: this does not err when surpassed, just prints a warning to stderr
     this.setMaxListeners(100)

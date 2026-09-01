@@ -12,29 +12,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
       - uses: actions/setup-node@v3
         with:
           node-version: 24
-          cache: "yarn"
-      - run: yarn install --frozen-lockfile
-      - run: yarn build
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
       - uses: actions/setup-node@v3
         with:
           node-version: 24
-          cache: "yarn"
-      - run: yarn install --frozen-lockfile
-      - run: yarn test
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # @did-plc/server imports @did-plc/lib by name, so lib's dist must exist
+      # before vitest can resolve it.
+      - run: pnpm run build
+      - run: pnpm run test
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
       - uses: actions/setup-node@v3
         with:
           node-version: 24
-          cache: "yarn"
-      - run: yarn install --frozen-lockfile
-      - run: yarn verify
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run verify

@@ -1,0 +1,13 @@
+# Build context is the repo root (see packages/server/Dockerfile).
+# Only the files the Dockerfile actually COPYs are needed:
+# package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, tsconfig.json,
+# packages/lib, packages/server.
+node_modules
+**/node_modules
+dist
+**/dist
+*.tsbuildinfo
+**/*.tsbuildinfo
+.git
+.superpowers
+.claude

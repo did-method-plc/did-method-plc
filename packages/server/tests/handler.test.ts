@@ -4,7 +4,7 @@ import { handler } from '../src/handler'
 import { ServerError } from '../src/error'
 
 const mockReq = () =>
-  ({ log: { debug: () => undefined } } as unknown as Request)
+  ({ log: { debug: () => undefined } }) as unknown as Request
 
 const mockRes = () => {
   const sent: { status?: number; body?: unknown } = {}

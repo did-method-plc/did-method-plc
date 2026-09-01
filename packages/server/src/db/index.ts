@@ -1,4 +1,4 @@
-import { Kysely, Migrator, PostgresDialect, sql } from 'kysely'
+import { Kysely, MigrationResult, Migrator, PostgresDialect, sql } from 'kysely'
 import { Pool as PgPool, types as pgTypes } from 'pg'
 import { CID } from 'multiformats/cid'
 import { cidForCbor } from '@atproto/common'
@@ -14,7 +14,10 @@ export * from './types'
 
 export class Database implements PlcDatabase {
   migrator: Migrator
-  constructor(public db: Kysely<DatabaseSchema>, public schema?: string) {
+  constructor(
+    public db: Kysely<DatabaseSchema>,
+    public schema?: string,
+  ) {
     this.migrator = new Migrator({
       db,
       migrationTableSchema: schema,
@@ -70,7 +73,7 @@ export class Database implements PlcDatabase {
     await sql`select 1`.execute(this.db)
   }
 
-  async migrateToOrThrow(migration: string) {
+  async migrateToOrThrow(migration: string): Promise<MigrationResult[]> {
     if (this.schema !== undefined) {
       await this.db.schema.createSchema(this.schema).ifNotExists().execute()
     }
@@ -84,7 +87,7 @@ export class Database implements PlcDatabase {
     return results
   }
 
-  async migrateToLatestOrThrow() {
+  async migrateToLatestOrThrow(): Promise<MigrationResult[]> {
     if (this.schema !== undefined) {
       await this.db.schema.createSchema(this.schema).ifNotExists().execute()
     }

@@ -1,23 +1,30 @@
 FROM node:24.18-alpine3.23 as build
 
+RUN npm install -g pnpm@11.11.0
+
 # Move files into the image and install
 WORKDIR /app
-COPY ./*.* ./
+COPY ./package.json ./
+COPY ./pnpm-lock.yaml ./
+COPY ./pnpm-workspace.yaml ./
+COPY ./.npmrc ./
+COPY ./tsconfig.json ./
 # NOTE plc's transitive dependencies go here: if that changes, this needs to be updated.
 COPY ./packages/lib ./packages/lib
 COPY ./packages/server ./packages/server
-RUN PLC_BUILD_SHALLOW=true yarn install --frozen-lockfile > /dev/null
-RUN yarn workspaces run build --update-main-to-dist > /dev/null
-# Remove non-prod deps
-RUN yarn install --production --ignore-scripts --prefer-offline > /dev/null
 
-WORKDIR packages/server/service
-RUN yarn install --frozen-lockfile > /dev/null
+RUN pnpm install --frozen-lockfile
+RUN pnpm run --recursive --stream build
+RUN pnpm run --recursive --stream update-main-to-dist
+# Remove non-prod deps, hoisted so the runtime can resolve them.
+# The layout change makes pnpm re-create node_modules, which it will not do
+# without a TTY unless the purge confirmation is turned off.
+RUN pnpm install --prod --shamefully-hoist --frozen-lockfile --prefer-offline \
+  --config.confirm-modules-purge=false
 
 # Uses assets from build stage to reduce build size
 FROM node:24.18-alpine3.23
 
-# RUN npm install -g yarn
 RUN apk add --update dumb-init
 
 # Avoid zombie processes, handle signal forwarding

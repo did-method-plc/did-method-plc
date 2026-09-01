@@ -12,7 +12,7 @@
     "jsx": "preserve",
     "strict": true,
     "strictPropertyInitialization": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

@@ -1,0 +1,12 @@
+packages:
+  - 'packages/*'
+  - 'packages/server/service'
+
+allowBuilds:
+  cbor-extract: true
+  dd-trace: true
+  '@datadog/native-appsec': false
+  '@datadog/native-iast-taint-tracking': false
+  '@datadog/native-metrics': false
+  '@datadog/pprof': false
+  esbuild: false

@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios'
+import { vi } from 'vitest'
 import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TEST_ADMIN_SECRET } from './_util'
@@ -389,9 +390,9 @@ describe('PLC server', () => {
   })
 
   it('rejects non-PLC identifiers before querying the database', async () => {
-    const lastOpForDid = jest.spyOn(db, 'lastOpForDid')
-    const opsForDid = jest.spyOn(db, 'opsForDid')
-    const indexedOpsForDid = jest.spyOn(db, 'indexedOpsForDid')
+    const lastOpForDid = vi.spyOn(db, 'lastOpForDid')
+    const opsForDid = vi.spyOn(db, 'opsForDid')
+    const indexedOpsForDid = vi.spyOn(db, 'indexedOpsForDid')
     const invalidDid = 'did:web:example.com'
 
     try {
