@@ -1,4 +1,3 @@
-import axios, { AxiosError } from 'axios'
 import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import { CloseFn, runTestServer, TEST_ADMIN_SECRET } from './_util'
@@ -284,8 +283,12 @@ describe('PLC server', () => {
   })
 
   it('exports the data set', async () => {
-    const res = await axios.get(`${client.url}/export`) // "legacy" non-sequenced export
-    const data = res.data.split('\n').map(JSON.parse)
+    const res = await fetch(`${client.url}/export`) // "legacy" non-sequenced export
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`)
+    const data = (await res.text())
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l))
     expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
     expect(data.length).toEqual(32)
     for (let i = 1; i < data.length; i++) {
@@ -341,12 +344,22 @@ describe('PLC server', () => {
 
   it('disallows removal of valid operations.', async () => {
     const auditLog = await client.getAuditableLog(did1)
-    const promise = axios.post(`${client.url}/admin/removeInvalidOps`, {
-      adminSecret: TEST_ADMIN_SECRET,
-      did: did1,
-      cid: auditLog[0].cid,
-    })
-    await expect(promise).rejects.toThrow(AxiosError)
+    const promise = (async () => {
+      const r = await fetch(`${client.url}/admin/removeInvalidOps`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminSecret: TEST_ADMIN_SECRET,
+          did: did1,
+          cid: auditLog[0].cid,
+        }),
+      })
+      if (!r.ok) {
+        const data = await r.json().catch(() => undefined)
+        throw new PlcClientError(r.status, data, `HTTP error ${r.status}`)
+      }
+    })()
+    await expect(promise).rejects.toThrow(PlcClientError)
   })
 
   it('allows invalid operations to be removed using adminSecret', async () => {
@@ -378,13 +391,17 @@ describe('PLC server', () => {
       .execute()
 
     // attempt removal
-    const removedOps = (
-      await axios.post(`${client.url}/admin/removeInvalidOps`, {
+    const removeRes = await fetch(`${client.url}/admin/removeInvalidOps`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         adminSecret: TEST_ADMIN_SECRET,
         did: did,
         cid: res.cid,
-      })
-    ).data
+      }),
+    })
+    if (!removeRes.ok) throw new Error(`HTTP error ${removeRes.status}`)
+    const removedOps = await removeRes.json()
     expect(removedOps).toEqual([res.operation]) // should return the removed op
   })
 
