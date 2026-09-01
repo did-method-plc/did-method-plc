@@ -2,16 +2,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
-    // multiformats@9's exports map declares no "types" condition, so
-    // "moduleResolution": "bundler" finds no declarations and silently types
-    // the module as `any` (silent because the root tsconfig sets
-    // "noImplicitAny": false). node10 resolution used to find them via the
-    // root "types" field, but TypeScript 7 removed node10. Drop this once we
-    // are on multiformats 13, whose exports map declares "types".
-    "paths": { "multiformats/*": ["./node_modules/multiformats/types/src/*"] },
     "outDir": "./dist",
-    "declarationDir": "./dist",
-    "emitDeclarationOnly": true,
+    "declarationDir": "./dist"
   },
   "include": ["./src"]
 }

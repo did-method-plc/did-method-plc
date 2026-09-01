@@ -1,5 +1,5 @@
-import * as plc from '@did-plc/lib'
-import { Generated, Selectable } from 'kysely'
+import type * as plc from '@did-plc/lib'
+import type { Generated, Selectable } from 'kysely'
 
 export interface PlcDatabase {
   close(): Promise<void>

@@ -1,13 +1,14 @@
 import { pipeline } from 'node:stream/promises'
 import express from 'express'
-import { WebSocket, createWebSocketStream } from 'ws'
+import type { WebSocket } from 'ws'
+import { createWebSocketStream } from 'ws'
 import * as plc from '@did-plc/lib'
-import { ServerError } from './error'
-import { handler } from './handler'
-import { AppContext } from './context'
-import { assertValidIncomingOp } from './constraints'
-import { stringify, timingSafeStringEqual } from './util'
-import { Outbox, OutboxError } from './sequencer'
+import { ServerError } from './error.js'
+import { handler } from './handler.js'
+import type { AppContext } from './context.js'
+import { assertValidIncomingOp } from './constraints.js'
+import { stringify, timingSafeStringEqual } from './util.js'
+import { Outbox, OutboxError } from './sequencer/index.js'
 
 // Once a websocket has this much data buffered, we wait for it to flush
 // before sending more events. Slow consumers then apply backpressure into

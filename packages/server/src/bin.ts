@@ -1,8 +1,9 @@
-import './env'
-import { Database, PlcDatabase } from './db'
-import PlcServer from '.'
-import { SequencerLeader } from './sequencer'
-import { leaderLogger } from './logger'
+import './env.js'
+import type { PlcDatabase } from './db/index.js'
+import { Database } from './db/index.js'
+import PlcServer from './index.js'
+import { SequencerLeader } from './sequencer/index.js'
+import { leaderLogger } from './logger.js'
 
 const waitForDb = async (
   db: Database,

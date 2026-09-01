@@ -1,15 +1,16 @@
+import { beforeAll, describe, expect, it } from 'vitest'
 import { cidForCbor, DAY } from '@atproto/common'
 import { Secp256k1Keypair } from '@atproto/crypto'
+import type { CreateOpV1 } from '../src/index.js'
 import {
   assureValidNextOp,
-  CreateOpV1,
   deprecatedSignCreate,
   didForCreateOp,
   normalizeOp,
   updateRotationKeysOp,
   updateAtprotoKeyOp,
   validateOperationLog,
-} from '../src'
+} from '../src/index.js'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 

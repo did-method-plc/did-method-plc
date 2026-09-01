@@ -1,6 +1,6 @@
 import { DAY, HOUR, cborEncode, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { ServerError } from './error'
+import { ServerError } from './error.js'
 import {
   extractPrefixedBytes,
   extractMultikey,

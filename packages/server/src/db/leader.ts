@@ -1,5 +1,5 @@
 import { sql } from 'kysely'
-import Database from './index'
+import type Database from './index.js'
 
 export class Leader {
   session: LeaderSession | null = null

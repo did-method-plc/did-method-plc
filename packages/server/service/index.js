@@ -1,7 +1,6 @@
-'use strict' /* eslint-disable */
+/* eslint-disable */
 
-require('dd-trace/init') // Only works with commonjs
-const { Database, PlcServer } = require('@did-plc/server')
+import { Database, PlcServer } from '@did-plc/server'
 
 const main = async () => {
   const version = process.env.PLC_VERSION

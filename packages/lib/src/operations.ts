@@ -1,15 +1,16 @@
 import * as cbor from '@ipld/dag-cbor'
-import { CID } from 'multiformats/cid'
+import type { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
-import { Keypair, sha256, verifySignature } from '@atproto/crypto'
+import type { Keypair } from '@atproto/crypto'
+import { sha256, verifySignature } from '@atproto/crypto'
 import { check, cidForCbor } from '@atproto/common'
-import * as t from './types'
+import * as t from './types.js'
 import {
   GenesisHashError,
   ImproperOperationError,
   InvalidSignatureError,
   MisorderedOperationError,
-} from './error'
+} from './error.js'
 
 export const didForCreateOp = async (op: t.CompatibleOp) => {
   const hashOfGenesis = await sha256(cbor.encode(op))

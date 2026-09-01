@@ -1,7 +1,8 @@
-import { Request, Response } from 'express'
+import { describe, expect, it } from 'vitest'
+import type { Request, Response } from 'express'
 import { MisorderedOperationError } from '@did-plc/lib'
-import { handler } from '../src/handler'
-import { ServerError } from '../src/error'
+import { handler } from '../src/handler.js'
+import { ServerError } from '../src/error.js'
 
 const mockReq = () =>
   ({ log: { debug: () => undefined } }) as unknown as Request

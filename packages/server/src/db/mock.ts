@@ -1,7 +1,7 @@
 import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { ServerError } from '../error'
-import { PlcDatabase } from './types'
+import { ServerError } from '../error.js'
+import type { PlcDatabase } from './types.js'
 import { CID } from 'multiformats/cid'
 
 type Contents = Record<string, plc.IndexedOperation[]>

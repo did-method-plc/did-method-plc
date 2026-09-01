@@ -1,4 +1,4 @@
-import { Duplex } from 'stream'
+import type { Duplex } from 'stream'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

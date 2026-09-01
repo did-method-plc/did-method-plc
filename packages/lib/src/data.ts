@@ -1,16 +1,16 @@
 import { CID } from 'multiformats/cid'
 import { check, cidForCbor, HOUR } from '@atproto/common'
-import * as t from './types'
+import * as t from './types.js'
 import {
   assureValidCreationOp,
   assureValidSig,
   normalizeOp,
-} from './operations'
+} from './operations.js'
 import {
   ImproperOperationError,
   LateRecoveryError,
   MisorderedOperationError,
-} from './error'
+} from './error.js'
 
 export const assureValidNextOp = async (
   did: string,

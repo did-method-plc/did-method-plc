@@ -1,5 +1,6 @@
 {
   "name": "did-method-plc",
+  "type": "module",
   "version": "0.0.1",
   "repository": "git@github.com:did-method-plc/did-method-plc.git",
   "author": "Bluesky Social PBC <hello@blueskyweb.xyz>",
@@ -7,6 +8,18 @@
   "private": true,
   "engines": {
     "node": ">=22"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=22.12.0",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.11.0",
+      "onFail": "error"
+    }
   },
   "scripts": {
     "prepublish": "pnpm run build",

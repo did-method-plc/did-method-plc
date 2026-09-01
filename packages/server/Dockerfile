@@ -1,4 +1,4 @@
-FROM node:24.18-alpine3.23 as build
+FROM node:24.18-alpine3.23 AS build
 
 RUN npm install -g pnpm@11.11.0
 
@@ -15,7 +15,6 @@ COPY ./packages/server ./packages/server
 
 RUN pnpm install --frozen-lockfile
 RUN pnpm run --recursive --stream build
-RUN pnpm run --recursive --stream update-main-to-dist
 # Remove non-prod deps, hoisted so the runtime can resolve them.
 # The layout change makes pnpm re-create node_modules, which it will not do
 # without a TTY unless the purge confirmation is turned off.
@@ -39,7 +38,9 @@ ENV NODE_ENV=production
 
 # https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md#non-root-user
 USER node
-CMD ["node", "--enable-source-maps", "index.js"]
+# tracer.js must be loaded with --import so its first import installs
+# dd-trace's ESM loader hook before any application module resolves.
+CMD ["node", "--enable-source-maps", "--import=./tracer.js", "index.js"]
 
 LABEL org.opencontainers.image.source=https://github.com/did-method-plc/did-method-plc
 LABEL org.opencontainers.image.description="DID PLC server"

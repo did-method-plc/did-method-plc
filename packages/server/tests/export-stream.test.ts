@@ -1,8 +1,11 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { CloseFn, runTestServer, TestServerInfo, createDid } from './_util'
-import { CloseReason, Database, SeqEvt } from '../src'
-import { SequencerLeader } from '../src/sequencer/sequencer-leader'
+import type { CloseFn, TestServerInfo } from './_util.js'
+import { runTestServer, createDid } from './_util.js'
+import type { Database, SeqEvt } from '../src/index.js'
+import { CloseReason } from '../src/index.js'
+import { SequencerLeader } from '../src/sequencer/sequencer-leader.js'
 import WebSocket from 'ws'
 
 describe('/export/stream endpoint', () => {

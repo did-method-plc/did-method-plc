@@ -1,6 +1,6 @@
-import { NextFunction, Request, RequestHandler, Response } from 'express'
+import type { NextFunction, Request, RequestHandler, Response } from 'express'
 import { PlcError } from '@did-plc/lib'
-import { ServerError } from './error'
+import { ServerError } from './error.js'
 
 export type RouteHandler = (req: Request, res: Response) => Promise<unknown>
 

@@ -1,6 +1,6 @@
 import { WebSocketServer } from 'ws'
-import { PlcDatabase } from './db'
-import { Sequencer } from './sequencer'
+import type { PlcDatabase } from './db/index.js'
+import type { Sequencer } from './sequencer/index.js'
 
 export class AppContext {
   public wss: WebSocketServer

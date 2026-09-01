@@ -1,6 +1,7 @@
 import { check, cidForCbor } from '@atproto/common'
-import { Keypair } from '@atproto/crypto'
-import axios, { AxiosError } from 'axios'
+import type { Keypair } from '@atproto/crypto'
+import type { AxiosError } from 'axios'
+import axios from 'axios'
 import {
   atprotoOp,
   createUpdateOp,
@@ -10,8 +11,8 @@ import {
   updateHandleOp,
   updatePdsOp,
   updateRotationKeysOp,
-} from './operations'
-import * as t from './types'
+} from './operations.js'
+import * as t from './types.js'
 
 export class Client {
   constructor(public url: string) {}
@@ -74,7 +75,7 @@ export class Client {
       url.searchParams.append('count', count.toString(10))
     }
     const res = await axios.get(url.toString())
-    const lines = res.data.split('\n')
+    const lines: string[] = res.data.split('\n')
     return lines.map((l) => JSON.parse(l))
   }
 
@@ -91,7 +92,7 @@ export class Client {
     return did
   }
 
-  async ensureLastOp(did) {
+  async ensureLastOp(did: string) {
     const lastOp = await this.getLastOp(did)
     if (check.is(lastOp, t.def.tombstone)) {
       throw new Error('Cannot apply op to tombstone')

@@ -1,8 +1,9 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { cidForCbor, DAY } from '@atproto/common'
 import { Secp256k1Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
-import { Kysely } from 'kysely'
-import { Database } from '../../src'
+import type { Kysely } from 'kysely'
+import { Database } from '../../src/index.js'
 
 describe('did-locks migration', () => {
   let db: Database

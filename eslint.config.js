@@ -1,14 +1,13 @@
-const js = require('@eslint/js')
-const tseslint = require('typescript-eslint')
-const prettierRecommended = require('eslint-plugin-prettier/recommended')
-const globals = require('globals')
+import js from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import prettierRecommended from 'eslint-plugin-prettier/recommended'
+import globals from 'globals'
 
-module.exports = [
+export default [
   {
     ignores: [
       '**/dist/**',
       '**/node_modules/**',
-      '**/update-pkg.js',
       '**/vitest.config.ts',
       'eslint.config.js',
     ],
