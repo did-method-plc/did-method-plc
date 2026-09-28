@@ -1,18 +1,18 @@
 # DID PLC Method (did:plc)
 
-DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
+DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation. PLC stands for "Public Ledger of Credentials".
 
 An example DID is: `did:plc:ewvi7nxzyoun6zhxrhs64oiz`
 
 Control over a `did:plc` identity rests in a set of reconfigurable rotation keys pairs. These keys can sign update operations to mutate the identity (including key rotations), with each operation referencing a prior version of the identity state by hash. Each identity starts from an initial genesis operation, and the hash of this initial object is what defines the DID itself (that is, the DID URI identifier string). A central directory server collects and validates operations, and maintains a transparent log of operations for each DID.
 
-This git repository contains a TypeScript reference implementation of the method (`@did-plc/lib`) and a directory server `@did-plc/server`, both in the `package/` directory. The `go-didplc/`directory is intended to hold a golang implementation.
+This git repository contains a TypeScript reference implementation of the method (`@did-plc/lib`) and a directory server `@did-plc/server`, both in the `package/` directory. The separate [go-didplc](https://github.com/did-method-plc/go-didplc) repository contains a Go implementation.
 
 ## Motivation
 
-[Bluesky Social PBC](https://bsky.social/) developed DID PLC when designing the [AT Protocol](https://atproto.com) (atproto) because we were not satisfied with any of the existing DID methods. We wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates.
+The DID PLC system was originally developed in 2022 by [Bluesky Social PBC](https://bsky.social/) to support [AT Protocol](https://atproto.com) (atproto). They wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates. Since then over 40 million atproto account identifiers have been registered.
 
-PLC stands for "Public Ledger of Credentials". We expect to evolve the system (in a backwards-compatible manner) into something less centralized - likely a permissioned DID consortium. That being said, we do intend to support `did:plc` in the current form until after any successor is deployed, with a reasonable grace period. We would also provide a migration route to allow continued use of existing `did:plc` identifiers.
+In 2026 the [PLC Organization](https://plcred.org) was founded to be a neutral steward for the DID PLC system. The system may evolve to add functionality or improve security, but will do so in a backwards-compatible manner so that existing DIDs will continue to resolve.
 
 ## How it works
 
