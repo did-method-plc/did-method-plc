@@ -1,6 +1,4 @@
-/* eslint-disable */
-
-import { Database, PlcServer } from '@did-plc/server'
+import { PgDatabase, PlcServer } from '@did-plc/server'
 
 const main = async () => {
   const version = process.env.PLC_VERSION
@@ -10,7 +8,7 @@ const main = async () => {
   if (enableMigrations) {
     const dbMigrateCreds = JSON.parse(process.env.DB_MIGRATE_CREDS_JSON)
     // Migrate using credentialed user
-    const migrateDb = Database.postgres({
+    const migrateDb = PgDatabase.create({
       url: pgUrl(dbMigrateCreds),
       schema: dbSchema,
     })
@@ -21,7 +19,7 @@ const main = async () => {
   const dbPoolMaxUses = parseMaybeInt(process.env.DB_POOL_MAX_USES)
   const dbPoolIdleTimeoutMs = parseMaybeInt(process.env.DB_POOL_IDLE_TIMEOUT_MS)
   // Use lower-credentialed user to run the app
-  const db = Database.postgres({
+  const db = PgDatabase.create({
     url: pgUrl(dbCreds),
     schema: dbSchema,
     poolSize: dbPoolSize,
@@ -39,7 +37,14 @@ const main = async () => {
   })
 }
 
-const pgUrl = ({ username = "postgres", password = "postgres", host = "localhost", port = "5432", database = "postgres", sslmode }) => {
+const pgUrl = ({
+  username = 'postgres',
+  password = 'postgres',
+  host = 'localhost',
+  port = '5432',
+  database = 'postgres',
+  sslmode,
+}) => {
   const enc = encodeURIComponent
   return `postgresql://${username}:${enc(password)}@${host}:${port}/${database}${sslmode ? `?sslmode=${enc(sslmode)}` : ''}`
 }

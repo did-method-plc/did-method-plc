@@ -1,6 +1,4 @@
-/* eslint-disable */
-
-import { Database, SequencerLeader, leaderLogger } from '@did-plc/server'
+import { PgDatabase, SequencerLeader, leaderLogger } from '@did-plc/server'
 
 const main = async () => {
   const dbCreds = JSON.parse(process.env.DB_CREDS_JSON)
@@ -8,7 +6,7 @@ const main = async () => {
   const dbPoolSize = parseMaybeInt(process.env.DB_POOL_SIZE)
   const dbPoolMaxUses = parseMaybeInt(process.env.DB_POOL_MAX_USES)
   const dbPoolIdleTimeoutMs = parseMaybeInt(process.env.DB_POOL_IDLE_TIMEOUT_MS)
-  const db = Database.postgres({
+  const db = PgDatabase.create({
     url: pgUrl(dbCreds),
     schema: dbSchema,
     poolSize: dbPoolSize,
@@ -36,7 +34,14 @@ const main = async () => {
   })
 }
 
-const pgUrl = ({ username = "postgres", password = "postgres", host = "localhost", port = "5432", database = "postgres", sslmode }) => {
+const pgUrl = ({
+  username = 'postgres',
+  password = 'postgres',
+  host = 'localhost',
+  port = '5432',
+  database = 'postgres',
+  sslmode,
+}) => {
   const enc = encodeURIComponent
   return `postgresql://${username}:${enc(password)}@${host}:${port}/${database}${sslmode ? `?sslmode=${enc(sslmode)}` : ''}`
 }
