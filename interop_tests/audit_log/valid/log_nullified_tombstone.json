@@ -6,9 +6,7 @@
       "prev": null,
       "type": "plc_operation",
       "services": {},
-      "alsoKnownAs": [
-        "at://op0"
-      ],
+      "alsoKnownAs": ["at://op0"],
       "rotationKeys": [
         "did:key:zQ3shYZd89t3Lke7N9NbDs8fcaTyAm7fAux3aVjDELLLSVmVQ",
         "did:key:zQ3shuK7Yt3GQoh8BoyEzSNZeWdovfAkqjjKJMUKHYC1878vm"
@@ -26,9 +24,7 @@
       "prev": "bafyreih2edkdbxj5kbuqstymemcu3r3mxj4gtgxcmuxpmj5mtnpazdocvm",
       "type": "plc_operation",
       "services": {},
-      "alsoKnownAs": [
-        "at://op1"
-      ],
+      "alsoKnownAs": ["at://op1"],
       "rotationKeys": [
         "did:key:zQ3shVec44WTCPYCMZb4Ka5ajjDKKLmfjWUxyRptht4knaMq8",
         "did:key:zQ3shmXuxJHxmy5SsXSdg3EWLsbrD4gztdU3TDhNq5QM7HyZr"
@@ -57,9 +53,7 @@
       "prev": "bafyreidfdc7xu5wvkyq2dwr6fuierhb7ybcdc3dnfmzf5u22hukttm75iq",
       "type": "plc_operation",
       "services": {},
-      "alsoKnownAs": [
-        "at://op3"
-      ],
+      "alsoKnownAs": ["at://op3"],
       "rotationKeys": [
         "did:key:zQ3shWWPEB81oEwNJ1mCVfvMPNFsdsat9u9FmGFteyjNAHh2A",
         "did:key:zQ3shXhSnMgAtK7JoaLAgEYf1aWqgXwwSfVC2Nx2WRCGGp6Si"

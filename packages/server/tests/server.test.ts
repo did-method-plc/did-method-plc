@@ -264,7 +264,7 @@ describe('PLC server', () => {
         try {
           await client.updateAtprotoKey(did1, rotationKey1, key.did())
           successes++
-        } catch (err) {
+        } catch {
           failures++
         }
       }),

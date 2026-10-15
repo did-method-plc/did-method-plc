@@ -1,7 +1,4 @@
 {
   "include": [],
-  "references": [
-    { "path": "./packages/lib" },
-    { "path": "./packages/server" }
-  ]
+  "references": [{ "path": "./packages/lib" }, { "path": "./packages/server" }]
 }

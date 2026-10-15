@@ -1,4 +1,3 @@
-
 @did-plc/lib - DID PLC Typescript Client Library
 ================================================
 
@@ -38,11 +37,11 @@ let signingKey = await Secp256k1Keypair.create()
 let rotationKey = await Secp256k1Keypair.create()
 
 did = await client.createDid({
-    signingKey: signingKey.did(),
-    handle: 'handle.example.com',
-    pds: 'https://pds.example.com',
-    rotationKeys: [rotationKey.did()],
-    signer: rotationKey,
+  signingKey: signingKey.did(),
+  handle: 'handle.example.com',
+  pds: 'https://pds.example.com',
+  rotationKeys: [rotationKey.did()],
+  signer: rotationKey,
 })
 ```
 
