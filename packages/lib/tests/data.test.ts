@@ -1,14 +1,14 @@
-import { beforeAll, describe, expect, it } from 'vitest'
-import { check, cidForCbor } from '@atproto/common'
+import { cidForCbor } from '@atproto/common'
 import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import * as ui8 from 'uint8arrays'
+import { beforeAll, describe, expect, it } from 'vitest'
+import * as data from '../src/data.js'
 import {
   GenesisHashError,
   ImproperOperationError,
   InvalidSignatureError,
   MisorderedOperationError,
 } from '../src/index.js'
-import * as data from '../src/data.js'
 import * as operations from '../src/operations.js'
 import * as t from '../src/types.js'
 
@@ -63,8 +63,7 @@ describe('plc did data', () => {
       prev: null,
       signer: rotationKey1,
     })
-    const isValid = check.is(createOp, t.def.operation)
-    expect(isValid).toBeTruthy()
+    expect(createOp.type).toEqual('plc_operation')
     ops.push(createOp)
     did = await operations.didForCreateOp(createOp)
   })

@@ -1,4 +1,4 @@
-import { DAY, HOUR, cborEncode, check } from '@atproto/common'
+import { DAY, HOUR, cborEncode } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error.js'
 import {
@@ -19,18 +19,24 @@ const MAX_ID_LENGTH = 32
 const MAX_DID_KEY_LENGTH = 256 // k256 = 57, BLS12-381 = 143
 
 export function assertValidIncomingOp(
-  op: unknown,
-): asserts op is plc.OpOrTombstone {
-  const byteLength = cborEncode(op).byteLength
+  input: unknown,
+): asserts input is plc.OpOrTombstone {
+  const byteLength = cborEncode(input).byteLength
   if (byteLength > MAX_OP_BYTES) {
     throw new ServerError(
       400,
       `Operation too large (${MAX_OP_BYTES} bytes maximum in cbor encoding)`,
     )
   }
-  if (!check.is(op, plc.def.opOrTombstone)) {
-    throw new ServerError(400, `Not a valid operation: ${JSON.stringify(op)}`)
+  const opResult = plc.def.opOrTombstone.safeParse(input)
+  if (!opResult.success) {
+    throw new ServerError(
+      400,
+      `Not a valid operation: ${JSON.stringify(input)}`,
+      { cause: opResult.error },
+    )
   }
+  const op = opResult.data
   if (op.type === 'plc_tombstone') {
     return
   }

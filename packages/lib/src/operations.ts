@@ -3,7 +3,7 @@ import type { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
 import type { Keypair } from '@atproto/crypto'
 import { sha256, verifySignature } from '@atproto/crypto'
-import { check, cidForCbor } from '@atproto/common'
+import { cidForCbor } from '@atproto/common'
 import * as t from './types.js'
 import {
   GenesisHashError,
@@ -216,7 +216,7 @@ export const deprecatedSignCreate = async (
 }
 
 export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
-  if (check.is(op, t.def.operation)) {
+  if (op.type === 'plc_operation') {
     return op
   }
   return {
@@ -244,7 +244,7 @@ export const assureValidCreationOp = async (
   did: string,
   op: t.CompatibleOpOrTombstone,
 ): Promise<t.DocumentData> => {
-  if (check.is(op, t.def.tombstone)) {
+  if (op.type === 'plc_tombstone') {
     throw new MisorderedOperationError()
   }
   const normalized = normalizeOp(op)
