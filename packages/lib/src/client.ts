@@ -1,4 +1,4 @@
-import { check, cidForCbor } from '@atproto/common'
+import { cidForCbor } from '@atproto/common'
 import type { Keypair } from '@atproto/crypto'
 import type { AxiosError } from 'axios'
 import axios from 'axios'
@@ -94,7 +94,7 @@ export class Client {
 
   async ensureLastOp(did: string) {
     const lastOp = await this.getLastOp(did)
-    if (check.is(lastOp, t.def.tombstone)) {
+    if (lastOp.type === 'plc_tombstone') {
       throw new Error('Cannot apply op to tombstone')
     }
     return lastOp

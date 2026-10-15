@@ -4,7 +4,6 @@ import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import type { CloseFn } from './_util.js'
 import { runTestServer, TEST_ADMIN_SECRET } from './_util.js'
-import { check } from '@atproto/common'
 import type { PgDatabase } from '../src/index.js'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
@@ -195,10 +194,7 @@ describe('PLC server', () => {
 
     const newKey = await P256Keypair.create()
     const ops = await client.getOperationLog(did1)
-    const forkPoint = ops.at(-2)
-    if (!check.is(forkPoint, plc.def.operation)) {
-      throw new Error('Could not find fork point')
-    }
+    const forkPoint = plc.def.operation.parse(ops.at(-2))
     const op = await plc.updateRotationKeysOp(forkPoint, rotationKey1, [
       rotationKey1.did(),
       newKey.did(),
@@ -218,10 +214,10 @@ describe('PLC server', () => {
     expect(auditable.length).toBe(log.length + 1)
     expect(auditable.filter((op) => op.nullified).length).toBe(1)
     expect(auditable.at(-2)?.nullified).toBe(true)
-    expect(
-      auditable.every((op) => check.is(op, plc.def.exportedOp)),
-    ).toBeTruthy()
-    expect(auditable.every((op) => (op as any).seq === undefined)).toBeTruthy()
+    for (const op of auditable) {
+      plc.def.exportedOp.parse(op)
+      expect((op as Record<string, unknown>).sec).toBeUndefined()
+    }
   })
 
   it('retrieves the did doc', async () => {
@@ -288,9 +284,9 @@ describe('PLC server', () => {
   it('exports the data set', async () => {
     const res = await axios.get(`${client.url}/export`) // "legacy" non-sequenced export
     const data = res.data.split('\n').map(JSON.parse)
-    expect(
-      data.every((row: any) => check.is(row, plc.def.exportedOp)),
-    ).toBeTruthy()
+    for (const row of data) {
+      plc.def.exportedOp.parse(row)
+    }
     expect(data.length).toEqual(32)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()
