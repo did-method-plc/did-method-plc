@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": ["./node.tsconfig.json"],
+  "compilerOptions": {
+    "noEmit": true,
+    "erasableSyntaxOnly": true,
+    "declaration": false,
+    "declarationMap": false,
+    "composite": false,
+    "allowJs": true,
+    "checkJs": true
+  }
+}

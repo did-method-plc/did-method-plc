@@ -13,7 +13,7 @@ describe('plc recovery', () => {
   let rotationKey1: Secp256k1Keypair
   let rotationKey2: P256Keypair
   let rotationKey3: P256Keypair
-  let did: string
+  let did!: string
   const handle = 'alice.example.com'
   const atpPds = 'https://example.com'
 
