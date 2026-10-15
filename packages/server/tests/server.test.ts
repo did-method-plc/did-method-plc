@@ -288,7 +288,9 @@ describe('PLC server', () => {
   it('exports the data set', async () => {
     const res = await axios.get(`${client.url}/export`) // "legacy" non-sequenced export
     const data = res.data.split('\n').map(JSON.parse)
-    expect(data.every((row) => check.is(row, plc.def.exportedOp))).toBeTruthy()
+    expect(
+      data.every((row: any) => check.is(row, plc.def.exportedOp)),
+    ).toBeTruthy()
     expect(data.length).toEqual(32)
     for (let i = 1; i < data.length; i++) {
       expect(data[i].createdAt >= data[i - 1].createdAt).toBeTruthy()

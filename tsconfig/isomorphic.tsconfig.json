@@ -1,0 +1,16 @@
+{
+  // Base for code that must run in both NodeJS and the browser. The DOM libs
+  // are included so browser globals typecheck; node types are kept available
+  // for build/test tooling.
+  //
+  // There is currently no ideal way to develop a lib compatible with both node
+  // and the browser. See:
+  // https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1685
+  // https://github.com/microsoft/TypeScript/issues/31535
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": ["./base.tsconfig.json"],
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  }
+}

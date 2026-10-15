@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    // In order to benefit from parallelized builds, we use "references" to split
+    // the project into multiple sub-projects. This requires "composite" to be
+    // set to true for each sub-project. This comes at the cost of some
+    // additional complexity in the project structure: each sub-project must
+    // reference its dependencies in its tsconfig file in addition to its
+    // package.json.
+    //
+    // See https://www.typescriptlang.org/docs/handbook/project-references.html
+    "composite": true,
+
+    "checkJs": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictPropertyInitialization": false,
+
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    // Elides "import type" statements from the runtime code tree, which allows
+    // TypeScript files to be executed in NodeJS without compilation.
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+    "noErrorTruncation": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": true,
+
+    "jsx": "preserve",
+    "module": "Node20",
+    "moduleResolution": "node16",
+    "target": "ES2023",
+    // Environment-agnostic: concrete environments (node, isomorphic) layer in
+    // their own "lib" and "types".
+    "lib": [],
+    "types": []
+  },
+  "typeAcquisition": {
+    "enable": false
+  }
+}
