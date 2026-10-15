@@ -8,9 +8,7 @@
         "did:key:zQ3shRURF844SXVaMHarhBZmdfRxgEDw2KaGuRZYMREUzRp9y"
       ],
       "verificationMethods": {},
-      "alsoKnownAs": [
-        "at://foo"
-      ],
+      "alsoKnownAs": ["at://foo"],
       "services": {},
       "prev": null,
       "sig": "rLbkRO-IDfN_HVaDaf-_uirfV0SntYU6dKoZ5sJXzzoZOeLenFqx2xkXaIz0pFMUXjYxm-UutuTz21HCtILwNg"
@@ -25,9 +23,7 @@
       "prev": "bafyreidt3urwnjdgfb5g3yvtvxgesnuydskk5gowux3o4ehtolgxpkkwwq",
       "type": "plc_operation",
       "services": {},
-      "alsoKnownAs": [
-        "at://foo"
-      ],
+      "alsoKnownAs": ["at://foo"],
       "rotationKeys": [],
       "verificationMethods": {},
       "sig": "fa5xNxqH2sPqcUKmtDVRWs4G6EjojgElwfrOTaHBKpBd5rd1wqFl_-ufa6vOHyZn8dMxICsWnFS9ia2wBRQuug"
@@ -42,9 +38,7 @@
       "prev": "bafyreidt3urwnjdgfb5g3yvtvxgesnuydskk5gowux3o4ehtolgxpkkwwq",
       "type": "plc_operation",
       "services": {},
-      "alsoKnownAs": [
-        "at://foo"
-      ],
+      "alsoKnownAs": ["at://foo"],
       "rotationKeys": [
         "did:key:zQ3shQ4pJUy63hdGwyxjMbpVHjpsGtZQxEDVCvHWqbUAwqfjB",
         "did:key:zQ3shRURF844SXVaMHarhBZmdfRxgEDw2KaGuRZYMREUzRp9y"

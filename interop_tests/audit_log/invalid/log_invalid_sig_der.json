@@ -11,9 +11,7 @@
           "endpoint": "https://mrSTdKI0ilD_bR23p5wCOfKGUSsbOSnI.example.com"
         }
       },
-      "alsoKnownAs": [
-        "at://merry.xmas.from.retr0.id"
-      ],
+      "alsoKnownAs": ["at://merry.xmas.from.retr0.id"],
       "rotationKeys": [
         "did:key:zQ3shaTh3deVkniqT1r413817rJ3JDvTG61bzGX13dSwCkvGC"
       ],
