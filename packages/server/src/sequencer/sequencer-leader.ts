@@ -1,5 +1,5 @@
 import { Leader } from '../db/leader.js'
-import type Database from '../db/index.js'
+import type PgDatabase from '../db/index.js'
 import { sql } from 'kysely'
 import { PLC_SEQ_SEQUENCE } from '../db/types.js'
 import { leaderLogger as log } from '../logger.js'
@@ -17,7 +17,7 @@ export class SequencerLeader {
   pollIntervalMs: number
 
   constructor(
-    public db: Database,
+    public db: PgDatabase,
     opts: SequencerLeaderOptions = {},
   ) {
     this.leader = new Leader(SEQUENCER_LEADER_ID, db)

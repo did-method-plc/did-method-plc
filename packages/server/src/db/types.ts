@@ -21,6 +21,13 @@ export interface PlcDatabase {
     did: string,
     cid: string,
   ): Promise<plc.CompatibleOpOrTombstone[]>
+  curr(): Promise<OperationsTableEntry | null>
+  next(cursor: number): Promise<OperationsTableEntry | null>
+  requestSeqRange(opts: {
+    earliestSeq?: number
+    latestSeq?: number
+    limit?: number
+  }): Promise<plc.ExportedOpWithSeq[]>
 }
 
 export interface DidsTable {

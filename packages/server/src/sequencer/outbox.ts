@@ -6,7 +6,7 @@ export type OutboxOpts = {
   maxBufferSize: number
 }
 
-export const enum CloseReason {
+export enum CloseReason {
   FutureCursor = 'FutureCursor',
   OutdatedCursor = 'OutdatedCursor',
   ConsumerTooSlow = 'ConsumerTooSlow',

@@ -3,7 +3,7 @@ import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import type { CloseFn, TestServerInfo } from './_util.js'
 import { runTestServer, createDid } from './_util.js'
-import type { Database, SeqEvt } from '../src/index.js'
+import type { PgDatabase, SeqEvt } from '../src/index.js'
 import { CloseReason } from '../src/index.js'
 import { SequencerLeader } from '../src/sequencer/sequencer-leader.js'
 import WebSocket from 'ws'
@@ -11,7 +11,7 @@ import WebSocket from 'ws'
 describe('/export/stream endpoint', () => {
   let server: TestServerInfo
   let close: CloseFn
-  let db: Database
+  let db: PgDatabase
   let sequencerLeader: SequencerLeader
   let client: plc.Client
   let wsUrl: string

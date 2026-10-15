@@ -2,14 +2,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as plc from '@did-plc/lib'
 import type { CloseFn } from './_util.js'
 import { runTestServer } from './_util.js'
-import type { Database } from '../src/index.js'
+import type { PgDatabase } from '../src/index.js'
 import { PlcClientError } from '@did-plc/lib'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
 describe('interop', () => {
   let close: CloseFn
-  let db: Database
+  let db: PgDatabase
   let client: plc.Client
 
   const INTEROP_TESTS_DIR = path.join(

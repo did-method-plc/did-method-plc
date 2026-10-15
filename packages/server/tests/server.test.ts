@@ -5,7 +5,7 @@ import * as plc from '@did-plc/lib'
 import type { CloseFn } from './_util.js'
 import { runTestServer, TEST_ADMIN_SECRET } from './_util.js'
 import { check } from '@atproto/common'
-import type { Database } from '../src/index.js'
+import type { PgDatabase } from '../src/index.js'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
 describe('PLC server', () => {
@@ -14,7 +14,7 @@ describe('PLC server', () => {
   let atpPds = 'https://example.com'
 
   let close: CloseFn
-  let db: Database
+  let db: PgDatabase
   let client: plc.Client
 
   let signingKey: P256Keypair
