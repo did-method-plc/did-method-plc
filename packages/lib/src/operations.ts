@@ -1,4 +1,4 @@
-import * as noble from '@noble/hashes/sha256'
+import * as noble from '@noble/hashes/sha2.js'
 import type { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
 import {
