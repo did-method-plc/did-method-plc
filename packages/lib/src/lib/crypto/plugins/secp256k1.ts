@@ -1,5 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1'
-import { sha256 } from '@noble/hashes/sha256'
+import { secp256k1 } from '@noble/curves/secp256k1.js'
 import { extractMultikey, formatDidKey } from '../did.js'
 import { extractPrefixedBytes, hasPrefix } from '../utils.js'
 import type { DidKeyPlugin, Keypair, VerifyOptions } from './types.js'
@@ -18,8 +17,7 @@ function decompressPubkey(compressed: Uint8Array): Uint8Array {
   if (compressed.length !== 33) {
     throw new Error('Expected 33 byte compress pubkey')
   }
-  const point = secp256k1.ProjectivePoint.fromHex(compressed)
-  return point.toRawBytes(false)
+  return secp256k1.Point.fromBytes(compressed).toBytes(false)
 }
 
 async function verifySignature(
@@ -43,16 +41,24 @@ async function verifySig(
   opts?: VerifyOptions,
 ): Promise<boolean> {
   const allowMalleable = opts?.allowMalleableSig ?? false
-  const msgHash = await sha256(data)
-  return secp256k1.verify(sig, msgHash, publicKey, {
-    format: allowMalleable ? undefined : 'compact', // prevent DER-encoded signatures
+  // noble-curves v1 accepted `format: undefined` to auto-detect compact vs DER;
+  // v2 requires an explicit format, so derive it from the signature encoding
+  // (compact sigs are exactly 64 bytes). The strict path only ever accepts
+  // low-s compact signatures — reject any non-compact sig up front, since v2's
+  // compact verify throws on a mismatched length rather than returning false.
+  const isCompact = sig.length === 64
+  if (!allowMalleable && !isCompact) {
+    return false
+  }
+  return secp256k1.verify(sig, data, publicKey, {
+    format: isCompact ? 'compact' : 'der', // prevent DER-encoded signatures on the strict path
     lowS: !allowMalleable,
   })
 }
 
 export class Secp256k1Keypair implements Keypair {
   static create(): Keypair {
-    const privateKey = secp256k1.utils.randomPrivateKey()
+    const privateKey = secp256k1.utils.randomSecretKey()
     return new Secp256k1Keypair(privateKey)
   }
 
@@ -64,15 +70,11 @@ export class Secp256k1Keypair implements Keypair {
   }
 
   did(): string {
-    const compressed = secp256k1.ProjectivePoint.fromHex(
-      this.publicKey,
-    ).toRawBytes(true)
+    const compressed = secp256k1.Point.fromBytes(this.publicKey).toBytes(true)
     return formatDidKey(SECP256K1_DID_PREFIX, compressed)
   }
 
   async sign(msg: Uint8Array): Promise<Uint8Array> {
-    const msgHash = sha256(msg)
-    const sig = secp256k1.sign(msgHash, this.privateKey, { lowS: true })
-    return sig.toCompactRawBytes()
+    return secp256k1.sign(msg, this.privateKey, { lowS: true })
   }
 }
