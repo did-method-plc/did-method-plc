@@ -326,12 +326,6 @@ importers:
         specifier: ^8.18.3
         version: 8.18.3
     devDependencies:
-      '@noble/curves':
-        specifier: ^2.4.0
-        version: 2.4.0
-      '@noble/hashes':
-        specifier: ^2.4.0
-        version: 2.4.0
       '@types/compression':
         specifier: ^1.8.1
         version: 1.8.1
