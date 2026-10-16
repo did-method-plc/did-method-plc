@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { wait } from '@atproto/common'
 import * as plc from '@did-plc/lib'
+import { wait } from '../src/util.js'
 import type { CloseFn, TestServerInfo } from './_util.js'
 import { runTestServer, createDid } from './_util.js'
 import type { PgDatabase, SeqEvt } from '../src/index.js'

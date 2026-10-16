@@ -1,19 +1,19 @@
-import * as cbor from '@ipld/dag-cbor'
+import * as noble from '@noble/hashes/sha256'
 import type { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
-import type { Keypair } from '@atproto/crypto'
-import { sha256, verifySignature } from '@atproto/crypto'
-import { check, cidForCbor } from '@atproto/common'
-import * as t from './types.js'
 import {
   GenesisHashError,
   ImproperOperationError,
   InvalidSignatureError,
   MisorderedOperationError,
 } from './error.js'
+import type { Keypair } from './lib/crypto.js'
+import { verifySignature } from './lib/crypto/verify.js'
+import { cborEncode, cidForCbor } from './lib/ipld.js'
+import * as t from './types.js'
 
-export const didForCreateOp = async (op: t.CompatibleOp) => {
-  const hashOfGenesis = await sha256(cbor.encode(op))
+export const didForCreateOp = (op: t.CompatibleOp) => {
+  const hashOfGenesis = noble.sha256(cborEncode(op))
   const hashB32 = uint8arrays.toString(hashOfGenesis, 'base32')
   const truncated = hashB32.slice(0, 24)
   return `did:plc:${truncated}`
@@ -190,7 +190,7 @@ export const addSignature = async <T extends Record<string, unknown>>(
   object: T,
   key: Keypair,
 ): Promise<T & { sig: string }> => {
-  const data = new Uint8Array(cbor.encode(object))
+  const data = new Uint8Array(cborEncode(object))
   const sig = await key.sign(data)
   return {
     ...object,
@@ -216,7 +216,7 @@ export const deprecatedSignCreate = async (
 }
 
 export const normalizeOp = (op: t.CompatibleOp): t.Operation => {
-  if (check.is(op, t.def.operation)) {
+  if (op.type === 'plc_operation') {
     return op
   }
   return {
@@ -244,7 +244,7 @@ export const assureValidCreationOp = async (
   did: string,
   op: t.CompatibleOpOrTombstone,
 ): Promise<t.DocumentData> => {
-  if (check.is(op, t.def.tombstone)) {
+  if (op.type === 'plc_tombstone') {
     throw new MisorderedOperationError()
   }
   const normalized = normalizeOp(op)
@@ -270,7 +270,7 @@ export const assureValidSig = async (
     throw new InvalidSignatureError(op)
   }
   const sigBytes = uint8arrays.fromString(sig, 'base64url')
-  const dataBytes = new Uint8Array(cbor.encode(opData))
+  const dataBytes = new Uint8Array(cborEncode(opData))
   for (const didKey of allowedDidKeys) {
     const isValid = await verifySignature(didKey, dataBytes, sigBytes)
     if (isValid) {

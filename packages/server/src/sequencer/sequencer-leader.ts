@@ -3,7 +3,7 @@ import type PgDatabase from '../db/index.js'
 import { sql } from 'kysely'
 import { PLC_SEQ_SEQUENCE } from '../db/types.js'
 import { leaderLogger as log } from '../logger.js'
-import { wait, jitter } from '@atproto/common'
+import { wait, jitter } from '../util.js'
 
 const SEQUENCER_LEADER_ID = 1100
 
