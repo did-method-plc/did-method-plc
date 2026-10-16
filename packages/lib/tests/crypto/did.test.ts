@@ -4,13 +4,13 @@
 // via the keypair fixtures' `did()` (production code has no `formatDidKey`).
 import * as uint8arrays from 'uint8arrays'
 import { describe, expect, it } from 'vitest'
+import { parseDidKey } from '../../src/lib/crypto/did.ts'
 import {
   P256Keypair,
   p256Plugin,
-  parseDidKey,
   Secp256k1Keypair,
   secp256k1Plugin,
-} from '../../src/lib/crypto.ts'
+} from '../../src/lib/crypto/plugins.ts'
 
 describe('secp256k1 did:key', () => {
   it('derives the correct DID from the private key', async () => {

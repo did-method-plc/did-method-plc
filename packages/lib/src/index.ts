@@ -10,6 +10,7 @@ export {
   extractPrefixedBytes,
   P256Keypair,
   parseDidKey,
+  type ParsedMultikey,
   Secp256k1Keypair,
   type Keypair,
 } from './lib/crypto.js'
