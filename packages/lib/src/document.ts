@@ -63,7 +63,7 @@ const formatKeyAndContext = (key: string): KeyAndContext => {
   let keyInfo: ParsedMultikey
   try {
     keyInfo = crypto.parseDidKey(key)
-  } catch (err) {
+  } catch {
     return {
       // we can't specify a context for a key type we don't recognize
       type: 'Multikey',

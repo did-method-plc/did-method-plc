@@ -19,10 +19,11 @@ test: ## Run all tests
 
 .PHONY: fmt
 fmt: ## Run syntax re-formatting
-	pnpm run prettier
+	pnpm run lint:fix
+	pnpm run style:fix
 
 .PHONY: lint
-lint: ## Run style checks and verify syntax
+lint: ## Run style checks and verify syntax & types
 	pnpm run verify
 
 .PHONY: nvm-setup
