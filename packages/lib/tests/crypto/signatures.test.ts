@@ -7,7 +7,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as uint8arrays from 'uint8arrays'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { verifySignature } from '../../src/lib/crypto.ts'
+import { verifySignature } from '../../src/lib/crypto/verify.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

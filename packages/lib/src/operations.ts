@@ -1,17 +1,17 @@
-import * as noble from '@noble/hashes/sha256'
 import * as cbor from '@ipld/dag-cbor'
+import * as noble from '@noble/hashes/sha256'
 import type { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
-import type { Keypair } from './lib/crypto.js'
-import { verifySignature } from './lib/crypto.js'
-import { cidForCbor } from './lib/ipld.js'
-import * as t from './types.js'
 import {
   GenesisHashError,
   ImproperOperationError,
   InvalidSignatureError,
   MisorderedOperationError,
 } from './error.js'
+import type { Keypair } from './lib/crypto.js'
+import { verifySignature } from './lib/crypto/verify.js'
+import { cidForCbor } from './lib/ipld.js'
+import * as t from './types.js'
 
 export const didForCreateOp = (op: t.CompatibleOp) => {
   const hashOfGenesis = noble.sha256(cbor.encode(op))

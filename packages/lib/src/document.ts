@@ -1,9 +1,5 @@
-import {
-  P256_JWT_ALG,
-  parseDidKey,
-  type ParsedMultikey,
-  SECP256K1_JWT_ALG,
-} from './lib/crypto.js'
+import { parseDidKey, type ParsedMultikey } from './lib/crypto/did.js'
+import { P256_JWT_ALG, SECP256K1_JWT_ALG } from './lib/crypto/plugins.js'
 import type * as t from './types.js'
 
 export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
