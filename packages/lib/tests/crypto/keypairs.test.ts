@@ -3,11 +3,8 @@
 // rather than the per-curve `verifyDidSig` (which is internal here).
 import { randomBytes } from '@noble/hashes/utils'
 import { describe, expect, it } from 'vitest'
-import {
-  P256Keypair,
-  Secp256k1Keypair,
-  verifySignature,
-} from '../../src/lib/crypto.ts'
+import { P256Keypair, Secp256k1Keypair } from '../../src/lib/crypto/plugins.ts'
+import { verifySignature } from '../../src/lib/crypto/verify.ts'
 
 describe('keypairs', () => {
   describe('secp256k1', () => {
