@@ -24,7 +24,7 @@
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18"
   },
   "scripts": {
     "start": "node dist/bin.js",
