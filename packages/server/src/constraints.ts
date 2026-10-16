@@ -70,8 +70,8 @@ export function assertValidIncomingOp(
   for (const key of op.rotationKeys) {
     try {
       parseDidKey(key)
-    } catch (err) {
-      throw new ServerError(400, `Invalid rotationKey: ${key}`)
+    } catch (cause) {
+      throw new ServerError(400, `Invalid rotationKey: ${key}`, { cause })
     }
   }
   const serviceEntries = Object.entries(op.services)
@@ -126,8 +126,10 @@ export function assertValidIncomingOp(
       // key types
       const multikey = extractMultikey(key) // enforces did:key: prefix
       extractPrefixedBytes(multikey) // enforces base58-btc encoding
-    } catch {
-      throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
+    } catch (cause) {
+      throw new ServerError(400, `Invalid verificationMethod key: ${key}`, {
+        cause,
+      })
     }
   }
 }

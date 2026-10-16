@@ -9,10 +9,8 @@ export {
   extractMultikey,
   extractPrefixedBytes,
   P256Keypair,
-  Secp256k1Keypair,
-  p256Plugin,
   parseDidKey,
-  secp256k1Plugin,
+  Secp256k1Keypair,
   type Keypair,
 } from './lib/crypto.js'
-export { cborEncode, cidForCbor } from './lib/ipld.js'
+export * from './lib/ipld.js'
