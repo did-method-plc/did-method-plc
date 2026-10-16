@@ -1,22 +1,23 @@
+import * as fs from 'fs/promises'
+import * as path from 'path'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { cidForCbor, DAY } from '@atproto/common'
-import { Secp256k1Keypair } from '@atproto/crypto'
-import type { CreateOpV1 } from '../src/index.js'
 import {
   assureValidNextOp,
   deprecatedSignCreate,
   didForCreateOp,
   normalizeOp,
-  updateRotationKeysOp,
   updateAtprotoKeyOp,
+  updateRotationKeysOp,
   validateOperationLog,
+  type CreateOpV1,
+  type Keypair,
+  Secp256k1Keypair,
 } from '../src/index.js'
-import * as fs from 'fs/promises'
-import * as path from 'path'
+import { cidForCbor } from '../src/lib/ipld.js'
 
 describe('compatibility', () => {
-  let signingKey: Secp256k1Keypair
-  let recoveryKey: Secp256k1Keypair
+  let signingKey: Keypair
+  let recoveryKey: Keypair
   const handle = 'alice.test'
   const service = 'https://example.com'
   let did: string
@@ -32,8 +33,8 @@ describe('compatibility', () => {
   )
 
   beforeAll(async () => {
-    signingKey = await Secp256k1Keypair.create()
-    recoveryKey = await Secp256k1Keypair.create()
+    signingKey = Secp256k1Keypair.create()
+    recoveryKey = Secp256k1Keypair.create()
   })
 
   it('normalizes legacy create ops', async () => {
@@ -72,8 +73,8 @@ describe('compatibility', () => {
 
   it('validates a log with a legacy create op', async () => {
     const legacyCid = await cidForCbor(legacyOp)
-    const newSigner = await Secp256k1Keypair.create()
-    const newRotater = await Secp256k1Keypair.create()
+    const newSigner = Secp256k1Keypair.create()
+    const newRotater = Secp256k1Keypair.create()
     const nextOp = await updateAtprotoKeyOp(
       legacyOp,
       signingKey,
@@ -90,7 +91,7 @@ describe('compatibility', () => {
       operation: legacyOp,
       cid: legacyCid,
       nullified: false,
-      createdAt: new Date(Date.now() - 7 * DAY),
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3),
     }
 
     const result = await assureValidNextOp(

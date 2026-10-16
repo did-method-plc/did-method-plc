@@ -1,10 +1,10 @@
-import { cidForCbor, HOUR } from '@atproto/common'
 import { CID } from 'multiformats/cid'
 import {
   ImproperOperationError,
   LateRecoveryError,
   MisorderedOperationError,
 } from './error.js'
+import { cidForCbor } from './lib/ipld.js'
 import {
   assureValidCreationOp,
   assureValidSig,
@@ -74,7 +74,7 @@ export const assureValidNextOp = async (
 
   // recovery key gets a 72hr window to do historical re-wrties
   if (nullified.length > 0) {
-    const RECOVERY_WINDOW = 72 * HOUR
+    const RECOVERY_WINDOW = 72 * 60 * 60 * 1000
     const timeLapsed =
       proposedDate.getTime() - firstNullified.createdAt.getTime()
     if (timeLapsed > RECOVERY_WINDOW) {

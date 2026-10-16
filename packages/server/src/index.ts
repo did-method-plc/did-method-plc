@@ -1,25 +1,24 @@
 import './types.js'
 
 import compression from 'compression'
-import express from 'express'
 import cors from 'cors'
-import http from 'http'
 import events from 'events'
-import * as error from './error.js'
-import createRouter from './routes.js'
-import { loggerMiddleware } from './logger.js'
-import AppContext from './context.js'
+import express from 'express'
+import http from 'http'
 import type { HttpTerminator } from 'http-terminator'
 import { createHttpTerminator } from 'http-terminator'
+import AppContext from './context.js'
 import type { PlcDatabase } from './db/types.js'
-import { Socket } from 'net'
+import * as error from './error.js'
+import { loggerMiddleware } from './logger.js'
+import createRouter from './routes.js'
 import type { SequencerOptions } from './sequencer/index.js'
 import { Sequencer } from './sequencer/index.js'
 
-export * from './db/index.js'
 export * from './context.js'
-export * from './sequencer/index.js'
+export * from './db/index.js'
 export * from './logger.js'
+export * from './sequencer/index.js'
 
 export class PlcServer {
   public ctx: AppContext

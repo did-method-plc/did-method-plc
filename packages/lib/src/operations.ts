@@ -1,9 +1,10 @@
+import * as noble from '@noble/hashes/sha256'
 import * as cbor from '@ipld/dag-cbor'
 import type { CID } from 'multiformats/cid'
 import * as uint8arrays from 'uint8arrays'
-import type { Keypair } from '@atproto/crypto'
-import { sha256, verifySignature } from '@atproto/crypto'
-import { cidForCbor } from '@atproto/common'
+import type { Keypair } from './lib/crypto.js'
+import { verifySignature } from './lib/crypto.js'
+import { cidForCbor } from './lib/ipld.js'
 import * as t from './types.js'
 import {
   GenesisHashError,
@@ -12,8 +13,8 @@ import {
   MisorderedOperationError,
 } from './error.js'
 
-export const didForCreateOp = async (op: t.CompatibleOp) => {
-  const hashOfGenesis = await sha256(cbor.encode(op))
+export const didForCreateOp = (op: t.CompatibleOp) => {
+  const hashOfGenesis = noble.sha256(cbor.encode(op))
   const hashB32 = uint8arrays.toString(hashOfGenesis, 'base32')
   const truncated = hashB32.slice(0, 24)
   return `did:plc:${truncated}`
