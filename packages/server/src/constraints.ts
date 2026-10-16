@@ -1,11 +1,12 @@
-import { DAY, HOUR, cborEncode } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { ServerError } from './error.js'
 import {
-  extractPrefixedBytes,
+  cborEncode,
   extractMultikey,
+  extractPrefixedBytes,
   parseDidKey,
-} from '@atproto/crypto'
+} from '@did-plc/lib'
+import { ServerError } from './error.js'
+import { DAY, HOUR } from './util.js'
 
 const MAX_OP_BYTES = 4000
 const MAX_AKA_ENTRIES = 10
@@ -125,7 +126,7 @@ export function assertValidIncomingOp(
       // key types
       const multikey = extractMultikey(key) // enforces did:key: prefix
       extractPrefixedBytes(multikey) // enforces base58-btc encoding
-    } catch (err) {
+    } catch {
       throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
     }
   }

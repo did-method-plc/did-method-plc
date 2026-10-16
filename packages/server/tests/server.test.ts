@@ -1,11 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import axios, { AxiosError } from 'axios'
-import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
+import { didForCreateOp, PlcClientError } from '@did-plc/lib'
+import axios, { AxiosError } from 'axios'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import type { PgDatabase } from '../src/index.js'
 import type { CloseFn } from './_util.js'
 import { runTestServer, TEST_ADMIN_SECRET } from './_util.js'
-import type { PgDatabase } from '../src/index.js'
-import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
 describe('PLC server', () => {
   let handle1 = 'at://alice.example.com'
@@ -16,10 +15,10 @@ describe('PLC server', () => {
   let db: PgDatabase
   let client: plc.Client
 
-  let signingKey: P256Keypair
-  let rotationKey1: P256Keypair
-  let rotationKey2: P256Keypair
-  let rotationKey3: P256Keypair
+  let signingKey: plc.Keypair
+  let rotationKey1: plc.Keypair
+  let rotationKey2: plc.Keypair
+  let rotationKey3: plc.Keypair
 
   let did1: string
   let did2: string
@@ -32,10 +31,10 @@ describe('PLC server', () => {
     db = server.db
     close = server.close
     client = new plc.Client(server.url)
-    signingKey = await P256Keypair.create()
-    rotationKey1 = await P256Keypair.create()
-    rotationKey2 = await P256Keypair.create()
-    rotationKey3 = await P256Keypair.create()
+    signingKey = await plc.P256Keypair.create()
+    rotationKey1 = await plc.P256Keypair.create()
+    rotationKey2 = await plc.P256Keypair.create()
+    rotationKey3 = await plc.P256Keypair.create()
   })
 
   afterAll(async () => {
@@ -84,8 +83,8 @@ describe('PLC server', () => {
   })
 
   it('can perform some updates', async () => {
-    const newRotationKey = await P256Keypair.create()
-    signingKey = await P256Keypair.create()
+    const newRotationKey = await plc.P256Keypair.create()
+    signingKey = await plc.P256Keypair.create()
     handle1 = 'at://ali.example2.com'
     atpPds = 'https://example2.com'
 
@@ -183,16 +182,16 @@ describe('PLC server', () => {
   })
 
   it('rejects on bad updates', async () => {
-    const newKey = await P256Keypair.create()
+    const newKey = await plc.P256Keypair.create()
     const operation = client.updateAtprotoKey(did1, newKey, newKey.did())
     await expect(operation).rejects.toThrow()
   })
 
   it('allows for recovery through a forked history', async () => {
-    const attackerKey = await P256Keypair.create()
+    const attackerKey = await plc.P256Keypair.create()
     await client.updateRotationKeys(did1, rotationKey2, [attackerKey.did()])
 
-    const newKey = await P256Keypair.create()
+    const newKey = await plc.P256Keypair.create()
     const ops = await client.getOperationLog(did1)
     const forkPoint = plc.def.operation.parse(ops.at(-2))
     const op = await plc.updateRotationKeysOp(forkPoint, rotationKey1, [
@@ -228,9 +227,9 @@ describe('PLC server', () => {
 
   it('handles concurrent requests to many docs', async () => {
     const COUNT = 20
-    const keys: P256Keypair[] = []
+    const keys: plc.Keypair[] = []
     for (let i = 0; i < COUNT; i++) {
-      keys.push(await P256Keypair.create())
+      keys.push(await plc.P256Keypair.create())
     }
     await Promise.all(
       keys.map(async (key, index) => {
@@ -247,9 +246,9 @@ describe('PLC server', () => {
 
   it('resolves races into a coherent history with no forks', async () => {
     const COUNT = 20
-    const keys: P256Keypair[] = []
+    const keys: plc.Keypair[] = []
     for (let i = 0; i < COUNT; i++) {
-      keys.push(await P256Keypair.create())
+      keys.push(await plc.P256Keypair.create())
     }
     // const prev = await client.getPrev(did)
 
