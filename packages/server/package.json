@@ -49,8 +49,6 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
-    "@noble/curves": "^2.4.0",
-    "@noble/hashes": "^2.4.0",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
