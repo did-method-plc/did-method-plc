@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { P256Keypair, parseDidKey, Secp256k1Keypair } from '@atproto/crypto'
 import * as document from '../src/document.js'
+import {
+  type Keypair,
+  P256Keypair,
+  parseDidKey,
+  Secp256k1Keypair,
+} from '../src/lib/crypto.ts'
 import type * as t from '../src/types.js'
 
 describe('document', () => {
   it('formats a valid DID document', async () => {
-    const atprotoKey = await Secp256k1Keypair.create()
-    const otherKey = await P256Keypair.create()
-    const rotate1 = await Secp256k1Keypair.create()
-    const rotate2 = await P256Keypair.create()
+    const atprotoKey: Keypair = Secp256k1Keypair.create()
+    const otherKey: Keypair = P256Keypair.create()
+    const rotate1: Keypair = Secp256k1Keypair.create()
+    const rotate2: Keypair = P256Keypair.create()
     const alsoKnownAs = ['at://alice.test', 'https://bob.test']
     const atpPds = 'https://example.com'
     const otherService = 'https://other.com'

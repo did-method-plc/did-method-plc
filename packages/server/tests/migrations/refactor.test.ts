@@ -1,9 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { cidForCbor, DAY } from '@atproto/common'
-import { Secp256k1Keypair } from '@atproto/crypto'
-import * as plc from '@did-plc/lib'
+import {
+  cidForCbor,
+  deprecatedSignCreate,
+  didForCreateOp,
+  Secp256k1Keypair,
+} from '@did-plc/lib'
 import type { Kysely } from 'kysely'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PgDatabase } from '../../src/index.js'
+import { DAY } from '../../src/util.js'
 
 describe('refactor migration', () => {
   let db: PgDatabase
@@ -32,9 +36,9 @@ describe('refactor migration', () => {
 
   it('fills the database with some operations', async () => {
     for (let i = 0; i < 100; i++) {
-      const signingKey = await Secp256k1Keypair.create()
-      const recoveryKey = await Secp256k1Keypair.create()
-      const op = await plc.deprecatedSignCreate(
+      const signingKey = Secp256k1Keypair.create()
+      const recoveryKey = Secp256k1Keypair.create()
+      const op = await deprecatedSignCreate(
         {
           type: 'create',
           signingKey: signingKey.did(),
@@ -45,7 +49,7 @@ describe('refactor migration', () => {
         },
         signingKey,
       )
-      const did = await plc.didForCreateOp(op)
+      const did = await didForCreateOp(op)
       const cid = await cidForCbor(op)
       const randomOffset = Math.floor(Math.random() * DAY * 60)
       const time = new Date(Date.now() - randomOffset).toISOString()

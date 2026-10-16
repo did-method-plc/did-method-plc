@@ -1,18 +1,21 @@
-import { beforeAll, describe, expect, it } from 'vitest'
-import { cidForCbor, DAY, HOUR } from '@atproto/common'
-import type { Keypair } from '@atproto/crypto'
-import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import type { CID } from 'multiformats/cid'
-import { InvalidSignatureError, LateRecoveryError } from '../src/index.js'
+import { beforeAll, describe, expect, it } from 'vitest'
 import * as data from '../src/data.js'
+import { InvalidSignatureError, LateRecoveryError } from '../src/index.js'
+import {
+  type Keypair,
+  P256Keypair,
+  Secp256k1Keypair,
+} from '../src/lib/crypto.ts'
+import { cidForCbor } from '../src/lib/ipld.ts'
 import * as operations from '../src/operations.js'
 import type * as t from '../src/types.js'
 
 describe('plc recovery', () => {
-  let signingKey: Secp256k1Keypair
-  let rotationKey1: Secp256k1Keypair
-  let rotationKey2: P256Keypair
-  let rotationKey3: P256Keypair
+  let signingKey: Keypair
+  let rotationKey1: Keypair
+  let rotationKey2: Keypair
+  let rotationKey3: Keypair
   let did!: string
   const handle = 'alice.example.com'
   const atpPds = 'https://example.com'
@@ -22,10 +25,10 @@ describe('plc recovery', () => {
   let createCid: CID
 
   beforeAll(async () => {
-    signingKey = await Secp256k1Keypair.create()
-    rotationKey1 = await Secp256k1Keypair.create()
-    rotationKey2 = await P256Keypair.create()
-    rotationKey3 = await P256Keypair.create()
+    signingKey = Secp256k1Keypair.create()
+    rotationKey1 = Secp256k1Keypair.create()
+    rotationKey2 = P256Keypair.create()
+    rotationKey3 = P256Keypair.create()
   })
 
   const formatIndexed = async (
@@ -73,7 +76,7 @@ describe('plc recovery', () => {
 
     log.push({
       ...create.indexed,
-      createdAt: new Date(Date.now() - 7 * DAY),
+      createdAt: new Date(Date.now() - 7 * (24 * 60 * 60 * 1e3)),
     })
 
     // key 3 tries to usurp control
@@ -81,7 +84,7 @@ describe('plc recovery', () => {
 
     log.push({
       ...rotate.indexed,
-      createdAt: new Date(Date.now() - DAY),
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1e3),
     })
 
     // and does some additional ops
@@ -94,7 +97,7 @@ describe('plc recovery', () => {
 
     log.push({
       ...another.indexed,
-      createdAt: new Date(Date.now() - HOUR),
+      createdAt: new Date(Date.now() - 60 * 60 * 1e3),
     })
   })
 
@@ -147,7 +150,7 @@ describe('plc recovery', () => {
       log[0],
       {
         ...rotate.indexed,
-        createdAt: new Date(Date.now() - 4 * DAY),
+        createdAt: new Date(Date.now() - 4 * (24 * 60 * 60 * 1e3)),
       },
     ]
     const rotateBack = await signOpForKeys(
@@ -173,7 +176,7 @@ describe('plc recovery', () => {
         // Must be strictly before the proposed op's timestamp: assureValidNextOp
         // requires timestamps to increase. Dating it with `new Date()` puts it
         // in the same millisecond whenever signing below is fast enough.
-        createdAt: new Date(Date.now() - HOUR),
+        createdAt: new Date(Date.now() - 60 * 60 * 1e3),
       },
     ]
     const rotateBack = await signOpForKeys(

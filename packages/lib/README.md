@@ -33,8 +33,8 @@ import * as plc from '@did-plc/lib'
 // please test against a sandbox or local development server
 client = new plc.Client('http://localhost:2582')
 
-let signingKey = await Secp256k1Keypair.create()
-let rotationKey = await Secp256k1Keypair.create()
+let signingKey = Secp256k1Keypair.create()
+let rotationKey = Secp256k1Keypair.create()
 
 did = await client.createDid({
   signingKey: signingKey.did(),

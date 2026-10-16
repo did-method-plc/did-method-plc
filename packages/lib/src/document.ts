@@ -1,6 +1,10 @@
-import * as crypto from '@atproto/crypto'
+import {
+  P256_JWT_ALG,
+  parseDidKey,
+  type ParsedMultikey,
+  SECP256K1_JWT_ALG,
+} from './lib/crypto.js'
 import type * as t from './types.js'
-import type { ParsedMultikey } from '@atproto/crypto'
 
 export const formatDidDoc = (data: t.DocumentData): t.DidDocument => {
   const context = [
@@ -62,7 +66,7 @@ type KeyAndContext = {
 const formatKeyAndContext = (key: string): KeyAndContext => {
   let keyInfo: ParsedMultikey
   try {
-    keyInfo = crypto.parseDidKey(key)
+    keyInfo = parseDidKey(key)
   } catch {
     return {
       // we can't specify a context for a key type we don't recognize
@@ -72,13 +76,13 @@ const formatKeyAndContext = (key: string): KeyAndContext => {
   }
   const { jwtAlg } = keyInfo
 
-  if (jwtAlg === crypto.P256_JWT_ALG) {
+  if (jwtAlg === P256_JWT_ALG) {
     return {
       context: 'https://w3id.org/security/suites/ecdsa-2019/v1',
       type: 'Multikey',
       publicKeyMultibase: key.replace(/^(did:key:)/, ''),
     }
-  } else if (jwtAlg === crypto.SECP256K1_JWT_ALG) {
+  } else if (jwtAlg === SECP256K1_JWT_ALG) {
     return {
       context: 'https://w3id.org/security/suites/secp256k1-2019/v1',
       type: 'Multikey',
