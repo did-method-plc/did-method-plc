@@ -1,6 +1,8 @@
 module github.com/did-method-plc/did-method-plc/website
 
-go 1.22.0
+go 1.27
+
+toolchain go1.27.3
 
 require (
 	github.com/flosch/pongo2/v6 v6.0.0
