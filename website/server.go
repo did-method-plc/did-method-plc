@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -120,12 +121,14 @@ func serve(cctx *cli.Context) error {
 
 	staticHandler := http.FileServer(func() http.FileSystem {
 		if debug {
-			log.Debugf("serving static file from the local file system")
+			slog.Debug("serving static file from the local file system")
 			return http.FS(os.DirFS("static"))
 		}
 		fsys, err := fs.Sub(StaticFS, "static")
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("loading static files", "err", err)
+			os.Exit(1)
+			return nil
 		}
 		return http.FS(fsys)
 	}())
@@ -152,34 +155,34 @@ func serve(cctx *cli.Context) error {
 	e.GET("/api/plc-server-openapi3.yaml", server.WebOpenapiYaml)
 
 	// Start the server.
-	log.Infof("starting server address=%s", httpAddress)
+	slog.Info("starting server", "bind", httpAddress)
 	go func() {
 		if err := server.httpd.ListenAndServe(); err != nil {
 			if !errors.Is(err, http.ErrServerClosed) {
-				log.Errorf("HTTP server shutting down unexpectedly: %s", err)
+				slog.Error("HTTP server shutting down unexpectedly", "err", err)
 			}
 		}
 	}()
 
 	// Wait for a signal to exit.
-	log.Info("registering OS exit signal handler")
+	slog.Info("registering OS exit signal handler")
 	quit := make(chan struct{})
 	exitSignals := make(chan os.Signal, 1)
 	signal.Notify(exitSignals, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-exitSignals
-		log.Infof("received OS exit signal: %s", sig)
+		slog.Info("received OS exit signal", "sig", sig)
 
 		// Shut down the HTTP server.
 		if err := server.Shutdown(); err != nil {
-			log.Errorf("HTTP server shutdown error: %s", err)
+			slog.Error("HTTP server shutdown error", "err", err)
 		}
 
 		// Trigger the return that causes an exit.
 		close(quit)
 	}()
 	<-quit
-	log.Infof("graceful shutdown complete")
+	slog.Info("graceful shutdown complete")
 	return nil
 }
 
@@ -188,7 +191,7 @@ func (srv *Server) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (srv *Server) Shutdown() error {
-	log.Info("shutting down")
+	slog.Info("shutting down")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
