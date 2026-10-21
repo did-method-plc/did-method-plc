@@ -1,4 +1,4 @@
-FROM node:24.18-alpine3.23
+FROM node:24.22-alpine3.23
 
 RUN corepack enable
 

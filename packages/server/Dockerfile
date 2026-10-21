@@ -1,4 +1,4 @@
-FROM node:24.18-alpine3.23 AS build
+FROM node:24.22-alpine3.23 AS build
 
 RUN npm install -g pnpm@11.11.0
 
@@ -22,7 +22,7 @@ RUN pnpm install --prod --shamefully-hoist --frozen-lockfile --prefer-offline \
   --config.confirm-modules-purge=false
 
 # Uses assets from build stage to reduce build size
-FROM node:24.18-alpine3.23
+FROM node:24.22-alpine3.23
 
 RUN apk add --update dumb-init
 
