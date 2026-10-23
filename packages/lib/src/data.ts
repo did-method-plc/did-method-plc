@@ -1,16 +1,16 @@
 import { CID } from 'multiformats/cid'
-import { check, cidForCbor, HOUR } from '@atproto/common'
-import * as t from './types.js'
-import {
-  assureValidCreationOp,
-  assureValidSig,
-  normalizeOp,
-} from './operations.js'
 import {
   ImproperOperationError,
   LateRecoveryError,
   MisorderedOperationError,
 } from './error.js'
+import { cidForCbor } from './lib/ipld.js'
+import {
+  assureValidCreationOp,
+  assureValidSig,
+  normalizeOp,
+} from './operations.js'
+import * as t from './types.js'
 
 export const assureValidNextOp = async (
   did: string,
@@ -41,7 +41,7 @@ export const assureValidNextOp = async (
   if (!lastOp) {
     throw new MisorderedOperationError()
   }
-  if (check.is(lastOp.operation, t.def.tombstone)) {
+  if (lastOp.operation.type === 'plc_tombstone') {
     throw new MisorderedOperationError()
   }
   const lastOpNormalized = normalizeOp(lastOp.operation)
@@ -74,7 +74,7 @@ export const assureValidNextOp = async (
 
   // recovery key gets a 72hr window to do historical re-wrties
   if (nullified.length > 0) {
-    const RECOVERY_WINDOW = 72 * HOUR
+    const RECOVERY_WINDOW = 72 * 60 * 60 * 1000
     const timeLapsed =
       proposedDate.getTime() - firstNullified.createdAt.getTime()
     if (timeLapsed > RECOVERY_WINDOW) {
@@ -93,15 +93,17 @@ export const validateOperationLog = async (
   ops: t.CompatibleOpOrTombstone[],
 ): Promise<t.DocumentData | null> => {
   // make sure they're all validly formatted operations
-  const [first, ...rest] = ops
-  if (!check.is(first, t.def.compatibleOp)) {
-    throw new ImproperOperationError('incorrect structure', first)
-  }
-  for (const op of rest) {
-    if (!check.is(op, t.def.opOrTombstone)) {
-      throw new ImproperOperationError('incorrect structure', op)
-    }
-  }
+  const first = await t.def.compatibleOp.parseAsync(ops[0]).catch((cause) => {
+    throw new ImproperOperationError('incorrect structure', ops[0], { cause })
+  })
+
+  const rest = ops.slice(1).map((op) => {
+    const opResult = t.def.opOrTombstone.safeParse(op)
+    if (opResult.success) return opResult.data
+    throw new ImproperOperationError('incorrect structure', op, {
+      cause: opResult.error,
+    })
+  })
 
   // ensure the first op is a valid & signed create operation
   let doc = await assureValidCreationOp(did, first)
@@ -133,7 +135,7 @@ export const opToData = (
   did: string,
   op: t.CompatibleOpOrTombstone,
 ): t.DocumentData | null => {
-  if (check.is(op, t.def.tombstone)) {
+  if (op.type === 'plc_tombstone') {
     return null
   }
   const { verificationMethods, rotationKeys, alsoKnownAs, services } =

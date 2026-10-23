@@ -1,9 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { cidForCbor, DAY } from '@atproto/common'
-import { Secp256k1Keypair } from '@atproto/crypto'
-import * as plc from '@did-plc/lib'
+import {
+  cidForCbor,
+  createOp,
+  Secp256k1Keypair,
+  updateHandleOp,
+} from '@did-plc/lib'
 import type { Kysely } from 'kysely'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PgDatabase } from '../../src/index.js'
+import { DAY } from '../../src/util.js'
 
 describe('did-locks migration', () => {
   let db: PgDatabase
@@ -32,9 +36,9 @@ describe('did-locks migration', () => {
   it('fills the database with some operations', async () => {
     const ops: any[] = []
     for (let i = 0; i < 100; i++) {
-      const signingKey = await Secp256k1Keypair.create()
-      const recoveryKey = await Secp256k1Keypair.create()
-      const { op, did } = await plc.createOp({
+      const signingKey = Secp256k1Keypair.create()
+      const recoveryKey = Secp256k1Keypair.create()
+      const { op, did } = await createOp({
         signingKey: signingKey.did(),
         rotationKeys: [recoveryKey.did()],
         handle: `user${i}.test`,
@@ -52,7 +56,7 @@ describe('did-locks migration', () => {
         createdAt: time,
       })
       dids.push(did)
-      const op2 = await plc.updateHandleOp(op, recoveryKey, `user${i}-2.test`)
+      const op2 = await updateHandleOp(op, recoveryKey, `user${i}-2.test`)
       const cid2 = await cidForCbor(op2)
       ops.push({
         did,

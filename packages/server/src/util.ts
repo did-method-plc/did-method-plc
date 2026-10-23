@@ -1,6 +1,17 @@
 import { timingSafeEqual } from 'node:crypto'
 import { TextEncoder } from 'node:util'
 
+export const HOUR = 60 * 60 * 1000
+export const DAY = 24 * HOUR
+
+export const jitter = (maxMs: number) => {
+  return Math.round((Math.random() - 0.5) * maxMs * 2)
+}
+
+export const wait = (ms: number) => {
+  return new Promise((res) => setTimeout(res, ms))
+}
+
 const utf8Encoder = new TextEncoder()
 
 // returns true if both strings are equal

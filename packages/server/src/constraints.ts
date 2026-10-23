@@ -1,11 +1,12 @@
-import { DAY, HOUR, cborEncode, check } from '@atproto/common'
 import * as plc from '@did-plc/lib'
-import { ServerError } from './error.js'
 import {
-  extractPrefixedBytes,
+  cborEncode,
   extractMultikey,
+  extractPrefixedBytes,
   parseDidKey,
-} from '@atproto/crypto'
+} from '@did-plc/lib'
+import { ServerError } from './error.js'
+import { DAY, HOUR } from './util.js'
 
 const MAX_OP_BYTES = 4000
 const MAX_AKA_ENTRIES = 10
@@ -19,18 +20,24 @@ const MAX_ID_LENGTH = 32
 const MAX_DID_KEY_LENGTH = 256 // k256 = 57, BLS12-381 = 143
 
 export function assertValidIncomingOp(
-  op: unknown,
-): asserts op is plc.OpOrTombstone {
-  const byteLength = cborEncode(op).byteLength
+  input: unknown,
+): asserts input is plc.OpOrTombstone {
+  const byteLength = cborEncode(input).byteLength
   if (byteLength > MAX_OP_BYTES) {
     throw new ServerError(
       400,
       `Operation too large (${MAX_OP_BYTES} bytes maximum in cbor encoding)`,
     )
   }
-  if (!check.is(op, plc.def.opOrTombstone)) {
-    throw new ServerError(400, `Not a valid operation: ${JSON.stringify(op)}`)
+  const opResult = plc.def.opOrTombstone.safeParse(input)
+  if (!opResult.success) {
+    throw new ServerError(
+      400,
+      `Not a valid operation: ${JSON.stringify(input)}`,
+      { cause: opResult.error },
+    )
   }
+  const op = opResult.data
   if (op.type === 'plc_tombstone') {
     return
   }
@@ -63,8 +70,8 @@ export function assertValidIncomingOp(
   for (const key of op.rotationKeys) {
     try {
       parseDidKey(key)
-    } catch (err) {
-      throw new ServerError(400, `Invalid rotationKey: ${key}`)
+    } catch (cause) {
+      throw new ServerError(400, `Invalid rotationKey: ${key}`, { cause })
     }
   }
   const serviceEntries = Object.entries(op.services)
@@ -119,8 +126,10 @@ export function assertValidIncomingOp(
       // key types
       const multikey = extractMultikey(key) // enforces did:key: prefix
       extractPrefixedBytes(multikey) // enforces base58-btc encoding
-    } catch (err) {
-      throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
+    } catch (cause) {
+      throw new ServerError(400, `Invalid verificationMethod key: ${key}`, {
+        cause,
+      })
     }
   }
 }

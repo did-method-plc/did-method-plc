@@ -1,7 +1,7 @@
-import { check, cidForCbor } from '@atproto/common'
-import type { Keypair } from '@atproto/crypto'
 import type { AxiosError } from 'axios'
 import axios from 'axios'
+import type { Keypair } from './lib/crypto.js'
+import { cidForCbor } from './lib/ipld.js'
 import {
   atprotoOp,
   createUpdateOp,
@@ -12,7 +12,15 @@ import {
   updatePdsOp,
   updateRotationKeysOp,
 } from './operations.js'
-import * as t from './types.js'
+import type {
+  CompatibleOpOrTombstone,
+  DidDocument,
+  DocumentData,
+  ExportedOp,
+  ExportedOpWithSeq,
+  OpOrTombstone,
+  UnsignedOperation,
+} from './types.js'
 
 export class Client {
   constructor(public url: string) {}
@@ -29,19 +37,19 @@ export class Client {
     }
   }
 
-  async getDocument(did: string): Promise<t.DidDocument> {
+  async getDocument(did: string): Promise<DidDocument> {
     return await this.makeGetReq(`${this.url}/${encodeURIComponent(did)}`)
   }
 
-  async getDocumentData(did: string): Promise<t.DocumentData> {
+  async getDocumentData(did: string): Promise<DocumentData> {
     return await this.makeGetReq(`${this.url}/${encodeURIComponent(did)}/data`)
   }
 
-  async getOperationLog(did: string): Promise<t.CompatibleOpOrTombstone[]> {
+  async getOperationLog(did: string): Promise<CompatibleOpOrTombstone[]> {
     return await this.makeGetReq(`${this.url}/${encodeURIComponent(did)}/log`)
   }
 
-  async getAuditableLog(did: string): Promise<t.ExportedOp[]> {
+  async getAuditableLog(did: string): Promise<ExportedOp[]> {
     return await this.makeGetReq(
       `${this.url}/${encodeURIComponent(did)}/log/audit`,
     )
@@ -51,13 +59,13 @@ export class Client {
     return `${this.url}/${encodeURIComponent(did)}`
   }
 
-  async getLastOp(did: string): Promise<t.CompatibleOpOrTombstone> {
+  async getLastOp(did: string): Promise<CompatibleOpOrTombstone> {
     return await this.makeGetReq(
       `${this.url}/${encodeURIComponent(did)}/log/last`,
     )
   }
 
-  async sendOperation(did: string, op: t.OpOrTombstone) {
+  async sendOperation(did: string, op: OpOrTombstone) {
     try {
       await axios.post(this.postOpUrl(did), op)
     } catch (err) {
@@ -68,7 +76,7 @@ export class Client {
     }
   }
 
-  async export(after?: number, count?: number): Promise<t.ExportedOpWithSeq[]> {
+  async export(after?: number, count?: number): Promise<ExportedOpWithSeq[]> {
     const url = new URL(`${this.url}/export`)
     url.searchParams.append('after', (after || 0).toString(10))
     if (count !== undefined) {
@@ -94,7 +102,7 @@ export class Client {
 
   async ensureLastOp(did: string) {
     const lastOp = await this.getLastOp(did)
-    if (check.is(lastOp, t.def.tombstone)) {
+    if (lastOp.type === 'plc_tombstone') {
       throw new Error('Cannot apply op to tombstone')
     }
     return lastOp
@@ -103,7 +111,7 @@ export class Client {
   async updateData(
     did: string,
     signer: Keypair,
-    fn: (lastOp: t.UnsignedOperation) => Omit<t.UnsignedOperation, 'prev'>,
+    fn: (lastOp: UnsignedOperation) => Omit<UnsignedOperation, 'prev'>,
   ) {
     const lastOp = await this.ensureLastOp(did)
     const op = await createUpdateOp(lastOp, signer, fn)
@@ -163,5 +171,3 @@ export class PlcClientError extends Error {
     )
   }
 }
-
-export default Client

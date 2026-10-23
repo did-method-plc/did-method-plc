@@ -1,4 +1,4 @@
-import { AsyncBuffer, AsyncBufferFullError } from '@atproto/common'
+import { AsyncBuffer, AsyncBufferFullError } from './async-buffer.js'
 import type { Sequencer } from './sequencer.js'
 import type { SeqEvt } from './events.js'
 
