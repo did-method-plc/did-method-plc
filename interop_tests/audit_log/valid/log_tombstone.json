@@ -6,9 +6,7 @@
       "prev": null,
       "type": "plc_operation",
       "services": {},
-      "alsoKnownAs": [
-        "at://op0"
-      ],
+      "alsoKnownAs": ["at://op0"],
       "rotationKeys": [
         "did:key:zQ3shmWf4f6ZwzNyjUDYw4oFQjgHWZoYZDjJYtz75YfYYrphB",
         "did:key:zQ3shr2PwdoF6kbuYYymyZq6YbGWShiTXAkdMioCPdSdPL9NV"
