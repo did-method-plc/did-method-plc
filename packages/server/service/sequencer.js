@@ -14,7 +14,7 @@ const main = async () => {
     poolIdleTimeoutMs: dbPoolIdleTimeoutMs,
   })
   const leader = new SequencerLeader(db)
-  leader.run()
+  const leaderRun = leader.run()
 
   const statsInterval = setInterval(async () => {
     if (leader?.isLeader) {
@@ -31,6 +31,10 @@ const main = async () => {
   process.on('SIGTERM', async () => {
     leader.destroy()
     clearInterval(statsInterval)
+    // Release the pool after the leader unlocks so Node can flush telemetry
+    // on beforeExit, including when DB_POOL_IDLE_TIMEOUT_MS disables eviction.
+    await leaderRun
+    await db.close()
   })
 }
 

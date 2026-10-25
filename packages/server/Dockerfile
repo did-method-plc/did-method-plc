@@ -40,9 +40,8 @@ ENV NODE_ENV=production
 
 # https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md#non-root-user
 USER node
-# tracer.js must be loaded with --import so its first import installs
-# dd-trace's ESM loader hook before any application module resolves.
-CMD ["node", "--enable-source-maps", "--import=./tracer.js", "index.js"]
+# Initialize OpenTelemetry before any application module resolves.
+CMD ["node", "--enable-source-maps", "--import=@did-plc/server/telemetry", "index.js"]
 
 LABEL org.opencontainers.image.source=https://github.com/did-method-plc/did-method-plc
 LABEL org.opencontainers.image.description="DID PLC server"

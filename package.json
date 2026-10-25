@@ -23,7 +23,7 @@
   },
   "scripts": {
     "dev:ts": "tsc --build tsconfig.json --watch --force",
-    "dev:server": "cd packages/server && node --enable-source-maps --watch dist/bin.js",
+    "dev:server": "cd packages/server && node --enable-source-maps --watch --import=./dist/telemetry.js dist/bin.js",
     "dev": "pnpm run '/^dev:/'",
     "prepublish": "pnpm run '/^(build|lint|style)$/'",
     "style:fix": "prettier --experimental-cli --write .",

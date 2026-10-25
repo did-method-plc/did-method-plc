@@ -8,6 +8,8 @@ Control over a `did:plc` identity rests in a set of reconfigurable rotation keys
 
 This git repository contains a TypeScript reference implementation of the method (`@did-plc/lib`) and a directory server `@did-plc/server`, both in the `package/` directory. The separate [go-didplc](https://github.com/did-method-plc/go-didplc) repository contains a Go implementation.
 
+See the [server telemetry guide](packages/server/README.md) for OpenTelemetry configuration.
+
 ## Motivation
 
 The DID PLC system was originally developed in 2022 by [Bluesky Social PBC](https://bsky.social/) to support [AT Protocol](https://atproto.com) (atproto). They wanted a strongly consistent, highly available, recoverable, and cryptographically secure method with fast and cheap propagation of updates. Since then over 40 million atproto account identifiers have been registered.

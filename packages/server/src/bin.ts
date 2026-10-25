@@ -84,7 +84,8 @@ const run = async () => {
       leader?.destroy()
       clearInterval(statsInterval)
       await plc.destroy()
-      process.exit(0)
+      // Let beforeExit flush telemetry after the application has drained.
+      process.exitCode = 0
     }
 
     process.on('SIGINT', shutdown)
