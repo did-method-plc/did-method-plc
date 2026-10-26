@@ -18,9 +18,9 @@ const service = z
 const documentData = z.object({
   did: z.string(),
   rotationKeys: z.array(z.string()),
-  verificationMethods: z.record(z.string()),
+  verificationMethods: z.record(z.string(), z.string()),
   alsoKnownAs: z.array(z.string()),
-  services: z.record(service),
+  services: z.record(z.string(), service),
 })
 export type DocumentData = z.infer<typeof documentData>
 
@@ -42,9 +42,9 @@ const unsignedOperation = z
   .object({
     type: z.literal('plc_operation'),
     rotationKeys: z.array(z.string()),
-    verificationMethods: z.record(z.string()),
+    verificationMethods: z.record(z.string(), z.string()),
     alsoKnownAs: z.array(z.string()),
-    services: z.record(service),
+    services: z.record(z.string(), service),
     prev: z.string().nullable(),
   })
   .strict()
