@@ -1,4 +1,4 @@
-import { cidForCbor } from '@atproto/common'
+import { cidForCbor } from '@did-plc/lib'
 import * as plc from '@did-plc/lib'
 import { ServerError } from '../error.js'
 import type { OperationsTableEntry, PlcDatabase } from './types.js'

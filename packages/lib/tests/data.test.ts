@@ -1,33 +1,37 @@
-import { beforeAll, describe, expect, it } from 'vitest'
-import { check, cidForCbor } from '@atproto/common'
-import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import * as ui8 from 'uint8arrays'
+import { beforeAll, describe, expect, it } from 'vitest'
+import * as data from '../src/data.js'
 import {
   GenesisHashError,
   ImproperOperationError,
   InvalidSignatureError,
   MisorderedOperationError,
 } from '../src/index.js'
-import * as data from '../src/data.js'
+import {
+  P256Keypair,
+  Secp256k1Keypair,
+  type Keypair,
+} from '../src/lib/crypto.ts'
+import { cidForCbor } from '../src/lib/ipld.ts'
 import * as operations from '../src/operations.js'
 import * as t from '../src/types.js'
 
 describe('plc did data', () => {
   const ops: t.Operation[] = []
 
-  let signingKey: Secp256k1Keypair
-  let rotationKey1: Secp256k1Keypair
-  let rotationKey2: P256Keypair
+  let signingKey: Keypair
+  let rotationKey1: Keypair
+  let rotationKey2: Keypair
   let did: string
   let handle = 'at://alice.example.com'
   let atpPds = 'https://example.com'
 
-  let oldRotationKey1: Secp256k1Keypair
+  let oldRotationKey1: Keypair
 
   beforeAll(async () => {
-    signingKey = await Secp256k1Keypair.create()
-    rotationKey1 = await Secp256k1Keypair.create()
-    rotationKey2 = await P256Keypair.create()
+    signingKey = Secp256k1Keypair.create()
+    rotationKey1 = Secp256k1Keypair.create()
+    rotationKey2 = P256Keypair.create()
   })
 
   const lastOp = () => {
@@ -63,8 +67,7 @@ describe('plc did data', () => {
       prev: null,
       signer: rotationKey1,
     })
-    const isValid = check.is(createOp, t.def.operation)
-    expect(isValid).toBeTruthy()
+    expect(createOp.type).toEqual('plc_operation')
     ops.push(createOp)
     did = await operations.didForCreateOp(createOp)
   })
@@ -95,7 +98,7 @@ describe('plc did data', () => {
   })
 
   it('rotates signingKey', async () => {
-    const newSigningKey = await Secp256k1Keypair.create()
+    const newSigningKey = Secp256k1Keypair.create()
     const op = await operations.updateAtprotoKeyOp(
       lastOp(),
       rotationKey1,
@@ -110,7 +113,7 @@ describe('plc did data', () => {
   })
 
   it('rotates rotation keys', async () => {
-    const newRotationKey = await Secp256k1Keypair.create()
+    const newRotationKey = Secp256k1Keypair.create()
     const op = await operations.updateRotationKeysOp(lastOp(), rotationKey1, [
       newRotationKey.did(),
       rotationKey2.did(),

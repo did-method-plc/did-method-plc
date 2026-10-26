@@ -1,9 +1,8 @@
-import type { AddressInfo } from 'net'
+import type { AddressInfo } from 'node:net'
 import type { AppContext } from '../src/index.js'
 import PlcServer from '../src/index.js'
-import type { Client as plcClient } from '@did-plc/lib'
+import { type Client, P256Keypair } from '@did-plc/lib'
 import PgDatabase from '../src/db/index.js'
-import { P256Keypair } from '@atproto/crypto'
 
 export type CloseFn = () => Promise<void>
 export type TestServerInfo = {
@@ -44,8 +43,8 @@ export const runTestServer = async (opts: {
   }
 }
 
-export const createDid = async (client: plcClient): Promise<string> => {
-  const key = await P256Keypair.create()
+export const createDid = async (client: Client): Promise<string> => {
+  const key = P256Keypair.create()
   const did = await client.createDid({
     signingKey: key.did(),
     rotationKeys: [key.did()],
