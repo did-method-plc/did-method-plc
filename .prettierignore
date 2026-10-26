@@ -1,0 +1,13 @@
+node_modules
+interop-test-files
+__snapshots__
+dist
+pnpm-lock.yaml
+.pnpm*
+.changeset
+CHANGELOG.md
+/.claude/settings.local.json
+
+/website/static/pico.min.css
+# These are not HTML files, they are Jinja2 templates
+/website/templates

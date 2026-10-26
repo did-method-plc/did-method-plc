@@ -1,31 +1,4 @@
 {
-  "compilerOptions": {
-    "declaration": true,
-    "noImplicitAny": true,
-    "removeComments": true,
-    "noLib": false,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "target": "ES2023",
-    "sourceMap": true,
-    "module": "Node20",
-    "jsx": "preserve",
-    "strict": true,
-    "strictPropertyInitialization": false,
-    "moduleResolution": "node16",
-    "verbatimModuleSyntax": true,
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "lib": ["dom", "dom.iterable", "esnext", "webworker"],
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "composite": true
-  },
-  "exclude": ["node_modules", "**/*/dist"],
-  "references": [
-    { "path": "./packages/lib/tsconfig.build.json" },
-    { "path": "./packages/server/tsconfig.build.json" }
-  ]
+  "include": [],
+  "references": [{ "path": "./packages/lib" }, { "path": "./packages/server" }]
 }

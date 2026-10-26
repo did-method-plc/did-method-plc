@@ -9,12 +9,14 @@ COPY ./pnpm-lock.yaml ./
 COPY ./pnpm-workspace.yaml ./
 COPY ./.npmrc ./
 COPY ./tsconfig.json ./
+# Shared tsconfig bases that every package's tsconfig.build.json extends
+COPY ./tsconfig ./tsconfig
 # NOTE plc's transitive dependencies go here: if that changes, this needs to be updated.
 COPY ./packages/lib ./packages/lib
 COPY ./packages/server ./packages/server
 
 RUN pnpm install --frozen-lockfile
-RUN pnpm run --recursive --stream build
+RUN pnpm run build
 # Remove non-prod deps, hoisted so the runtime can resolve them.
 # The layout change makes pnpm re-create node_modules, which it will not do
 # without a TTY unless the purge confirmation is turned off.

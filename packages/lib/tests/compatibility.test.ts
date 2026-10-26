@@ -111,7 +111,7 @@ describe('compatibility', () => {
       if (fileName.includes('nullif')) continue // validateOperationLog does not handle nullifications
       const testPath = path.join(valid_audit_logs, fileName)
       const testcase = JSON.parse(await fs.readFile(testPath, 'utf8'))
-      const ops = testcase.map((logItem) => logItem.operation)
+      const ops = testcase.map((logItem: any) => logItem.operation)
       await validateOperationLog(testcase[0].did, ops)
     }
   })
@@ -128,7 +128,7 @@ describe('compatibility', () => {
     async function validateLogForPath(fileName: string) {
       const testPath = path.join(invalid_audit_logs, fileName)
       const testcase = JSON.parse(await fs.readFile(testPath, 'utf8'))
-      const ops = testcase.map((logItem) => logItem.operation)
+      const ops = testcase.map((logItem: any) => logItem.operation)
       await validateOperationLog(testcase[0].did, ops)
     }
 

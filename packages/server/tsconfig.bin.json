@@ -1,0 +1,5 @@
+{
+  "extends": ["../../tsconfig/node-script.tsconfig.json"],
+  "include": ["./bin"],
+  "references": [{ "path": "../lib/tsconfig.build.json" }]
+}

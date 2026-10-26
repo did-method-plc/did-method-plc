@@ -11,9 +11,7 @@
           "endpoint": "https://bsky.social"
         }
       },
-      "alsoKnownAs": [
-        "at://bluesky-team.bsky.social"
-      ],
+      "alsoKnownAs": ["at://bluesky-team.bsky.social"],
       "rotationKeys": [
         "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg",
         "did:key:zQ3shpKnbdPx3g3CmPf5cRVTPe1HtSwVn5ish3wSnDPQCbLJK"
@@ -38,9 +36,7 @@
           "endpoint": "https://bsky.social"
         }
       },
-      "alsoKnownAs": [
-        "at://bsky.app"
-      ],
+      "alsoKnownAs": ["at://bsky.app"],
       "rotationKeys": [
         "did:key:zQ3shhCGUqDKjStzuDxPkTxN6ujddP4RkEKJJouJGRRkaLGbg",
         "did:key:zQ3shpKnbdPx3g3CmPf5cRVTPe1HtSwVn5ish3wSnDPQCbLJK"

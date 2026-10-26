@@ -11,9 +11,7 @@
           "endpoint": "https://pds.robocracy.org"
         }
       },
-      "alsoKnownAs": [
-        "at://bnewbold.pds.robocracy.org"
-      ],
+      "alsoKnownAs": ["at://bnewbold.pds.robocracy.org"],
       "rotationKeys": [
         "did:key:zQ3shcciz4AvrLyDnUdZLpQys3kyCsesojRNzJAieyDStGxGo"
       ],
@@ -37,9 +35,7 @@
           "endpoint": "https://pds.robocracy.org"
         }
       },
-      "alsoKnownAs": [
-        "at://bnewbold.robocracy.org"
-      ],
+      "alsoKnownAs": ["at://bnewbold.robocracy.org"],
       "rotationKeys": [
         "did:key:zQ3shcciz4AvrLyDnUdZLpQys3kyCsesojRNzJAieyDStGxGo"
       ],

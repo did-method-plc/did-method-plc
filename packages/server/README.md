@@ -1,4 +1,3 @@
-
 @did-plc/server - DID PLC Directory Service
 ===========================================
 

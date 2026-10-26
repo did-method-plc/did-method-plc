@@ -7,9 +7,7 @@
         "did:key:zDnaefqvvRQsME5c7LvxdghHeARNWEFbg2PfrAYiHhKVf9rH9"
       ],
       "verificationMethods": {},
-      "alsoKnownAs": [
-        "at://weird_sig_padding"
-      ],
+      "alsoKnownAs": ["at://weird_sig_padding"],
       "services": {},
       "prev": null,
       "sig": "yRcZOnrdCdTMIWVbM-HX8ByF0Rk1SOkivl3A3YbmzT4saxyk_nERJSJ-CqKlNP4CmMdVL5Cvc1vSM_Fe5HBbmR"

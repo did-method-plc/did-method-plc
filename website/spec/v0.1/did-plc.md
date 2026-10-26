@@ -1,4 +1,3 @@
-
 # `did:plc` Method Specification
 
 **Version:** v0.3.0 (December 2025)
@@ -57,7 +56,7 @@ A tombstone operation contains:
 - `prev` (string): same as above, but not nullable
 - `sig` (string): signature of the operation (same as above)
 
-There is also a deprecated legacy operation format, supported *only* for creation ("genesis") operations:
+There is also a deprecated legacy operation format, supported _only_ for creation ("genesis") operations:
 
 - `type` (string): with fixed value `create`
 - `signingKey` (string): single `did:key` value (not an array of strings)
@@ -73,7 +72,7 @@ The process for signing and hashing operation objects is to first encode them in
 
 As an anti-abuse mechanism, operations have a maximum size when encoded as DAG-CBOR. The current limit is 7500 bytes.
 
-For signatures, the object is first encoded as DAG-CBOR *without* the `sig` field at all (as opposed to a `null` value in that field). Those bytes are signed using ECDSA-SHA256, and the signature value is encoded as follows:
+For signatures, the object is first encoded as DAG-CBOR _without_ the `sig` field at all (as opposed to a `null` value in that field). Those bytes are signed using ECDSA-SHA256, and the signature value is encoded as follows:
 
 1. The signature value is represented as a pair of integers `(r, s)`, as described in [RFC 4754](https://datatracker.ietf.org/doc/html/rfc4754#section-3)
 
@@ -102,7 +101,7 @@ Although `verificationMethods` signing keys can be of any key type (unlike rotat
 
 The DID itself is derived from the hash of the first operation in the log, called the "genesis" operation. The signed operation is encoded in DAG-CBOR; the bytes are hashed with SHA-256; the hash bytes are `base32`-encoded (not hex encoded) as a string; and that string is truncated to 24 chars to yield the "identifier" segment of the DID.
 
-In pseudo-code: 
+In pseudo-code:
 `did:plc:${base32Encode(sha256(createOp)).slice(0,24)}`
 
 ### Identifier Syntax
@@ -113,14 +112,13 @@ The DID PLC method name is `plc`. The identifier part is 24 characters long, inc
 - the entire identifier is lower-case (and should be normalized to lower-case)
 - the entire identifier is ASCII, and includes only the characters `a-z`, `0-9`, and `:` (and does not even use digits `0189`)
 
-
 ### Key Rotation & Account Recovery
 
 Any key specified in `rotationKeys` has the ability to sign operations for the DID document.
 
 The set of rotation keys for a DID is not included in the DID document. They are an internal detail of PLC, and are stored in the operation log.
 
-Keys are listed in the `rotationKeys` field of operations in order of descending authority. 
+Keys are listed in the `rotationKeys` field of operations in order of descending authority.
 
 The PLC server provides a 72hr window during which a higher authority rotation key can "rewrite" history, clobbering any operations (or chain of operations) signed by a lower-authority rotation key.
 
@@ -130,19 +128,17 @@ The PLC server will accept this recovery operation as long as:
 - it is submitted within 72hrs of the to-be-invalidated operation
 - the key used for the signature has a lower index in the `rotationKeys` array than the key that signed the to-be-invalidated operation
 
-
 ### Privacy and Security Concerns
 
 The full history of DID operations and updates, including timestamps, is permanently publicly accessible. This is true even after DID deactivation. It is important to recognize (and communicate to account holders) that any personally identifiable information (PII) encoded in `alsoKnownAs` URIs will be publicly visible even after DID deactivation, and can not be redacted or purged.
 
 In the context of atproto, this includes the full history of handle updates and PDS locations (URLs) over time. To be explicit, it does not include any other account metadata such as email addresses or IP addresses. Handle history could potentially de-anonymize account holders if they switch handles between a known identity and an anonymous or pseudonymous identity.
 
-The PLC server does not cross-validate `alsoKnownAs` or `service` entries in operations. This means that any DID can "claim" to have any identity, or to have an active account with any service (identified by URL). This data should *not* be trusted without bi-directionally verification, for example using handle resolution.
+The PLC server does not cross-validate `alsoKnownAs` or `service` entries in operations. This means that any DID can "claim" to have any identity, or to have an active account with any service (identified by URL). This data should _not_ be trusted without bi-directionally verification, for example using handle resolution.
 
 The timestamp metadata encoded in the PLC audit log could be cross-verified against network traffic or other information to de-anonymize account holders. It also makes the "identity creation date" public.
 
 If "rotation" and "signing" keys are re-used across multiple accounts, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
-
 
 #### PLC Server Trust Model
 
@@ -154,7 +150,6 @@ Some trust is required in the PLC server. Its attacks are limited to:
 
 - Denial of service: rejecting valid operations, or refusing to serve some information about the DID
 - Misordering: In the event of a fork in DID document history, the server could choose to serve the "wrong" fork
-
 
 ### DID Creation
 
@@ -199,7 +194,6 @@ PLC DIDs are resolved to a DID document (JSON) by making simple HTTP GET request
 
 The PLC-specific state data (based on the most recent operation) can be fetched as a JSON object at: `https://plc.directory/:did/data`
 
-
 ### Audit Logs
 
 As an additional check against abuse by the PLC server, and to promote resiliency, the set of all identifiers is enumerable, and the set of all operations for all identifiers (even "nullified" operations) can be enumerated and audited.
@@ -212,16 +206,15 @@ To fully validate a DID document against the operation log:
 
 - fetch the full audit log
 - for the genesis operation, validate the DID
-    - note that the genesis operation may be in deprecated/legacy format, and should be encoded and verified in that format
-    - see the "DID Creation" section above for details
+  - note that the genesis operation may be in deprecated/legacy format, and should be encoded and verified in that format
+  - see the "DID Creation" section above for details
 - for each operation in the log, validate signatures:
-    - identify the set of valid `rotationKeys` at that point of time: either the initial keys for a "genesis" operation, or the keys in the `prev` operation
-    - remove any `sig` field and serialize the "unsigned" operation with DAG-CBOR, yielding bytes
-    - decode the `base64url` `sig` field to bytes
-    - for each of the `rotationKeys`, attempt to verify the signature against the "unsigned" bytes
-    - if no key matches, there has been a trust violation; the PLC server should never have accepted the operation
+  - identify the set of valid `rotationKeys` at that point of time: either the initial keys for a "genesis" operation, or the keys in the `prev` operation
+  - remove any `sig` field and serialize the "unsigned" operation with DAG-CBOR, yielding bytes
+  - decode the `base64url` `sig` field to bytes
+  - for each of the `rotationKeys`, attempt to verify the signature against the "unsigned" bytes
+  - if no key matches, there has been a trust violation; the PLC server should never have accepted the operation
 - verify the correctness of "nullified" operations and the current active operation log using the rules around rotation keys and recovery windows
-
 
 ### Bulk Export
 
@@ -261,7 +254,7 @@ NOTE: Legacy responses order operations by `createdAt`, while non-legacy respons
 
 ### Export Streaming WebSocket
 
-The [WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) endpoint at `wss://plc.directory/export/stream` returns a stream of JSON objects in the same format as the (non-legacy) `/export` endpoint. JSON objects are delimited by the WebSocket message framing layer (*not* newlines).
+The [WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) endpoint at `wss://plc.directory/export/stream` returns a stream of JSON objects in the same format as the (non-legacy) `/export` endpoint. JSON objects are delimited by the WebSocket message framing layer (_not_ newlines).
 
 When a client connects with no parameters set, the WebSocket streams newly accepted operations after the time of connection.
 
@@ -288,46 +281,36 @@ A PLC mirror or replica service could plausibly assign different sequence number
 const genesisOp = {
   type: 'plc_operation',
   verificationMethods: {
-    atproto: "did:key:zSigningKey"
+    atproto: 'did:key:zSigningKey',
   },
-  rotationKeys: [
-    "did:key:zRecoveryKey",
-    "did:key:zRotationKey"
-  ],
-  alsoKnownAs: [
-    "at://alice.test"
-  ],
+  rotationKeys: ['did:key:zRecoveryKey', 'did:key:zRotationKey'],
+  alsoKnownAs: ['at://alice.test'],
   services: {
     atproto_pds: {
-      type: "AtprotoPersonalDataServer",
-      endpoint: "https://example.test"
-    }
+      type: 'AtprotoPersonalDataServer',
+      endpoint: 'https://example.test',
+    },
   },
   prev: null,
-  sig: 'sig_from_did:key:zRotationKey'
+  sig: 'sig_from_did:key:zRotationKey',
 }
 
 // Operation to update recovery key
 const updateKeys = {
   type: 'plc_operation',
   verificationMethods: {
-    atproto: "did:key:zSigningKey"
+    atproto: 'did:key:zSigningKey',
   },
-  rotationKeys: [
-    "did:key:zNewRecoveryKey",
-    "did:key:zRotationKey"
-  ],
-  alsoKnownAs: [
-    "at://alice.test"
-  ],
+  rotationKeys: ['did:key:zNewRecoveryKey', 'did:key:zRotationKey'],
+  alsoKnownAs: ['at://alice.test'],
   services: {
     atproto_pds: {
-      type: "AtprotoPersonalDataServer",
-      endpoint: "https://example.test"
-    }
+      type: 'AtprotoPersonalDataServer',
+      endpoint: 'https://example.test',
+    },
   },
   prev: CID(genesisOp),
-  sig: 'sig_from_did:key:zRotationKey'
+  sig: 'sig_from_did:key:zRotationKey',
 }
 
 // Invalid operation that will be rejected
@@ -335,48 +318,40 @@ const updateKeys = {
 const invalidUpdate = {
   type: 'plc_operation',
   verificationMethods: {
-    atproto: "did:key:zAttackerKey"
+    atproto: 'did:key:zAttackerKey',
   },
-  rotationKeys: [
-    "did:key:zAttackerKey"
-  ],
-  alsoKnownAs: [
-    "at://bob.test"
-  ],
+  rotationKeys: ['did:key:zAttackerKey'],
+  alsoKnownAs: ['at://bob.test'],
   services: {
     atproto_pds: {
-      type: "AtprotoPersonalDataServer",
-      endpoint: "https://example.test"
-    }
+      type: 'AtprotoPersonalDataServer',
+      endpoint: 'https://example.test',
+    },
   },
   prev: CID(updateKeys),
-  sig: 'sig_from_did:key:zAttackerKey'
+  sig: 'sig_from_did:key:zAttackerKey',
 }
 
 // Valid recovery operation that "undoes" updateKeys
 const recoveryOp = {
   type: 'plc_operation',
   verificationMethods: {
-    atproto: "did:key:zSigningKey"
+    atproto: 'did:key:zSigningKey',
   },
-  rotationKeys: [
-    "did:key:zRecoveryKey"
-  ],
-  alsoKnownAs: [
-    "at://alice.test"
-  ],
+  rotationKeys: ['did:key:zRecoveryKey'],
+  alsoKnownAs: ['at://alice.test'],
   services: {
     atproto_pds: {
-      type: "AtprotoPersonalDataServer",
-      endpoint: "https://example.test"
-    }
+      type: 'AtprotoPersonalDataServer',
+      endpoint: 'https://example.test',
+    },
   },
   prev: CID(genesisOp),
-  sig: 'sig_from_did:key:zRecoveryKey'
+  sig: 'sig_from_did:key:zRecoveryKey',
 }
 ```
 
-## Presentation as DID Document 
+## Presentation as DID Document
 
 The following data:
 

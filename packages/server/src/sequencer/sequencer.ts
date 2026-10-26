@@ -9,6 +9,7 @@ export interface SequencerEmitter {
   emit(event: 'events', evts: SeqEvt[]): boolean
   removeAllListeners(event?: string): this
   setMaxListeners(n: number): this
+  listenerCount(event: 'events'): number
 }
 
 export type SequencerOptions = {

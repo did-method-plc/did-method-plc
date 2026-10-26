@@ -7,9 +7,7 @@
         "did:key:zQ3shTBEaSruX6DJNAH3W9Weu95PYwrdQvmrHCSW9bLLZXrnw"
       ],
       "verificationMethods": {},
-      "alsoKnownAs": [
-        "at://high_s_k256"
-      ],
+      "alsoKnownAs": ["at://high_s_k256"],
       "services": {},
       "prev": null,
       "sig": "cDdgXcFwiJFhTzUyEhmvG4uCqy_UEqTXiWN29O3CiMXtfPnNo7Mg_BsK1iv4VBt010RwJg5mnDOK20T6m8ltDw"
