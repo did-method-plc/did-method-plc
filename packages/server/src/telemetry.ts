@@ -26,7 +26,7 @@ import {
 import { createAddHookMessageChannel } from 'import-in-the-middle'
 import pkg from '../package.json' with { type: 'json' }
 
-// Like atproto's opentelemetry-node bootstrap, telemetry is opt-in per signal.
+// Telemetry is opt-in per signal.
 // An endpoint enables a signal unless its exporter list includes "none".
 function isSignalConfigured(signal: 'TRACES' | 'METRICS' | 'LOGS'): boolean {
   if (getStringListFromEnv(`OTEL_${signal}_EXPORTER`)?.includes('none')) {
