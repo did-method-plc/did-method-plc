@@ -4,6 +4,7 @@ import { sql } from 'kysely'
 import { PLC_SEQ_SEQUENCE } from '../db/types.js'
 import { leaderLogger as log } from '../logger.js'
 import { wait, jitter } from '@atproto/common'
+import { sequencerSequence } from '../metrics.js'
 
 const SEQUENCER_LEADER_ID = 1100
 
@@ -91,7 +92,11 @@ export class SequencerLeader {
       .orderBy('seq', 'desc')
       .limit(1)
       .executeTakeFirst()
-    return res?.seq ?? 0
+    const seq = res?.seq ?? 0
+    if (this.isLeader && !this.destroyed) {
+      sequencerSequence.record(seq)
+    }
+    return seq
   }
 
   destroy(): void {

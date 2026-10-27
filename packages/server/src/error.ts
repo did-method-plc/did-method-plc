@@ -48,9 +48,33 @@ const releaseUnhandledUpgrade = (req: Request): boolean => {
   return true
 }
 
+export type OperationRejectionReason =
+  | 'invalid_operation'
+  | 'operation_too_large'
+  | 'invalid_alias'
+  | 'invalid_rotation_key'
+  | 'invalid_service'
+  | 'invalid_verification_method'
+  | 'rate_limit'
+  | 'conflict'
+  | 'invalid_signature'
+  | 'invalid_prev'
+  | 'late_recovery'
+  | 'genesis_mismatch'
+  | 'invalid_did'
+  | 'unsupported_key'
+  | 'invalid_json'
+  | 'body_too_large'
+  | 'invalid_request_body'
+  | 'internal_error'
+
 export class ServerError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  constructor(
+    status: number,
+    message: string,
+    public reason?: OperationRejectionReason,
+  ) {
     super(message)
     this.status = status
   }

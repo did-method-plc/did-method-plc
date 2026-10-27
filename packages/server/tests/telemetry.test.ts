@@ -19,6 +19,7 @@ type Log = { body: { stringValue?: string }; traceId: string; spanId: string }
 type Metric = {
   name: string
   histogram?: { dataPoints: { attributes: Attributes }[] }
+  sum?: { dataPoints: { asDouble?: number; asInt?: string }[] }
 }
 type ResourceBatch = {
   resource: { attributes: Attributes }
@@ -114,6 +115,11 @@ describe('OpenTelemetry preload', () => {
     expect(metrics.some((metric) => metric.name.startsWith('nodejs.'))).toBe(
       true,
     )
+    expect(
+      metrics.find((metric) => metric.name === 'plc.stream.subscribers'),
+    ).toMatchObject({
+      sum: { dataPoints: [expect.objectContaining({ asDouble: 0 })] },
+    })
     const httpMetric = metrics.find(
       (metric) => metric.name === 'http.server.request.duration',
     )
