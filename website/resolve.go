@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 )
 
@@ -39,7 +40,7 @@ func ResolveDidPlc(client *http.Client, plc_host, did string) (*ResolutionResult
 		return nil, fmt.Errorf("error making http request: %v", err)
 	}
 	defer res.Body.Close()
-	log.Debugf("PLC resolution result status=%d did=%s", res.StatusCode, did)
+	slog.Debug("PLC resolution result", "statusCode", res.StatusCode, "did", did)
 
 	result.StatusCode = res.StatusCode
 	if res.StatusCode == 404 || res.StatusCode == 410 {

@@ -5,16 +5,8 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	logging "github.com/ipfs/go-log"
 	"github.com/urfave/cli/v2"
 )
-
-var log = logging.Logger("webplc")
-
-func init() {
-	logging.SetAllLoggers(logging.LevelDebug)
-	//logging.SetAllLoggers(logging.LevelWarn)
-}
 
 func main() {
 	run(os.Args)
