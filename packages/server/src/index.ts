@@ -15,7 +15,6 @@ import type { PlcDatabase } from './db/types.js'
 import { Socket } from 'net'
 import type { SequencerOptions } from './sequencer/index.js'
 import { Sequencer } from './sequencer/index.js'
-import { bodyParserErrorMetrics } from './metrics.js'
 
 export * from './db/index.js'
 export * from './context.js'
@@ -49,7 +48,6 @@ export class PlcServer {
     // oversized bodies by handing the error straight to error.handler, which
     // needs req.log to already be attached.
     app.use(express.json({ limit: '100kb' }))
-    app.use(bodyParserErrorMetrics)
 
     // Initialize sequencer
     const sequencer = new Sequencer(opts.db, opts.sequencer)

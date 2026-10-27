@@ -65,18 +65,20 @@ Configuration is read after loading the server's `.env` or `ENV`-selected file.
 
 Application metrics use the `@did-plc/server` meter:
 
-| Metric                    | Meaning                                                                               | Attributes                                           |
-| ------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `plc.sequencer.sequence`  | Gauge of the latest sequence sampled by the existing leader stats polling.            | None                                                 |
-| `plc.stream.subscribers`  | Up/down counter of active `/export/stream` WebSocket connections, including backfill. | None                                                 |
-| `plc.operations.accepted` | Counter of operation submissions successfully committed through the API.              | `operation.type`: `create`, `update`, or `tombstone` |
-| `plc.operations.rejected` | Counter of failed operation submissions, including malformed bodies and rate limits.  | `error.reason`: a fixed reason code                  |
+| Metric                    | Meaning                                                                                            | Attributes                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `plc.sequencer.sequence`  | Gauge of the latest sequence sampled by the existing leader stats polling.                         | None                                                 |
+| `plc.stream.subscribers`  | Up/down counter of active `/export/stream` WebSocket connections, including backfill.              | None                                                 |
+| `plc.operations.accepted` | Counter of operation submissions successfully committed through the API.                           | `operation.type`: `create`, `update`, or `tombstone` |
+| `plc.operations.rejected` | Counter of submissions rejected during operation validation or persistence, including rate limits. | `error.reason`: a fixed reason code                  |
 
 Recovery operations count as updates. Rejection reasons distinguish invalid
 operations, size limits, aliases, rotation keys, services, verification methods,
 signatures, previous operations, recovery windows, genesis hashes, DIDs, key
-support, conflicts, rate limits, body parsing, and internal errors. Rate limits
+support, conflicts, rate limits, and internal errors. Rate limits
 use `rate_limit`, including the existing limits that respond with HTTP 400.
+Requests rejected before operation validation, such as malformed or oversized JSON
+bodies, are covered by HTTP metrics.
 Metric attributes never include DIDs, keys, or error messages.
 
 Telemetry flushes on `beforeExit`. Custom entrypoints should close their resources

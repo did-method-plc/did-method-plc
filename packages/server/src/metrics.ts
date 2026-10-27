@@ -1,6 +1,5 @@
 import { metrics } from '@opentelemetry/api'
 import * as plc from '@did-plc/lib'
-import type { ErrorRequestHandler } from 'express'
 import { ServerError } from './error.js'
 import type { OperationRejectionReason } from './error.js'
 
@@ -58,35 +57,4 @@ function rejectionReason(err: unknown): OperationRejectionReason {
 
 export function recordRejectedOperation(err: unknown): void {
   rejectedOperations.add(1, { 'error.reason': rejectionReason(err) })
-}
-
-// Body parsing runs before the operation route. Count those rejections here;
-// the route counts validation, rate-limit, and database failures itself.
-export const bodyParserErrorMetrics: ErrorRequestHandler = (
-  err,
-  req,
-  _res,
-  next,
-) => {
-  if (req.method === 'POST' && /^\/[^/]+\/?$/.test(req.path)) {
-    const type: unknown = err?.type
-    let reason: OperationRejectionReason | undefined
-    if (type === 'entity.parse.failed') reason = 'invalid_json'
-    else if (type === 'entity.too.large') reason = 'body_too_large'
-    else if (
-      typeof type === 'string' &&
-      [
-        'request.aborted',
-        'request.size.invalid',
-        'encoding.unsupported',
-        'charset.unsupported',
-        'stream.encoding.set',
-        'stream.not.readable',
-        'entity.verify.failed',
-      ].includes(type)
-    )
-      reason = 'invalid_request_body'
-    if (reason) rejectedOperations.add(1, { 'error.reason': reason })
-  }
-  next(err)
 }

@@ -63,9 +63,6 @@ export type OperationRejectionReason =
   | 'genesis_mismatch'
   | 'invalid_did'
   | 'unsupported_key'
-  | 'invalid_json'
-  | 'body_too_large'
-  | 'invalid_request_body'
   | 'internal_error'
 
 export class ServerError extends Error {

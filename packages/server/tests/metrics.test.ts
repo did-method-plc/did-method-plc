@@ -190,31 +190,26 @@ describe('PLC application metrics', () => {
     }
   })
 
-  it('counts parser failures for operation submissions and excludes admin and read failures', async () => {
+  it('excludes parser, admin, and read failures from operation rejection counts', async () => {
     const unknownDid = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa'
-    const cases: [string, string, number][] = [
-      ['{"invalid":', 'invalid_json', 400],
-      [
-        JSON.stringify({ padding: 'x'.repeat(200 * 1024) }),
-        'body_too_large',
-        413,
-      ],
+    const counts = async () =>
+      (await collect())
+        .find((m) => m.descriptor.name === 'plc.operations.rejected')
+        ?.dataPoints.map(({ attributes, value }) => ({ attributes, value }))
+    const before = await counts()
+    const cases: [string, number][] = [
+      ['{"invalid":', 400],
+      [JSON.stringify({ padding: 'x'.repeat(200 * 1024) }), 413],
     ]
-    for (const [body, reason, status] of cases) {
-      const before = await rejected(reason)
+    for (const [body, status] of cases) {
       const response = await fetch(`${server.url}/${unknownDid}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body,
       })
       expect(response.status).toBe(status)
-      expect(await rejected(reason)).toBe(before + 1)
+      expect(await counts()).toEqual(before)
     }
-    const counts = async () =>
-      (await collect())
-        .find((m) => m.descriptor.name === 'plc.operations.rejected')
-        ?.dataPoints.map(({ attributes, value }) => ({ attributes, value }))
-    const before = await counts()
     expect(
       (await post('admin/removeInvalidOps', { adminSecret: 'wrong' })).status,
     ).toBe(401)
