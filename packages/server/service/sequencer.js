@@ -33,8 +33,11 @@ const main = async () => {
     clearInterval(statsInterval)
     // Release the pool after the leader unlocks so Node can flush telemetry
     // on beforeExit, including when DB_POOL_IDLE_TIMEOUT_MS disables eviction.
-    await leaderRun
-    await db.close()
+    try {
+      await leaderRun
+    } finally {
+      await db.close()
+    }
   })
 }
 
