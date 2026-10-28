@@ -9,6 +9,11 @@ import type { AppContext } from './context.js'
 import { assertValidIncomingOp } from './constraints.js'
 import { stringify, timingSafeStringEqual } from './util.js'
 import { Outbox, OutboxError } from './sequencer/index.js'
+import {
+  recordAcceptedOperation,
+  recordRejectedOperation,
+  streamSubscribers,
+} from './metrics.js'
 
 // Once a websocket has this much data buffered, we wait for it to flush
 // before sending more events. Slow consumers then apply backpressure into
@@ -31,6 +36,7 @@ const assertPlcDid = (did: string): void => {
 
 export const createRouter = (ctx: AppContext): express.Router => {
   const router = express.Router()
+  streamSubscribers.add(0)
 
   router.get(
     '/',
@@ -124,7 +130,9 @@ export const createRouter = (ctx: AppContext): express.Router => {
           const abortController = new AbortController()
           const outbox = new Outbox(ctx.sequencer)
 
-          ws.on('close', () => {
+          streamSubscribers.add(1)
+          ws.once('close', () => {
+            streamSubscribers.add(-1)
             abortController.abort()
           })
 
@@ -254,8 +262,14 @@ export const createRouter = (ctx: AppContext): express.Router => {
     handler(async function (req, res) {
       const { did } = req.params
       const op = req.body
-      assertValidIncomingOp(op)
-      await ctx.db.validateAndAddOp(did, op, new Date())
+      try {
+        assertValidIncomingOp(op)
+        await ctx.db.validateAndAddOp(did, op, new Date())
+      } catch (err) {
+        recordRejectedOperation(err)
+        throw err
+      }
+      recordAcceptedOperation(op)
       res.sendStatus(200)
     }),
   )

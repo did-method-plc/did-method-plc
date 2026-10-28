@@ -3,7 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@did-plc/server": "workspace:^",
-    "dd-trace": "^5.103.0"
+    "@did-plc/server": "workspace:^"
   }
 }

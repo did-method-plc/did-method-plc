@@ -26,10 +26,15 @@ export function assertValidIncomingOp(
     throw new ServerError(
       400,
       `Operation too large (${MAX_OP_BYTES} bytes maximum in cbor encoding)`,
+      'operation_too_large',
     )
   }
   if (!check.is(op, plc.def.opOrTombstone)) {
-    throw new ServerError(400, `Not a valid operation: ${JSON.stringify(op)}`)
+    throw new ServerError(
+      400,
+      `Not a valid operation: ${JSON.stringify(op)}`,
+      'invalid_operation',
+    )
   }
   if (op.type === 'plc_tombstone') {
     return
@@ -38,6 +43,7 @@ export function assertValidIncomingOp(
     throw new ServerError(
       400,
       `To many alsoKnownAs entries (max ${MAX_AKA_ENTRIES})`,
+      'invalid_alias',
     )
   }
   const akaDupe = new Set<string>()
@@ -46,10 +52,15 @@ export function assertValidIncomingOp(
       throw new ServerError(
         400,
         `alsoKnownAs entry too long (max ${MAX_AKA_LENGTH}): ${aka}`,
+        'invalid_alias',
       )
     }
     if (akaDupe.has(aka)) {
-      throw new ServerError(400, `duplicate alsoKnownAs entry: ${aka}`)
+      throw new ServerError(
+        400,
+        `duplicate alsoKnownAs entry: ${aka}`,
+        'invalid_alias',
+      )
     } else {
       akaDupe.add(aka)
     }
@@ -58,13 +69,18 @@ export function assertValidIncomingOp(
     throw new ServerError(
       400,
       `Too many rotationKey entries (max ${MAX_ROTATION_ENTRIES})`,
+      'invalid_rotation_key',
     )
   }
   for (const key of op.rotationKeys) {
     try {
       parseDidKey(key)
     } catch (err) {
-      throw new ServerError(400, `Invalid rotationKey: ${key}`)
+      throw new ServerError(
+        400,
+        `Invalid rotationKey: ${key}`,
+        'invalid_rotation_key',
+      )
     }
   }
   const serviceEntries = Object.entries(op.services)
@@ -72,6 +88,7 @@ export function assertValidIncomingOp(
     throw new ServerError(
       400,
       `To many service entries (max ${MAX_SERVICE_ENTRIES})`,
+      'invalid_service',
     )
   }
   for (const [id, service] of serviceEntries) {
@@ -79,18 +96,21 @@ export function assertValidIncomingOp(
       throw new ServerError(
         400,
         `Service id too long (max ${MAX_ID_LENGTH}): ${id}`,
+        'invalid_service',
       )
     }
     if (service.type.length > MAX_SERVICE_TYPE_LENGTH) {
       throw new ServerError(
         400,
         `Service type too long (max ${MAX_SERVICE_TYPE_LENGTH})`,
+        'invalid_service',
       )
     }
     if (service.endpoint.length > MAX_SERVICE_ENDPOINT_LENGTH) {
       throw new ServerError(
         400,
         `Service endpoint too long (max ${MAX_SERVICE_ENDPOINT_LENGTH})`,
+        'invalid_service',
       )
     }
   }
@@ -99,6 +119,7 @@ export function assertValidIncomingOp(
     throw new ServerError(
       400,
       `Too many Verification Method entries (max ${MAX_VERIFICATION_METHOD_ENTRIES})`,
+      'invalid_verification_method',
     )
   }
   for (const [id, key] of verifyMethods) {
@@ -106,12 +127,14 @@ export function assertValidIncomingOp(
       throw new ServerError(
         400,
         `Verification Method id too long (max ${MAX_ID_LENGTH}): ${id}`,
+        'invalid_verification_method',
       )
     }
     if (key.length > MAX_DID_KEY_LENGTH) {
       throw new ServerError(
         400,
         `Verification Method key too long (max ${MAX_DID_KEY_LENGTH}): ${key}`,
+        'invalid_verification_method',
       )
     }
     try {
@@ -120,7 +143,11 @@ export function assertValidIncomingOp(
       const multikey = extractMultikey(key) // enforces did:key: prefix
       extractPrefixedBytes(multikey) // enforces base58-btc encoding
     } catch (err) {
-      throw new ServerError(400, `Invalid verificationMethod key: ${key}`)
+      throw new ServerError(
+        400,
+        `Invalid verificationMethod key: ${key}`,
+        'invalid_verification_method',
+      )
     }
   }
 }
@@ -143,6 +170,7 @@ export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
         throw new ServerError(
           400,
           `To many operations within last week (max ${WEEK_LIMIT})`,
+          'rate_limit',
         )
       }
     }
@@ -152,6 +180,7 @@ export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
         throw new ServerError(
           400,
           `To many operations within last day (max ${DAY_LIMIT})`,
+          'rate_limit',
         )
       }
     }
@@ -161,6 +190,7 @@ export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
         throw new ServerError(
           400,
           `To many operations within last hour (max ${HOUR_LIMIT})`,
+          'rate_limit',
         )
       }
     }
