@@ -274,6 +274,28 @@ export const createRouter = (ctx: AppContext): express.Router => {
     }),
   )
 
+  // Update a DID doc, but do not create one
+  router.put(
+    '/:did',
+    handler(async function (req, res) {
+      const { did } = req.params
+      const op = req.body
+      try {
+        assertValidIncomingOp(op)
+        const last = await ctx.db.lastOpForDid(did)
+        if (!last) {
+          throw new ServerError(404, `DID not registered: ${did}`)
+        }
+        await ctx.db.validateAndAddOp(did, op, new Date())
+      } catch (err) {
+        recordRejectedOperation(err)
+        throw err
+      }
+      recordAcceptedOperation(op)
+      res.sendStatus(200)
+    }),
+  )
+
   // We only have one admin endpoint, so an auth middleware would probably be overkill
   router.post(
     '/admin/removeInvalidOps',

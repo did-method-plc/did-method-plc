@@ -343,6 +343,34 @@ describe('PLC server', () => {
     await expect(attempt).rejects.toThrow()
   })
 
+  it('updates a did with PUT', async () => {
+    const lastOp = await client.ensureLastOp(did2)
+    const op = await plc.updateHandleOp(
+      lastOp,
+      rotationKey3,
+      'at://bob2.example.com',
+    )
+    await axios.put(client.postOpUrl(did2), op)
+
+    const doc = await client.getDocumentData(did2)
+    expect(doc.alsoKnownAs).toEqual(['at://bob2.example.com'])
+  })
+
+  it('does not create a did with PUT', async () => {
+    const { op, did } = await plc.createOp({
+      signingKey: signingKey.did(),
+      rotationKeys: [rotationKey1.did()],
+      handle: handle1,
+      pds: atpPds,
+      signer: rotationKey1,
+    })
+    const promise = axios.put(client.postOpUrl(did), op)
+    await expect(promise).rejects.toThrow(AxiosError)
+
+    const promise2 = client.getDocumentData(did)
+    await expect(promise2).rejects.toThrow(PlcClientError)
+  })
+
   it('disallows removal of valid operations.', async () => {
     const auditLog = await client.getAuditableLog(did1)
     const promise = axios.post(`${client.url}/admin/removeInvalidOps`, {
