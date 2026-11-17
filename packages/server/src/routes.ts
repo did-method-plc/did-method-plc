@@ -257,6 +257,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
   )
 
   // Update or create a DID doc
+  // With "If-Match: *", only update an existing DID doc
   router.post(
     '/:did',
     handler(async function (req, res) {
@@ -264,6 +265,17 @@ export const createRouter = (ctx: AppContext): express.Router => {
       const op = req.body
       try {
         assertValidIncomingOp(op)
+        const ifMatch = req.get('if-match')
+        if (ifMatch !== undefined) {
+          // we do not serve ETags, so no other If-Match value can match
+          if (ifMatch !== '*') {
+            throw new ServerError(412, 'Only "If-Match: *" is supported')
+          }
+          const last = await ctx.db.lastOpForDid(did)
+          if (!last) {
+            throw new ServerError(412, `DID not registered: ${did}`)
+          }
+        }
         await ctx.db.validateAndAddOp(did, op, new Date())
       } catch (err) {
         recordRejectedOperation(err)
