@@ -32,9 +32,11 @@
     "lint:fix": "pnpm run lint --fix",
     "verify": "pnpm run '/^(build|lint|style)$/'",
     "build": "tsc --build tsconfig.json",
+    "changeset": "changeset",
     "test": "NODE_ENV=development pnpm run --recursive --stream test"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "@eslint/js": "^9.39.5",
     "@npmcli/package-json": "^3.0.0",
     "@types/node": "^22",
