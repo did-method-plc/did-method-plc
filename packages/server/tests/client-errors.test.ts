@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import axios from 'axios'
 import type { CloseFn } from './_util.js'
 import { runTestServer } from './_util.js'
 describe('client errors', () => {
@@ -16,11 +15,22 @@ describe('client errors', () => {
     if (close) await close()
   })
 
-  const get = (path: string) =>
-    axios.get(`${url}${path}`, { validateStatus: () => true })
+  const parse = async (res: Response) => {
+    const text = await res.text()
+    const isJson = res.headers.get('content-type')?.includes('json')
+    return { status: res.status, data: isJson ? JSON.parse(text) : text }
+  }
 
-  const post = (path: string, body: unknown) =>
-    axios.post(`${url}${path}`, body, { validateStatus: () => true })
+  const get = async (path: string) => parse(await fetch(`${url}${path}`))
+
+  const post = async (path: string, body: unknown) =>
+    parse(
+      await fetch(`${url}${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    )
 
   const badDid = 'did:web:example.com'
   const unknownDid = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa'
