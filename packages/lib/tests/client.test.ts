@@ -90,6 +90,39 @@ describe('plc client', () => {
     }
   }
 
+  describe('export', () => {
+    const exported = (seq: number): t.ExportedOpWithSeq => ({
+      did,
+      operation: lastOp,
+      cid: 'bafyreiexample',
+      createdAt: new Date(0).toISOString(),
+      seq,
+      type: 'sequenced_op',
+    })
+
+    const jsonLines = (lines: unknown[]): Handler => {
+      return (_req, res) => {
+        res.writeHead(200, { 'content-type': 'application/jsonlines' })
+        res.end(lines.map((l) => JSON.stringify(l)).join('\n'))
+      }
+    }
+
+    it('parses a page of several ops', async () => {
+      const plc = await mockPlc(jsonLines([exported(1), exported(2)]))
+      expect(await plc.client.export(0, 2)).toEqual([exported(1), exported(2)])
+    })
+
+    it('parses a page of a single op', async () => {
+      const plc = await mockPlc(jsonLines([exported(1)]))
+      expect(await plc.client.export(0, 1)).toEqual([exported(1)])
+    })
+
+    it('parses an empty page', async () => {
+      const plc = await mockPlc(jsonLines([]))
+      expect(await plc.client.export(5)).toEqual([])
+    })
+  })
+
   describe('cancellation', () => {
     const reads: [
       string,

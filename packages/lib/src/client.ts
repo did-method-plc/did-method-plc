@@ -121,8 +121,12 @@ export class Client {
     if (count !== undefined) {
       url.searchParams.append('count', count.toString(10))
     }
-    const data = await this.makeGetReq<string>(url.toString(), opts)
-    const lines: string[] = data.split('\n')
+    // read as text: axios would otherwise JSON-parse a single-line page
+    const data = await this.request<string>(
+      { method: 'GET', url: url.toString(), responseType: 'text' },
+      opts,
+    )
+    const lines = data.split('\n').filter((l) => l.length > 0)
     return lines.map((l) => JSON.parse(l))
   }
 
