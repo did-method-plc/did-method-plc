@@ -2,8 +2,14 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import * as http from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { once } from 'node:events'
+import axios, { type AxiosError } from 'axios'
 import { Secp256k1Keypair } from '@atproto/crypto'
-import { Client } from '../src/index.js'
+import {
+  Client,
+  PlcClientError,
+  PlcConflictError,
+  TombstonedDidError,
+} from '../src/index.js'
 import * as operations from '../src/operations.js'
 import type * as t from '../src/types.js'
 
@@ -89,6 +95,137 @@ describe('plc client', () => {
       return json(res, 200, lastOp)
     }
   }
+
+  describe('errors', () => {
+    const catchErr = async (promise: Promise<unknown>): Promise<unknown> => {
+      try {
+        await promise
+      } catch (err) {
+        return err
+      }
+      throw new Error('expected rejection')
+    }
+
+    it("uses PLC's message from the response body", async () => {
+      const plc = await mockPlc((_req, res) =>
+        json(res, 404, { message: `DID not registered: ${did}` }),
+      )
+      const err = await catchErr(plc.client.getDocument(did))
+      expect(err).toBeInstanceOf(PlcClientError)
+      const plcErr = err as PlcClientError
+      expect(plcErr.status).toEqual(404)
+      expect(plcErr.message).toEqual(`DID not registered: ${did}`)
+      expect(plcErr.data).toEqual({ message: `DID not registered: ${did}` })
+    })
+
+    it('names each error class', async () => {
+      const notFound = await mockPlc((_req, res) =>
+        json(res, 404, { message: 'nope' }),
+      )
+      expect(
+        ((await catchErr(notFound.client.getDocument(did))) as Error).name,
+      ).toEqual('PlcClientError')
+      const conflict = await mockPlc((_req, res) =>
+        json(res, 409, { message: 'conflict' }),
+      )
+      const conflictErr = await catchErr(conflict.client.getDocument(did))
+      expect(conflictErr).toBeInstanceOf(PlcConflictError)
+      expect((conflictErr as Error).name).toEqual('PlcConflictError')
+      expect(new TombstonedDidError(did).name).toEqual('TombstonedDidError')
+    })
+
+    it('falls back to a generic message without a JSON message', async () => {
+      const plc = await mockPlc((_req, res) => {
+        res.writeHead(502, { 'content-type': 'text/plain' })
+        res.end('bad gateway')
+      })
+      const err = (await catchErr(
+        plc.client.getDocument(did),
+      )) as PlcClientError
+      expect(err).toBeInstanceOf(PlcClientError)
+      expect(err.status).toEqual(502)
+      expect(err.message).toMatch(/502/)
+      expect(err.data).toEqual('bad gateway')
+    })
+
+    it('exposes response headers', async () => {
+      const plc = await mockPlc((_req, res) => {
+        res.setHeader('x-custom', 'yes')
+        res.setHeader('retry-after', '120')
+        json(res, 429, { message: 'slow down' })
+      })
+      const err = (await catchErr(
+        plc.client.getDocument(did),
+      )) as PlcClientError
+      expect(err.headers['x-custom']).toEqual('yes')
+      expect(err.headers['content-type']).toMatch(/application\/json/)
+      expect(err.headers['retry-after']).toEqual('120')
+    })
+
+    it('maps a 409 to PlcConflictError', async () => {
+      const message = 'Proposed prev does not match the most recent operation'
+      const plc = await mockPlc((req, res) => {
+        if (req.method === 'POST') return json(res, 409, { message })
+        return json(res, 200, lastOp)
+      })
+      const err = await catchErr(plc.client.updateHandle(did, key, 'x.test'))
+      expect(err).toBeInstanceOf(PlcConflictError)
+      expect(err).toBeInstanceOf(PlcClientError)
+      expect((err as PlcConflictError).status).toEqual(409)
+      expect((err as PlcConflictError).message).toEqual(message)
+    })
+
+    it('propagates a refused connection as the axios error', async () => {
+      const plc = await mockPlc(hang)
+      await plc.close()
+      servers.pop()
+      const err = await catchErr(plc.client.getDocument(did))
+      expect(axios.isAxiosError(err)).toBe(true)
+      expect((err as AxiosError).response).toBeUndefined()
+      expect(err).not.toBeInstanceOf(PlcClientError)
+    })
+
+    it('propagates a dropped connection as the axios error', async () => {
+      const plc = await mockPlc((req) => req.socket.destroy())
+      const err = await catchErr(plc.client.getDocument(did))
+      expect(axios.isAxiosError(err)).toBe(true)
+      expect((err as AxiosError).response).toBeUndefined()
+      expect(err).not.toBeInstanceOf(PlcClientError)
+    })
+
+    it('maps export failures too', async () => {
+      const plc = await mockPlc((_req, res) =>
+        json(res, 400, { message: 'Invalid after parameter' }),
+      )
+      const err = (await catchErr(plc.client.export(1))) as PlcClientError
+      expect(err).toBeInstanceOf(PlcClientError)
+      expect(err.message).toEqual('Invalid after parameter')
+    })
+
+    describe('tombstoned DIDs', () => {
+      let tombstone: t.Tombstone
+
+      beforeAll(async () => {
+        const { cidForCbor } = await import('@atproto/common')
+        tombstone = await operations.tombstoneOp(await cidForCbor(lastOp), key)
+      })
+
+      it('ensureLastOp throws TombstonedDidError', async () => {
+        const plc = await mockPlc((_req, res) => json(res, 200, tombstone))
+        const err = await catchErr(plc.client.ensureLastOp(did))
+        expect(err).toBeInstanceOf(TombstonedDidError)
+        expect((err as TombstonedDidError).did).toEqual(did)
+        expect((err as TombstonedDidError).message).toMatch(/tombstone/)
+      })
+
+      it('updates refuse without posting', async () => {
+        const plc = await mockPlc((_req, res) => json(res, 200, tombstone))
+        const err = await catchErr(plc.client.updateHandle(did, key, 'x.test'))
+        expect(err).toBeInstanceOf(TombstonedDidError)
+        expect(plc.requests.map((r) => r.method)).toEqual(['GET'])
+      })
+    })
+  })
 
   describe('createDid', () => {
     it('posts a genesis op carrying the kem key', async () => {
