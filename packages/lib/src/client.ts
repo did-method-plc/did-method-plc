@@ -2,6 +2,7 @@ import { check, cidForCbor } from '@atproto/common'
 import type { Keypair } from '@atproto/crypto'
 import type { AxiosError, AxiosRequestConfig } from 'axios'
 import axios from 'axios'
+import type { AtprotoOpOpts } from './operations.js'
 import {
   atprotoOp,
   createUpdateOp,
@@ -131,13 +132,7 @@ export class Client {
   }
 
   async createDid(
-    opts: {
-      signingKey: string
-      handle: string
-      pds: string
-      rotationKeys: string[]
-      signer: Keypair
-    },
+    opts: AtprotoOpOpts & { signer: Keypair },
     reqOpts?: RequestOptions,
   ): Promise<string> {
     const op = await atprotoOp({ ...opts, prev: null })

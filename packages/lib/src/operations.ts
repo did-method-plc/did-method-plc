@@ -22,18 +22,47 @@ export const didForCreateOp = async (op: t.CompatibleOp) => {
 // Operations formatting
 // ---------------------------
 
-export const formatAtprotoOp = (opts: {
+export type AtprotoOpOpts = {
+  /** did:key written to `verificationMethods.atproto` */
   signingKey: string
+  /** did:key written to `verificationMethods.atproto_kem` */
+  kemKey?: string
+  /**
+   * Further verification methods, by id. Must not name an id that
+   * `signingKey` or `kemKey` also sets.
+   */
+  verificationMethods?: Record<string, string>
   handle: string
   pds: string
   rotationKeys: string[]
-  prev: CID | null
-}): t.UnsignedOperation => {
+}
+
+// Combines the explicitly-named atproto keys with any further verification
+// methods, refusing to let one silently override the other.
+const atprotoVerificationMethods = (opts: {
+  signingKey?: string
+  kemKey?: string
+  verificationMethods?: Record<string, string>
+}): Record<string, string> => {
+  const named: Record<string, string> = {}
+  if (opts.signingKey !== undefined) named.atproto = opts.signingKey
+  if (opts.kemKey !== undefined) named.atproto_kem = opts.kemKey
+  for (const id of Object.keys(named)) {
+    if (opts.verificationMethods && id in opts.verificationMethods) {
+      throw new Error(
+        `verificationMethods.${id} conflicts with the ${id === 'atproto' ? 'signingKey' : 'kemKey'} option`,
+      )
+    }
+  }
+  return { ...opts.verificationMethods, ...named }
+}
+
+export const formatAtprotoOp = (
+  opts: AtprotoOpOpts & { prev: CID | null },
+): t.UnsignedOperation => {
   return {
     type: 'plc_operation',
-    verificationMethods: {
-      atproto: opts.signingKey,
-    },
+    verificationMethods: atprotoVerificationMethods(opts),
     rotationKeys: opts.rotationKeys,
     alsoKnownAs: [ensureAtprotoPrefix(opts.handle)],
     services: {
@@ -46,24 +75,15 @@ export const formatAtprotoOp = (opts: {
   }
 }
 
-export const atprotoOp = async (opts: {
-  signingKey: string
-  handle: string
-  pds: string
-  rotationKeys: string[]
-  prev: CID | null
-  signer: Keypair
-}) => {
+export const atprotoOp = async (
+  opts: AtprotoOpOpts & { prev: CID | null; signer: Keypair },
+) => {
   return addSignature(formatAtprotoOp(opts), opts.signer)
 }
 
-export const createOp = async (opts: {
-  signingKey: string
-  handle: string
-  pds: string
-  rotationKeys: string[]
-  signer: Keypair
-}): Promise<{ op: t.Operation; did: string }> => {
+export const createOp = async (
+  opts: AtprotoOpOpts & { signer: Keypair },
+): Promise<{ op: t.Operation; did: string }> => {
   const op = await atprotoOp({ ...opts, prev: null })
   const did = await didForCreateOp(op)
   return { op, did }
@@ -91,19 +111,20 @@ export const createUpdateOp = async (
 export const createAtprotoUpdateOp = async (
   lastOp: t.CompatibleOp,
   signer: Keypair,
-  opts: Partial<{
-    signingKey: string
-    handle: string
-    pds: string
-    rotationKeys: string[]
-  }>,
+  opts: Partial<AtprotoOpOpts>,
 ) => {
+  // validate before signing anything
+  const verificationMethods = atprotoVerificationMethods({
+    signingKey: opts.signingKey || undefined,
+    kemKey: opts.kemKey || undefined,
+    verificationMethods: opts.verificationMethods,
+  })
   return createUpdateOp(lastOp, signer, (normalized) => {
     const updated = { ...normalized }
-    if (opts.signingKey) {
+    if (Object.keys(verificationMethods).length > 0) {
       updated.verificationMethods = {
         ...normalized.verificationMethods,
-        atproto: opts.signingKey,
+        ...verificationMethods,
       }
     }
     if (opts.handle) {

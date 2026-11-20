@@ -90,6 +90,28 @@ describe('plc client', () => {
     }
   }
 
+  describe('createDid', () => {
+    it('posts a genesis op carrying the kem key', async () => {
+      const kemKey = await Secp256k1Keypair.create()
+      const plc = await mockPlc((_req, res) => json(res, 200, {}))
+      const created = await plc.client.createDid({
+        signingKey: key.did(),
+        kemKey: kemKey.did(),
+        handle: 'erin.example.com',
+        pds: 'https://example.com',
+        rotationKeys: [key.did()],
+        signer: key,
+      })
+      expect(plc.requests).toHaveLength(1)
+      const posted = JSON.parse(plc.requests[0].body)
+      expect(plc.requests[0].url).toEqual(`/${encodeURIComponent(created)}`)
+      expect(posted.verificationMethods).toEqual({
+        atproto: key.did(),
+        atproto_kem: kemKey.did(),
+      })
+    })
+  })
+
   describe('export', () => {
     const exported = (seq: number): t.ExportedOpWithSeq => ({
       did,
