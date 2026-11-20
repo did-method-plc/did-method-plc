@@ -15,6 +15,10 @@
     "url": "https://github.com/did-method-plc/did-method-plc",
     "directory": "packages/lib"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
