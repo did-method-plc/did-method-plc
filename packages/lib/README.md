@@ -45,6 +45,21 @@ did = await client.createDid({
 })
 ```
 
+Custom fetch:
+
+```typescript
+// any fetch implementation, e.g. one that adds timeouts or tracing
+client = new plc.Client('https://plc.directory', { fetch: myFetch })
+```
+
+If no `fetch` is given, the global `fetch` is used.
+
+### Errors
+
+- A non-2xx response rejects with `PlcClientError`, which has `status`, `headers`, and `data`. A 409 is a `PlcConflictError`.
+- Network failures reject with the error from `fetch` itself (usually a `TypeError`).
+- Calls made with `{ signal }` reject with the signal's reason when aborted.
+
 ## License
 
 MIT / Apache 2.0 dual-licensed.
