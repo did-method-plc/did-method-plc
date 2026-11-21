@@ -1,0 +1,414 @@
+import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import * as http from 'node:http'
+import type { AddressInfo } from 'node:net'
+import { once } from 'node:events'
+import axios, { type AxiosError } from 'axios'
+import { Secp256k1Keypair } from '@atproto/crypto'
+import {
+  Client,
+  PlcClientError,
+  PlcConflictError,
+  TombstonedDidError,
+} from '../src/index.js'
+import * as operations from '../src/operations.js'
+import type * as t from '../src/types.js'
+
+type Handler = (
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  body: string,
+) => void
+
+type MockPlc = {
+  client: Client
+  requests: { method: string; url: string; body: string }[]
+  close: () => Promise<void>
+}
+
+const servers: MockPlc[] = []
+
+const mockPlc = async (handler: Handler): Promise<MockPlc> => {
+  const requests: MockPlc['requests'] = []
+  const sockets = new Set<import('node:net').Socket>()
+  const server = http.createServer(async (req, res) => {
+    let body = ''
+    for await (const chunk of req) body += chunk
+    requests.push({ method: req.method ?? '', url: req.url ?? '', body })
+    handler(req, res, body)
+  })
+  server.on('connection', (socket) => {
+    sockets.add(socket)
+    socket.on('close', () => sockets.delete(socket))
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  const { port } = server.address() as AddressInfo
+  const mock: MockPlc = {
+    client: new Client(`http://127.0.0.1:${port}`),
+    requests,
+    close: async () => {
+      for (const socket of sockets) socket.destroy()
+      server.close()
+      await once(server, 'close')
+    },
+  }
+  servers.push(mock)
+  return mock
+}
+
+const json = (res: http.ServerResponse, status: number, body: unknown) => {
+  res.writeHead(status, { 'content-type': 'application/json' })
+  res.end(JSON.stringify(body))
+}
+
+// leaves the request open until the test aborts it or the server closes
+const hang: Handler = () => {}
+
+const isAbortError = (err: unknown) =>
+  err instanceof Error && err.name === 'AbortError'
+
+afterEach(async () => {
+  while (servers.length) await servers.pop()?.close()
+})
+
+describe('plc client', () => {
+  let key: Secp256k1Keypair
+  let did: string
+  let lastOp: t.Operation
+
+  beforeAll(async () => {
+    key = await Secp256k1Keypair.create()
+    const created = await operations.createOp({
+      signingKey: key.did(),
+      handle: 'alice.example.com',
+      pds: 'https://example.com',
+      rotationKeys: [key.did()],
+      signer: key,
+    })
+    did = created.did
+    lastOp = created.op
+  })
+
+  // answers GET /:did/log/last with the create op, and hangs on everything else
+  const lastOpThenHang: Handler = (req, res) => {
+    if (req.method === 'GET' && req.url?.endsWith('/log/last')) {
+      return json(res, 200, lastOp)
+    }
+  }
+
+  describe('errors', () => {
+    const catchErr = async (promise: Promise<unknown>): Promise<unknown> => {
+      try {
+        await promise
+      } catch (err) {
+        return err
+      }
+      throw new Error('expected rejection')
+    }
+
+    it("uses PLC's message from the response body", async () => {
+      const plc = await mockPlc((_req, res) =>
+        json(res, 404, { message: `DID not registered: ${did}` }),
+      )
+      const err = await catchErr(plc.client.getDocument(did))
+      expect(err).toBeInstanceOf(PlcClientError)
+      const plcErr = err as PlcClientError
+      expect(plcErr.status).toEqual(404)
+      expect(plcErr.message).toEqual(`DID not registered: ${did}`)
+      expect(plcErr.data).toEqual({ message: `DID not registered: ${did}` })
+    })
+
+    it('names each error class', async () => {
+      const notFound = await mockPlc((_req, res) =>
+        json(res, 404, { message: 'nope' }),
+      )
+      expect(
+        ((await catchErr(notFound.client.getDocument(did))) as Error).name,
+      ).toEqual('PlcClientError')
+      const conflict = await mockPlc((_req, res) =>
+        json(res, 409, { message: 'conflict' }),
+      )
+      const conflictErr = await catchErr(conflict.client.getDocument(did))
+      expect(conflictErr).toBeInstanceOf(PlcConflictError)
+      expect((conflictErr as Error).name).toEqual('PlcConflictError')
+      expect(new TombstonedDidError(did).name).toEqual('TombstonedDidError')
+    })
+
+    it('falls back to a generic message without a JSON message', async () => {
+      const plc = await mockPlc((_req, res) => {
+        res.writeHead(502, { 'content-type': 'text/plain' })
+        res.end('bad gateway')
+      })
+      const err = (await catchErr(
+        plc.client.getDocument(did),
+      )) as PlcClientError
+      expect(err).toBeInstanceOf(PlcClientError)
+      expect(err.status).toEqual(502)
+      expect(err.message).toMatch(/502/)
+      expect(err.data).toEqual('bad gateway')
+    })
+
+    it('exposes response headers', async () => {
+      const plc = await mockPlc((_req, res) => {
+        res.setHeader('x-custom', 'yes')
+        res.setHeader('retry-after', '120')
+        json(res, 429, { message: 'slow down' })
+      })
+      const err = (await catchErr(
+        plc.client.getDocument(did),
+      )) as PlcClientError
+      expect(err.headers['x-custom']).toEqual('yes')
+      expect(err.headers['content-type']).toMatch(/application\/json/)
+      expect(err.headers['retry-after']).toEqual('120')
+    })
+
+    it('maps a 409 to PlcConflictError', async () => {
+      const message = 'Proposed prev does not match the most recent operation'
+      const plc = await mockPlc((req, res) => {
+        if (req.method === 'POST') return json(res, 409, { message })
+        return json(res, 200, lastOp)
+      })
+      const err = await catchErr(plc.client.updateHandle(did, key, 'x.test'))
+      expect(err).toBeInstanceOf(PlcConflictError)
+      expect(err).toBeInstanceOf(PlcClientError)
+      expect((err as PlcConflictError).status).toEqual(409)
+      expect((err as PlcConflictError).message).toEqual(message)
+    })
+
+    it('propagates a refused connection as the axios error', async () => {
+      const plc = await mockPlc(hang)
+      await plc.close()
+      servers.pop()
+      const err = await catchErr(plc.client.getDocument(did))
+      expect(axios.isAxiosError(err)).toBe(true)
+      expect((err as AxiosError).response).toBeUndefined()
+      expect(err).not.toBeInstanceOf(PlcClientError)
+    })
+
+    it('propagates a dropped connection as the axios error', async () => {
+      const plc = await mockPlc((req) => req.socket.destroy())
+      const err = await catchErr(plc.client.getDocument(did))
+      expect(axios.isAxiosError(err)).toBe(true)
+      expect((err as AxiosError).response).toBeUndefined()
+      expect(err).not.toBeInstanceOf(PlcClientError)
+    })
+
+    it('maps export failures too', async () => {
+      const plc = await mockPlc((_req, res) =>
+        json(res, 400, { message: 'Invalid after parameter' }),
+      )
+      const err = (await catchErr(plc.client.export(1))) as PlcClientError
+      expect(err).toBeInstanceOf(PlcClientError)
+      expect(err.message).toEqual('Invalid after parameter')
+    })
+
+    describe('tombstoned DIDs', () => {
+      let tombstone: t.Tombstone
+
+      beforeAll(async () => {
+        const { cidForCbor } = await import('@atproto/common')
+        tombstone = await operations.tombstoneOp(await cidForCbor(lastOp), key)
+      })
+
+      it('ensureLastOp throws TombstonedDidError', async () => {
+        const plc = await mockPlc((_req, res) => json(res, 200, tombstone))
+        const err = await catchErr(plc.client.ensureLastOp(did))
+        expect(err).toBeInstanceOf(TombstonedDidError)
+        expect((err as TombstonedDidError).did).toEqual(did)
+        expect((err as TombstonedDidError).message).toMatch(/tombstone/)
+      })
+
+      it('updates refuse without posting', async () => {
+        const plc = await mockPlc((_req, res) => json(res, 200, tombstone))
+        const err = await catchErr(plc.client.updateHandle(did, key, 'x.test'))
+        expect(err).toBeInstanceOf(TombstonedDidError)
+        expect(plc.requests.map((r) => r.method)).toEqual(['GET'])
+      })
+    })
+  })
+
+  describe('createDid', () => {
+    it('posts a genesis op carrying the kem key', async () => {
+      const kemKey = await Secp256k1Keypair.create()
+      const plc = await mockPlc((_req, res) => json(res, 200, {}))
+      const created = await plc.client.createDid({
+        signingKey: key.did(),
+        kemKey: kemKey.did(),
+        handle: 'erin.example.com',
+        pds: 'https://example.com',
+        rotationKeys: [key.did()],
+        signer: key,
+      })
+      expect(plc.requests).toHaveLength(1)
+      const posted = JSON.parse(plc.requests[0].body)
+      expect(plc.requests[0].url).toEqual(`/${encodeURIComponent(created)}`)
+      expect(posted.verificationMethods).toEqual({
+        atproto: key.did(),
+        atproto_kem: kemKey.did(),
+      })
+    })
+  })
+
+  describe('export', () => {
+    const exported = (seq: number): t.ExportedOpWithSeq => ({
+      did,
+      operation: lastOp,
+      cid: 'bafyreiexample',
+      createdAt: new Date(0).toISOString(),
+      seq,
+      type: 'sequenced_op',
+    })
+
+    const jsonLines = (lines: unknown[]): Handler => {
+      return (_req, res) => {
+        res.writeHead(200, { 'content-type': 'application/jsonlines' })
+        res.end(lines.map((l) => JSON.stringify(l)).join('\n'))
+      }
+    }
+
+    it('parses a page of several ops', async () => {
+      const plc = await mockPlc(jsonLines([exported(1), exported(2)]))
+      expect(await plc.client.export(0, 2)).toEqual([exported(1), exported(2)])
+    })
+
+    it('parses a page of a single op', async () => {
+      const plc = await mockPlc(jsonLines([exported(1)]))
+      expect(await plc.client.export(0, 1)).toEqual([exported(1)])
+    })
+
+    it('parses an empty page', async () => {
+      const plc = await mockPlc(jsonLines([]))
+      expect(await plc.client.export(5)).toEqual([])
+    })
+  })
+
+  describe('cancellation', () => {
+    const reads: [
+      string,
+      (c: Client, signal: AbortSignal) => Promise<unknown>,
+    ][] = [
+      ['getDocument', (c, signal) => c.getDocument(did, { signal })],
+      ['getDocumentData', (c, signal) => c.getDocumentData(did, { signal })],
+      ['getOperationLog', (c, signal) => c.getOperationLog(did, { signal })],
+      ['getAuditableLog', (c, signal) => c.getAuditableLog(did, { signal })],
+      ['getLastOp', (c, signal) => c.getLastOp(did, { signal })],
+      ['ensureLastOp', (c, signal) => c.ensureLastOp(did, { signal })],
+      ['export', (c, signal) => c.export(0, 10, { signal })],
+      ['health', (c, signal) => c.health({ signal })],
+      [
+        'sendOperation',
+        (c, signal) => c.sendOperation(did, lastOp, { signal }),
+      ],
+      [
+        'createDid',
+        (c, signal) =>
+          c.createDid(
+            {
+              signingKey: key.did(),
+              handle: 'bob.example.com',
+              pds: 'https://example.com',
+              rotationKeys: [key.did()],
+              signer: key,
+            },
+            { signal },
+          ),
+      ],
+    ]
+
+    for (const [name, call] of reads) {
+      it(`${name} rejects with an AbortError when aborted mid-request`, async () => {
+        const plc = await mockPlc(hang)
+        const ac = new AbortController()
+        const promise = call(plc.client, ac.signal)
+        await waitFor(() => plc.requests.length === 1)
+        ac.abort()
+        await expect(promise).rejects.toSatisfy(isAbortError)
+      })
+    }
+
+    it('rejects without making a request when the signal is already aborted', async () => {
+      const plc = await mockPlc(hang)
+      const signal = AbortSignal.abort()
+      await expect(plc.client.getDocument(did, { signal })).rejects.toSatisfy(
+        isAbortError,
+      )
+      expect(plc.requests).toHaveLength(0)
+    })
+
+    it('propagates the abort reason', async () => {
+      const plc = await mockPlc(hang)
+      const reason = new Error('shutting down')
+      const ac = new AbortController()
+      const promise = plc.client.getDocument(did, { signal: ac.signal })
+      await waitFor(() => plc.requests.length === 1)
+      ac.abort(reason)
+      await expect(promise).rejects.toBe(reason)
+    })
+
+    const updates: [
+      string,
+      (c: Client, signal: AbortSignal) => Promise<void>,
+    ][] = [
+      [
+        'updateData',
+        (c, signal) => c.updateData(did, key, (op) => op, { signal }),
+      ],
+      [
+        'updateAtprotoKey',
+        (c, signal) => c.updateAtprotoKey(did, key, key.did(), { signal }),
+      ],
+      [
+        'updateHandle',
+        (c, signal) => c.updateHandle(did, key, 'carol.test', { signal }),
+      ],
+      [
+        'updatePds',
+        (c, signal) => c.updatePds(did, key, 'https://pds.test', { signal }),
+      ],
+      [
+        'updateRotationKeys',
+        (c, signal) => c.updateRotationKeys(did, key, [key.did()], { signal }),
+      ],
+      ['tombstone', (c, signal) => c.tombstone(did, key, { signal })],
+    ]
+
+    for (const [name, call] of updates) {
+      it(`${name} passes the signal to the last-op read`, async () => {
+        const plc = await mockPlc(hang)
+        const ac = new AbortController()
+        const promise = call(plc.client, ac.signal)
+        await waitFor(() => plc.requests.length === 1)
+        expect(plc.requests[0].method).toEqual('GET')
+        ac.abort()
+        await expect(promise).rejects.toSatisfy(isAbortError)
+      })
+
+      it(`${name} passes the signal to the operation post`, async () => {
+        const plc = await mockPlc(lastOpThenHang)
+        const ac = new AbortController()
+        const promise = call(plc.client, ac.signal)
+        await waitFor(() => plc.requests.length === 2)
+        expect(plc.requests[1].method).toEqual('POST')
+        ac.abort()
+        await expect(promise).rejects.toSatisfy(isAbortError)
+      })
+    }
+
+    it('remains callable without options', async () => {
+      const plc = await mockPlc((req, res) => {
+        if (req.method === 'POST') return json(res, 200, {})
+        return lastOpThenHang(req, res, '')
+      })
+      await plc.client.updateHandle(did, key, 'dave.test')
+      expect(plc.requests.map((r) => r.method)).toEqual(['GET', 'POST'])
+    })
+  })
+})
+
+const waitFor = async (cond: () => boolean, timeoutMs = 5000) => {
+  const start = Date.now()
+  while (!cond()) {
+    if (Date.now() - start > timeoutMs) throw new Error('timed out waiting')
+    await new Promise((resolve) => setTimeout(resolve, 5))
+  }
+}
