@@ -227,7 +227,7 @@ export class PgDatabase implements PlcDatabase {
     }))
   }
 
-  async lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null> {
+  async lastOpForDid(did: string): Promise<OperationsTableEntry | null> {
     const res = await this.db
       .selectFrom('operations')
       .selectAll()
@@ -236,7 +236,7 @@ export class PgDatabase implements PlcDatabase {
       .orderBy('createdAt', 'desc')
       .limit(1)
       .executeTakeFirst()
-    return res?.operation ?? null
+    return res ?? null
   }
 
   async exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]> {

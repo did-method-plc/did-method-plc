@@ -2,7 +2,6 @@ import { pipeline } from 'node:stream/promises'
 import express from 'express'
 import type { WebSocket } from 'ws'
 import { createWebSocketStream } from 'ws'
-import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error.js'
 import { handler } from './handler.js'
@@ -181,12 +180,12 @@ export const createRouter = (ctx: AppContext): express.Router => {
       if (!last) {
         throw new ServerError(404, `DID not registered: ${did}`)
       }
-      const data = plc.opToData(did, last)
+      const data = plc.opToData(did, last.operation)
       if (data === null) {
         throw new ServerError(404, `DID not available: ${did}`)
       }
       const doc = await plc.formatDidDoc(data)
-      res.setHeader('ETag', `"${await cidForCbor(last)}"`)
+      res.setHeader('ETag', `"${last.cid}"`)
       res.type('application/did+ld+json')
       res.send(JSON.stringify(doc))
     }),
@@ -202,11 +201,11 @@ export const createRouter = (ctx: AppContext): express.Router => {
       if (!last) {
         throw new ServerError(404, `DID not registered: ${did}`)
       }
-      const data = plc.opToData(did, last)
+      const data = plc.opToData(did, last.operation)
       if (data === null) {
         throw new ServerError(404, `DID not available: ${did}`)
       }
-      res.setHeader('ETag', `"${await cidForCbor(last)}"`)
+      res.setHeader('ETag', `"${last.cid}"`)
       res.json(data)
     }),
   )
@@ -255,8 +254,8 @@ export const createRouter = (ctx: AppContext): express.Router => {
       if (!last) {
         throw new ServerError(404, `DID not registered: ${did}`)
       }
-      res.setHeader('ETag', `"${await cidForCbor(last)}"`)
-      res.json(last)
+      res.setHeader('ETag', `"${last.cid}"`)
+      res.json(last.operation)
     }),
   )
 
