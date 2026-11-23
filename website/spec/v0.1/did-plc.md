@@ -1,6 +1,6 @@
 # `did:plc` Method Specification
 
-**Version:** v0.3.0 (December 2025)
+**Version:** v0.3.1 (November 2026)
 
 DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
 
@@ -177,6 +177,8 @@ To summarize the process of updating a new `did:plc` identifier:
 - if the HTTP status code is successful, the DID has been updated
 - the DID update may be nullified by a "rotation" operation during the recovery window (currently 72hr)
 
+Updates to an existing PLC identifier may use the `If-Match` HTTP header to prevent accidental rollbacks or clobbering. If the `If-Match` header includes a content hash (CID), it is matched against the current PLC op value, and the request will be rejected if not. If the `If-Match` header contains a wildcard (`*`), then the operation must be an update (not identifier creation).
+
 ### DID Deactivation
 
 To summarize the process of de-activating an existing `did:plc` identifier:
@@ -191,6 +193,8 @@ To summarize the process of de-activating an existing `did:plc` identifier:
 ### DID Resolution
 
 PLC DIDs are resolved to a DID document (JSON) by making simple HTTP GET request to the PLC server. The resolution endpoint is: `https://plc.directory/:did`
+
+The resolution HTTP response will include an `ETag` header containing the content hash (CID) of the current PLC operation. Note that this is different from a hash over the DID document itself.
 
 The PLC-specific state data (based on the most recent operation) can be fetched as a JSON object at: `https://plc.directory/:did/data`
 
@@ -429,6 +433,10 @@ A "DID PLC history explorer" web interface would make the public nature of the D
 It is conceivable that longer DID PLCs, with more of the SHA-256 characters, will be supported in the future. It is also conceivable that a different hash algorithm would be allowed. Any such changes would allow existing DIDs in their existing syntax to continue being used.
 
 ## Changelog
+
+### 2026-11-23 (v0.3.1)
+
+- Specify `ETag` and `If-Matches` HTTP headers
 
 ### 2025-12-04 (v0.3.0)
 
