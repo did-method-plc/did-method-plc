@@ -419,6 +419,38 @@ describe('PLC server', () => {
     }
   })
 
+  it('registers and renders a DID with an atproto KEM key', async () => {
+    const kemKey = await P256Keypair.create()
+    const did = await client.createDid({
+      signingKey: signingKey.did(),
+      kemKey: kemKey.did(),
+      handle: 'kem.test',
+      pds: atpPds,
+      rotationKeys: [rotationKey1.did()],
+      signer: rotationKey1,
+    })
+    const data = await client.getDocumentData(did)
+    expect(data.verificationMethods).toEqual({
+      atproto: signingKey.did(),
+      atproto_kem: kemKey.did(),
+    })
+    const doc = await client.getDocument(did)
+    expect(doc.verificationMethod.map((vm) => vm.id)).toEqual([
+      `${did}#atproto`,
+      `${did}#atproto_kem`,
+    ])
+  })
+
+  it("surfaces the directory's error message to client callers", async () => {
+    const unknownDid = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa'
+    const promise = client.getDocument(unknownDid)
+    await expect(promise).rejects.toThrow(PlcClientError)
+    await expect(promise).rejects.toMatchObject({
+      status: 404,
+      message: `DID not registered: ${unknownDid}`,
+    })
+  })
+
   it('healthcheck succeeds when database is available.', async () => {
     const res = await client.health()
     expect(res).toEqual({ version: '0.0.0' })
