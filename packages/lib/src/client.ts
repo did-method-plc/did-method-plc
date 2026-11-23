@@ -1,7 +1,5 @@
 import { check, cidForCbor } from '@atproto/common'
 import type { Keypair } from '@atproto/crypto'
-import type { AxiosError, AxiosRequestConfig } from 'axios'
-import axios from 'axios'
 import type { AtprotoOpOpts } from './operations.js'
 import {
   atprotoOp,
@@ -24,31 +22,60 @@ export type RequestOptions = {
   signal?: AbortSignal
 }
 
-export class Client {
-  constructor(public url: string) {}
+export type ClientOptions = {
+  /**
+   * The `fetch` implementation used for requests. Defaults to the global
+   * `fetch`, resolved at call time. Rejections from it (network failures,
+   * custom errors) propagate to the caller unchanged.
+   */
+  fetch?: typeof globalThis.fetch
+}
 
+export class Client {
+  private customFetch: typeof globalThis.fetch | undefined
+
+  constructor(
+    public url: string,
+    opts?: ClientOptions,
+  ) {
+    this.customFetch = opts?.fetch
+  }
+
+  /**
+   * Performs the request and reads a 2xx response with `read`. Failed requests
+   * reject with the fetch error as-is (not a `PlcClientError`); non-2xx
+   * responses reject with a `PlcClientError`. If the signal aborts at any
+   * point, including while a body is being read, the call rejects with the
+   * signal's reason.
+   */
   private async request<T>(
-    config: AxiosRequestConfig,
+    url: string,
+    init: RequestInit,
+    read: (res: Response) => Promise<T>,
     opts?: RequestOptions,
   ): Promise<T> {
     const signal = opts?.signal
+    // a local variable, so the default fetch is called unbound
+    const fetchFn = this.customFetch ?? globalThis.fetch
     try {
-      const res = await axios.request({ ...config, signal })
-      return res.data
+      const res = await fetchFn(url, { ...init, signal })
+      if (!res.ok) throw await errorFromResponse(res)
+      return await read(res)
     } catch (err) {
-      if (signal?.aborted && axios.isCancel(err)) {
+      if (signal?.aborted && !(err instanceof PlcClientError)) {
         throw signal.reason
       }
-      if (!axios.isAxiosError(err) || !err.response) {
-        // not an HTTP failure (refused, reset, DNS, ...): propagate unchanged
-        throw err
-      }
-      throw PlcClientError.fromAxiosError(err)
+      throw err
     }
   }
 
   private async makeGetReq<T>(url: string, opts?: RequestOptions): Promise<T> {
-    return this.request<T>({ method: 'GET', url }, opts)
+    return await this.request(
+      url,
+      { method: 'GET' },
+      async (res) => (await res.json()) as T,
+      opts,
+    )
   }
 
   async getDocument(
@@ -108,7 +135,16 @@ export class Client {
     opts?: RequestOptions,
   ): Promise<void> {
     await this.request(
-      { method: 'POST', url: this.postOpUrl(did), data: op },
+      this.postOpUrl(did),
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(op),
+      },
+      // release the connection without buffering an unused body
+      async (res) => {
+        await res.body?.cancel()
+      },
       opts,
     )
   }
@@ -123,9 +159,10 @@ export class Client {
     if (count !== undefined) {
       url.searchParams.append('count', count.toString(10))
     }
-    // read as text: axios would otherwise JSON-parse a single-line page
-    const data = await this.request<string>(
-      { method: 'GET', url: url.toString(), responseType: 'text' },
+    const data = await this.request(
+      url.toString(),
+      { method: 'GET' },
+      (res) => res.text(),
       opts,
     )
     const lines = data.split('\n').filter((l) => l.length > 0)
@@ -219,8 +256,9 @@ export class Client {
 }
 
 /**
- * A failed request to the PLC directory. `status` is the HTTP status of the
- * response.
+ * A non-2xx response from the PLC directory. `status` is the HTTP status of
+ * the response. Network failures are not wrapped: they reject with the error
+ * from `fetch`.
  */
 export class PlcClientError extends Error {
   override name: string = 'PlcClientError'
@@ -235,25 +273,6 @@ export class PlcClientError extends Error {
   ) {
     super(message, { cause: opts?.cause })
     this.headers = opts?.headers ?? {}
-  }
-
-  /** Only for errors that carry a response; any other error is rethrown. */
-  static fromAxiosError(err: AxiosError): PlcClientError {
-    const res = err.response
-    if (!res) throw err
-    const headers = flattenHeaders(res.headers)
-    const data = parseErrorBody(res.data, headers['content-type'])
-    const plcMessage =
-      data && typeof data === 'object' && 'message' in data
-        ? data.message
-        : undefined
-    const message =
-      typeof plcMessage === 'string' && plcMessage ? plcMessage : err.message
-    const opts = { headers, cause: err }
-    if (res.status === 409) {
-      return new PlcConflictError(data, message, opts)
-    }
-    return new PlcClientError(res.status, data, message, opts)
   }
 }
 
@@ -283,27 +302,31 @@ export class TombstonedDidError extends Error {
   }
 }
 
-const flattenHeaders = (headers: unknown): Record<string, string> => {
-  const flat: Record<string, string> = {}
-  if (!headers || typeof headers !== 'object') return flat
-  for (const [name, value] of Object.entries(headers)) {
-    if (value === undefined || value === null) continue
-    flat[name.toLowerCase()] = Array.isArray(value)
-      ? value.join(', ')
-      : String(value)
+const errorFromResponse = async (res: Response): Promise<PlcClientError> => {
+  const headers: Record<string, string> = {}
+  res.headers.forEach((value, name) => {
+    headers[name.toLowerCase()] = value
+  })
+  const text = await res.text()
+  let data: unknown = text
+  if (headers['content-type']?.includes('json')) {
+    try {
+      data = JSON.parse(text)
+    } catch {
+      // keep the raw text
+    }
   }
-  return flat
-}
-
-// a request made with responseType 'text' (export) leaves a JSON error body
-// unparsed
-const parseErrorBody = (data: unknown, contentType?: string): unknown => {
-  if (typeof data !== 'string' || !contentType?.includes('json')) return data
-  try {
-    return JSON.parse(data)
-  } catch {
-    return data
-  }
+  const plcMessage =
+    data && typeof data === 'object' && 'message' in data
+      ? data.message
+      : undefined
+  const message =
+    typeof plcMessage === 'string' && plcMessage
+      ? plcMessage
+      : `Request failed with status code ${res.status}`
+  const opts = { headers }
+  if (res.status === 409) return new PlcConflictError(data, message, opts)
+  return new PlcClientError(res.status, data, message, opts)
 }
 
 export default Client

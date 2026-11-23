@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import axios, { AxiosError } from 'axios'
 import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import type { CloseFn } from './_util.js'
@@ -286,8 +285,9 @@ describe('PLC server', () => {
   })
 
   it('exports the data set', async () => {
-    const res = await axios.get(`${client.url}/export`) // "legacy" non-sequenced export
-    const data = res.data.split('\n').map(JSON.parse)
+    // "legacy" non-sequenced export
+    const text = await (await fetch(`${client.url}/export`)).text()
+    const data = text.split('\n').map((line) => JSON.parse(line))
     expect(
       data.every((row: any) => check.is(row, plc.def.exportedOp)),
     ).toBeTruthy()
@@ -345,12 +345,17 @@ describe('PLC server', () => {
 
   it('disallows removal of valid operations.', async () => {
     const auditLog = await client.getAuditableLog(did1)
-    const promise = axios.post(`${client.url}/admin/removeInvalidOps`, {
-      adminSecret: TEST_ADMIN_SECRET,
-      did: did1,
-      cid: auditLog[0].cid,
+    const res = await fetch(`${client.url}/admin/removeInvalidOps`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        adminSecret: TEST_ADMIN_SECRET,
+        did: did1,
+        cid: auditLog[0].cid,
+      }),
     })
-    await expect(promise).rejects.toThrow(AxiosError)
+    expect(res.ok).toBe(false)
+    expect(res.status).toEqual(400)
   })
 
   it('allows invalid operations to be removed using adminSecret', async () => {
@@ -382,13 +387,17 @@ describe('PLC server', () => {
       .execute()
 
     // attempt removal
-    const removedOps = (
-      await axios.post(`${client.url}/admin/removeInvalidOps`, {
+    const removeRes = await fetch(`${client.url}/admin/removeInvalidOps`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
         adminSecret: TEST_ADMIN_SECRET,
         did: did,
         cid: res.cid,
-      })
-    ).data
+      }),
+    })
+    expect(removeRes.ok).toBe(true)
+    const removedOps = await removeRes.json()
     expect(removedOps).toEqual([res.operation]) // should return the removed op
   })
 
@@ -400,12 +409,10 @@ describe('PLC server', () => {
 
     try {
       for (const path of ['', '/data', '/log', '/log/audit', '/log/last']) {
-        const res = await axios.get(`${client.url}/${invalidDid}${path}`, {
-          validateStatus: () => true,
-        })
+        const res = await fetch(`${client.url}/${invalidDid}${path}`)
 
         expect(res.status).toEqual(400)
-        expect(res.data).toEqual({
+        expect(await res.json()).toEqual({
           message: `Resolution of non-PLC DIDs not supported: ${invalidDid}`,
         })
       }

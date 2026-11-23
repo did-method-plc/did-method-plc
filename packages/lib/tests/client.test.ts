@@ -1,8 +1,7 @@
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import * as http from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { once } from 'node:events'
-import axios, { type AxiosError } from 'axios'
 import { Secp256k1Keypair } from '@atproto/crypto'
 import {
   Client,
@@ -68,6 +67,7 @@ const isAbortError = (err: unknown) =>
   err instanceof Error && err.name === 'AbortError'
 
 afterEach(async () => {
+  vi.unstubAllGlobals()
   while (servers.length) await servers.pop()?.close()
 })
 
@@ -175,22 +175,34 @@ describe('plc client', () => {
       expect((err as PlcConflictError).message).toEqual(message)
     })
 
-    it('propagates a refused connection as the axios error', async () => {
+    it('propagates a refused connection as a TypeError', async () => {
       const plc = await mockPlc(hang)
       await plc.close()
       servers.pop()
       const err = await catchErr(plc.client.getDocument(did))
-      expect(axios.isAxiosError(err)).toBe(true)
-      expect((err as AxiosError).response).toBeUndefined()
+      expect(err).toBeInstanceOf(TypeError)
       expect(err).not.toBeInstanceOf(PlcClientError)
     })
 
-    it('propagates a dropped connection as the axios error', async () => {
+    it('propagates a dropped connection as a TypeError', async () => {
       const plc = await mockPlc((req) => req.socket.destroy())
       const err = await catchErr(plc.client.getDocument(did))
-      expect(axios.isAxiosError(err)).toBe(true)
-      expect((err as AxiosError).response).toBeUndefined()
+      expect(err).toBeInstanceOf(TypeError)
       expect(err).not.toBeInstanceOf(PlcClientError)
+    })
+
+    it('keeps a malformed JSON error body as text', async () => {
+      const plc = await mockPlc((_req, res) => {
+        res.writeHead(500, { 'content-type': 'application/json' })
+        res.end('{nope')
+      })
+      const err = (await catchErr(
+        plc.client.getDocument(did),
+      )) as PlcClientError
+      expect(err).toBeInstanceOf(PlcClientError)
+      expect(err.status).toEqual(500)
+      expect(err.data).toEqual('{nope')
+      expect(err.message).toMatch(/500/)
     })
 
     it('maps export failures too', async () => {
@@ -224,6 +236,110 @@ describe('plc client', () => {
         expect(err).toBeInstanceOf(TombstonedDidError)
         expect(plc.requests.map((r) => r.method)).toEqual(['GET'])
       })
+    })
+  })
+
+  describe('fetch', () => {
+    const docBody = { id: 'did:plc:mock' }
+    const docMock = () => mockPlc((_req, res) => json(res, 200, docBody))
+
+    it('uses a custom fetch', async () => {
+      const plc = await docMock()
+      const spy = vi.fn((...args: Parameters<typeof fetch>) =>
+        globalThis.fetch(...args),
+      )
+      const client = new Client(plc.client.url, { fetch: spy })
+      const doc = await client.getDocument(did)
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(String(spy.mock.calls[0][0])).toMatch(
+        new RegExp(`/${encodeURIComponent(did)}$`),
+      )
+      expect(doc).toEqual(docBody)
+    })
+
+    it('resolves the default fetch at call time', async () => {
+      const plc = await docMock()
+      const client = new Client(plc.client.url)
+      const stub = vi.fn(async () => Response.json(docBody))
+      vi.stubGlobal('fetch', stub)
+      expect(await client.getDocument(did)).toEqual(docBody)
+      expect(stub).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls the default fetch unbound', async () => {
+      const plc = await docMock()
+      const client = new Client(plc.client.url)
+      const receivers: unknown[] = []
+      vi.stubGlobal('fetch', function (this: unknown) {
+        receivers.push(this)
+        return Promise.resolve(Response.json(docBody))
+      })
+      await client.getDocument(did)
+      expect(receivers).toEqual([undefined])
+    })
+
+    it('propagates a custom fetch rejection unchanged', async () => {
+      const reason = { not: 'an error' }
+      const client = new Client('http://127.0.0.1:1', {
+        fetch: () => Promise.reject(reason),
+      })
+      await expect(client.getDocument(did)).rejects.toBe(reason)
+    })
+
+    it('sends ops as JSON', async () => {
+      const plc = await mockPlc((_req, res) => {
+        res.writeHead(200)
+        res.end()
+      })
+      await plc.client.sendOperation(did, lastOp)
+      expect(plc.requests).toHaveLength(1)
+      expect(plc.requests[0].method).toEqual('POST')
+      expect(JSON.parse(plc.requests[0].body)).toEqual(lastOp)
+    })
+
+    it('sets a JSON content-type on posted ops', async () => {
+      let contentType: string | undefined
+      const plc = await mockPlc((req, res) => {
+        contentType = req.headers['content-type']
+        res.writeHead(200)
+        res.end()
+      })
+      await plc.client.sendOperation(did, lastOp)
+      expect(contentType).toEqual('application/json')
+    })
+
+    it('resolves sendOperation on an empty 2xx body', async () => {
+      const plc = await mockPlc((_req, res) => {
+        res.writeHead(200)
+        res.end()
+      })
+      await expect(
+        plc.client.sendOperation(did, lastOp),
+      ).resolves.toBeUndefined()
+    })
+
+    it('resolves sendOperation on a non-empty 2xx body', async () => {
+      const plc = await mockPlc((_req, res) => json(res, 200, { ok: true }))
+      await expect(
+        plc.client.sendOperation(did, lastOp),
+      ).resolves.toBeUndefined()
+    })
+
+    it('cancels the unread 2xx body in sendOperation', async () => {
+      let cancelled = false
+      const body = new ReadableStream({
+        pull(controller) {
+          controller.enqueue(new TextEncoder().encode('{"ok":true}'))
+        },
+        cancel() {
+          cancelled = true
+        },
+      })
+      const client = new Client('http://plc.invalid', {
+        fetch: async () => new Response(body, { status: 200 }),
+      })
+      await expect(client.sendOperation(did, lastOp)).resolves.toBeUndefined()
+      expect(cancelled).toBe(true)
     })
   })
 
@@ -283,6 +399,88 @@ describe('plc client', () => {
   })
 
   describe('cancellation', () => {
+    describe('abort during the body read', () => {
+      const partial: Handler = (_req, res) => {
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.write('{"id":')
+      }
+
+      // headers arrive, then the body stream errors with a generic
+      // AbortError (not the signal's reason) when the signal aborts
+      const bodyAbortingFetch = (async (_url, init) => {
+        const signal = init?.signal
+        const body = new ReadableStream({
+          start(controller) {
+            signal?.addEventListener('abort', () =>
+              controller.error(new DOMException('aborted', 'AbortError')),
+            )
+          },
+        })
+        return new Response(body, {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
+      }) as typeof fetch
+
+      const abortSoon = (controller: AbortController, reason: unknown) =>
+        setTimeout(() => controller.abort(reason), 30)
+
+      it('rejects with the signal reason on a real partial body', async () => {
+        const plc = await mockPlc(partial)
+        const reason = new Error('custom reason')
+        const controller = new AbortController()
+        abortSoon(controller, reason)
+        await expect(
+          plc.client.getDocument(did, { signal: controller.signal }),
+        ).rejects.toBe(reason)
+      })
+
+      it('maps a generic body AbortError to the reason (json)', async () => {
+        const client = new Client('http://127.0.0.1:1', {
+          fetch: bodyAbortingFetch,
+        })
+        const reason = new Error('custom reason')
+        const controller = new AbortController()
+        abortSoon(controller, reason)
+        await expect(
+          client.getDocument(did, { signal: controller.signal }),
+        ).rejects.toBe(reason)
+      })
+
+      it('maps a generic body AbortError to the reason (export)', async () => {
+        const client = new Client('http://127.0.0.1:1', {
+          fetch: bodyAbortingFetch,
+        })
+        const reason = new Error('custom reason')
+        const controller = new AbortController()
+        abortSoon(controller, reason)
+        await expect(
+          client.export(0, 1, { signal: controller.signal }),
+        ).rejects.toBe(reason)
+      })
+
+      it('maps a generic body AbortError to the reason (error body)', async () => {
+        const failing = (async (_url, init) => {
+          const signal = init?.signal
+          const body = new ReadableStream({
+            start(controller) {
+              signal?.addEventListener('abort', () =>
+                controller.error(new DOMException('aborted', 'AbortError')),
+              )
+            },
+          })
+          return new Response(body, { status: 500 })
+        }) as typeof fetch
+        const client = new Client('http://127.0.0.1:1', { fetch: failing })
+        const reason = new Error('custom reason')
+        const controller = new AbortController()
+        abortSoon(controller, reason)
+        await expect(
+          client.getDocument(did, { signal: controller.signal }),
+        ).rejects.toBe(reason)
+      })
+    })
+
     const reads: [
       string,
       (c: Client, signal: AbortSignal) => Promise<unknown>,
