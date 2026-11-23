@@ -25,6 +25,8 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+      # the Version Packages PR is opened with GITHUB_TOKEN, so CI doesn't run on it
+      - run: pnpm --filter @did-plc/lib test
       - uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           publish-script: pnpm changeset publish
