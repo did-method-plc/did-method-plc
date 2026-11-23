@@ -1,10 +1,9 @@
 openapi: 3.0.0
 info:
   title: 'did:plc Directory Server API'
-  version: 0.1
+  version: 0.3.1
   contact:
-    name: 'Protocol Team at Bluesky'
-    email: 'protocol@blueskyweb.xyz'
+    name: 'PLC Maintainers'
     url: 'https://web.plc.directory'
   description: |
     DID PLC is a self-authenticating [DID](https://www.w3.org/TR/did-core/) which is strongly-consistent, recoverable, and allows for key rotation.
@@ -52,8 +51,8 @@ paths:
             resp.raise_for_status()
             print(resp.json())
     post:
-      description: 'Create new PLC Operation for the indicated DID'
-      operationId: CreatePlcOp
+      description: 'Submit PLC Operation for the indicated DID.\nThe "If-Match" request HTTP header may be used with wildcard ("*") or the current identifier PLC operation content hash (CID). "If-Match" must not be used when creating identifiers (submitting first operation)'
+      operationId: SubmitPlcOp
       parameters:
         - name: did
           in: path
