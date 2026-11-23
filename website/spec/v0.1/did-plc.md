@@ -24,7 +24,7 @@ Operations are signed and submitted to the central PLC directory server over an 
 
 A special operation type is a "tombstone", which clears all of the data fields and permanently deactivates the DID. Note that the usual recovery time window applies to tombstone operations.
 
-Note that `rotationKeys` and `verificationMethods` (signing keys) may have public keys which are re-used across many accounts. There is not necessarily a one-to-one mapping between a DID and either rotation keys or signing keys.
+Note that `rotationKeys` and `verificationMethods` (signing keys) may have public keys which are reused across many accounts. There is not necessarily a one-to-one mapping between a DID and either rotation keys or signing keys.
 
 Only `secp256k1` ("k256") and NIST P-256 ("p256") keys are currently supported for rotation keys, whereas `verificationMethods` keys can be any syntactically-valid `did:key`.
 
@@ -78,7 +78,7 @@ For signatures, the object is first encoded as DAG-CBOR _without_ the `sig` fiel
 
 2. The signature is canonicalized in "low-S" form. This means that if `s` is greater than or equal to half the EC group order constant, the value of `s` is replaced by `-s` (modulo the EC group order). This process is described for the secp256k1 curve as part of [Bitcoin BIP-0062](https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki), but this definition can be generalized to the NIST P-256 curve also.
 
-3. The `(r, s)` tuple is encoded to bytes in the same format as specified in the [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/sign#ecdsa) web API. This format is refered to by a variety of names, including "raw", "compact", "IEEE P1363". For secp256k1 and NIST P-256 curves, it is concretely: 32 big-endian bytes representing integer `r`, followed by 32 big-endian bytes representing integer `s`.
+3. The `(r, s)` tuple is encoded to bytes in the same format as specified in the [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/sign#ecdsa) web API. This format is referred to by a variety of names, including "raw", "compact", "IEEE P1363". For secp256k1 and NIST P-256 curves, it is concretely: 32 big-endian bytes representing integer `r`, followed by 32 big-endian bytes representing integer `s`.
 
 4. Those bytes are encoded as a string using `base64url` encoding, without equals-padding. Trailing padding bits MUST be set to zero, as described in [RFC 4648 section 3.5](https://www.rfc-editor.org/rfc/rfc4648.html#section-3.5)
 
@@ -138,7 +138,7 @@ The PLC server does not cross-validate `alsoKnownAs` or `service` entries in ope
 
 The timestamp metadata encoded in the PLC audit log could be cross-verified against network traffic or other information to de-anonymize account holders. It also makes the "identity creation date" public.
 
-If "rotation" and "signing" keys are re-used across multiple accounts, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
+If "rotation" and "signing" keys are reused across multiple accounts, it could reveal non-public identity details or relationships. For example, if two individuals cross-share rotation keys as a trusted backup, that information is public. If device-local recovery or signing keys are uniquely shared by two identifiers, that would indicate that those identities may actually be the same person.
 
 #### PLC Server Trust Model
 
