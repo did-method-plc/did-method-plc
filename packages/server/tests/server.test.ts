@@ -4,7 +4,7 @@ import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import type { CloseFn } from './_util.js'
 import { runTestServer, TEST_ADMIN_SECRET } from './_util.js'
-import { check } from '@atproto/common'
+import { check, cidForCbor } from '@atproto/common'
 import type { PgDatabase } from '../src/index.js'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
@@ -358,20 +358,42 @@ describe('PLC server', () => {
     expect(doc.alsoKnownAs).toEqual(['at://bob2.example.com'])
   })
 
-  it('rejects If-Match values other than *', async () => {
+  it('updates a did with If-Match: <etag>', async () => {
+    const res = await axios.get(`${client.url}/${did2}/log/last`)
+    const etag = res.headers.etag
+    expect(etag).toEqual(`"${await cidForCbor(res.data)}"`)
+    const res2 = await axios.get(client.postOpUrl(did2))
+    expect(res2.headers.etag).toEqual(etag)
+
+    const op = await plc.updateHandleOp(
+      res.data,
+      rotationKey3,
+      'at://bob3.example.com',
+    )
+    await axios.post(client.postOpUrl(did2), op, {
+      headers: { 'if-match': etag },
+    })
+
+    const doc = await client.getDocumentData(did2)
+    expect(doc.alsoKnownAs).toEqual(['at://bob3.example.com'])
+  })
+
+  it('rejects an update when If-Match is not the most recent op', async () => {
+    const ops = await client.getOperationLog(did2)
+    const staleEtag = `"${await cidForCbor(ops.at(-2))}"`
     const lastOp = await client.ensureLastOp(did2)
     const op = await plc.updateHandleOp(
       lastOp,
       rotationKey3,
-      'at://bob3.example.com',
+      'at://bob4.example.com',
     )
     const promise = axios.post(client.postOpUrl(did2), op, {
-      headers: { 'if-match': '"abc"' },
+      headers: { 'if-match': staleEtag },
     })
     await expect(promise).rejects.toThrow(AxiosError)
 
     const doc = await client.getDocumentData(did2)
-    expect(doc.alsoKnownAs).toEqual(['at://bob2.example.com'])
+    expect(doc.alsoKnownAs).toEqual(['at://bob3.example.com'])
   })
 
   it('does not create a did with If-Match: *', async () => {

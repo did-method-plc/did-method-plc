@@ -2,6 +2,7 @@ import { pipeline } from 'node:stream/promises'
 import express from 'express'
 import type { WebSocket } from 'ws'
 import { createWebSocketStream } from 'ws'
+import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from './error.js'
 import { handler } from './handler.js'
@@ -185,6 +186,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
         throw new ServerError(404, `DID not available: ${did}`)
       }
       const doc = await plc.formatDidDoc(data)
+      res.setHeader('ETag', `"${await cidForCbor(last)}"`)
       res.type('application/did+ld+json')
       res.send(JSON.stringify(doc))
     }),
@@ -204,6 +206,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
       if (data === null) {
         throw new ServerError(404, `DID not available: ${did}`)
       }
+      res.setHeader('ETag', `"${await cidForCbor(last)}"`)
       res.json(data)
     }),
   )
@@ -252,12 +255,13 @@ export const createRouter = (ctx: AppContext): express.Router => {
       if (!last) {
         throw new ServerError(404, `DID not registered: ${did}`)
       }
+      res.setHeader('ETag', `"${await cidForCbor(last)}"`)
       res.json(last)
     }),
   )
 
   // Update or create a DID doc
-  // With "If-Match: *", only update an existing DID doc
+  // With If-Match, only update an existing DID doc
   router.post(
     '/:did',
     handler(async function (req, res) {
@@ -265,18 +269,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
       const op = req.body
       try {
         assertValidIncomingOp(op)
-        const ifMatch = req.get('if-match')
-        if (ifMatch !== undefined) {
-          // we do not serve ETags, so no other If-Match value can match
-          if (ifMatch !== '*') {
-            throw new ServerError(412, 'Only "If-Match: *" is supported')
-          }
-          const last = await ctx.db.lastOpForDid(did)
-          if (!last) {
-            throw new ServerError(412, `DID not registered: ${did}`)
-          }
-        }
-        await ctx.db.validateAndAddOp(did, op, new Date())
+        await ctx.db.validateAndAddOp(did, op, new Date(), req.get('if-match'))
       } catch (err) {
         recordRejectedOperation(err)
         throw err

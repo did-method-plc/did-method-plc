@@ -8,6 +8,7 @@ export interface PlcDatabase {
     did: string,
     proposed: plc.CompatibleOpOrTombstone,
     proposedDate: Date,
+    ifMatch?: string,
   ): Promise<void>
   opsForDid(did: string): Promise<plc.CompatibleOpOrTombstone[]>
   indexedOpsForDid(

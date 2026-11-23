@@ -1,6 +1,7 @@
 import { cidForCbor } from '@atproto/common'
 import * as plc from '@did-plc/lib'
 import { ServerError } from '../error.js'
+import { enforceIfMatch } from '../constraints.js'
 import type { OperationsTableEntry, PlcDatabase } from './types.js'
 
 type Contents = Record<string, plc.IndexedOperation[]>
@@ -23,9 +24,11 @@ export class MockDatabase implements PlcDatabase {
     did: string,
     proposed: plc.OpOrTombstone,
     proposedDate: Date,
+    ifMatch?: string,
   ): Promise<void> {
     this.contents[did] ??= []
     const opsBefore = this.contents[did]
+    enforceIfMatch(opsBefore, ifMatch)
     // throws if invalid
     const { nullified } = await plc.assureValidNextOp(
       did,
