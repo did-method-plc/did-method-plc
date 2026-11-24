@@ -436,7 +436,7 @@ It is conceivable that longer DID PLCs, with more of the SHA-256 characters, wil
 
 ### 2026-11-23 (v0.3.1)
 
-- Specify `ETag` and `If-Matches` HTTP headers
+- Specify `ETag` and `If-Match` HTTP headers
 
 ### 2025-12-04 (v0.3.0)
 
