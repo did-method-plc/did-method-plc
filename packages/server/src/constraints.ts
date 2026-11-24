@@ -198,7 +198,7 @@ export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
 }
 
 // The ETag for a DID is the CID of its most recent operation.
-// "If-Match: *" matches any registered DID.
+// "If-Match: *" matches any any CID and therefor just ensures the DID is a registered DID.
 export const enforceIfMatch = (
   ops: plc.IndexedOperation[],
   ifMatch: string | undefined,
