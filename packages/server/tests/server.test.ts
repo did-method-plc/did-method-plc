@@ -3,7 +3,7 @@ import { P256Keypair } from '@atproto/crypto'
 import * as plc from '@did-plc/lib'
 import type { CloseFn } from './_util.js'
 import { runTestServer, TEST_ADMIN_SECRET } from './_util.js'
-import { check } from '@atproto/common'
+import { check, cidForCbor } from '@atproto/common'
 import type { PgDatabase } from '../src/index.js'
 import { didForCreateOp, PlcClientError } from '@did-plc/lib'
 
@@ -341,6 +341,78 @@ describe('PLC server', () => {
     const did = await didForCreateOp(badOp as any)
     const attempt = client.sendOperation(did, badOp as any)
     await expect(attempt).rejects.toThrow()
+  })
+
+  const postWithIfMatch = (did: string, op: unknown, ifMatch: string) =>
+    fetch(client.postOpUrl(did), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'if-match': ifMatch },
+      body: JSON.stringify(op),
+    })
+
+  it('updates a did with If-Match: *', async () => {
+    const lastOp = await client.ensureLastOp(did2)
+    const op = await plc.updateHandleOp(
+      lastOp,
+      rotationKey3,
+      'at://bob2.example.com',
+    )
+    const res = await postWithIfMatch(did2, op, '*')
+    expect(res.status).toEqual(200)
+
+    const doc = await client.getDocumentData(did2)
+    expect(doc.alsoKnownAs).toEqual(['at://bob2.example.com'])
+  })
+
+  it('updates a did with If-Match: <etag>', async () => {
+    const res = await fetch(`${client.url}/${did2}/log/last`)
+    const lastOp = await res.json()
+    const etag = `"${await cidForCbor(lastOp)}"`
+    expect(res.headers.get('etag')).toEqual(etag)
+    const res2 = await fetch(client.postOpUrl(did2))
+    expect(res2.headers.get('etag')).toEqual(etag)
+
+    const op = await plc.updateHandleOp(
+      lastOp,
+      rotationKey3,
+      'at://bob3.example.com',
+    )
+    const res3 = await postWithIfMatch(did2, op, etag)
+    expect(res3.status).toEqual(200)
+
+    const doc = await client.getDocumentData(did2)
+    expect(doc.alsoKnownAs).toEqual(['at://bob3.example.com'])
+  })
+
+  it('rejects an update when If-Match is not the most recent op', async () => {
+    const ops = await client.getOperationLog(did2)
+    const staleEtag = `"${await cidForCbor(ops.at(-2))}"`
+    const lastOp = await client.ensureLastOp(did2)
+    const op = await plc.updateHandleOp(
+      lastOp,
+      rotationKey3,
+      'at://bob4.example.com',
+    )
+    const res = await postWithIfMatch(did2, op, staleEtag)
+    expect(res.status).toEqual(412)
+
+    const doc = await client.getDocumentData(did2)
+    expect(doc.alsoKnownAs).toEqual(['at://bob3.example.com'])
+  })
+
+  it('does not create a did with If-Match: *', async () => {
+    const { op, did } = await plc.createOp({
+      signingKey: signingKey.did(),
+      rotationKeys: [rotationKey1.did()],
+      handle: handle1,
+      pds: atpPds,
+      signer: rotationKey1,
+    })
+    const res = await postWithIfMatch(did, op, '*')
+    expect(res.status).toEqual(412)
+
+    const promise2 = client.getDocumentData(did)
+    await expect(promise2).rejects.toThrow(PlcClientError)
   })
 
   it('disallows removal of valid operations.', async () => {

@@ -196,3 +196,27 @@ export const enforceOpsRateLimit = (ops: plc.IndexedOperation[]) => {
     }
   }
 }
+
+// The ETag for a DID is the CID of its most recent operation.
+// "If-Match: *" matches any any CID and therefor just ensures the DID is a registered DID.
+export const enforceIfMatch = (
+  ops: plc.IndexedOperation[],
+  ifMatch: string | undefined,
+) => {
+  if (ifMatch === undefined) {
+    return
+  }
+  const head = ops.at(-1)
+  if (!head) {
+    throw new ServerError(412, 'DID not registered')
+  }
+  if (ifMatch === '*') {
+    return
+  }
+  if (ifMatch !== `"${head.cid.toString()}"`) {
+    throw new ServerError(
+      412,
+      'If-Match does not match the most recent operation',
+    )
+  }
+}

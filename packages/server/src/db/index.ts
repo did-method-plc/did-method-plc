@@ -11,7 +11,7 @@ import type {
   OperationsTableEntry,
   PlcDatabase,
 } from './types.js'
-import { enforceOpsRateLimit } from '../constraints.js'
+import { enforceIfMatch, enforceOpsRateLimit } from '../constraints.js'
 
 // pg is CJS and its named exports are not statically detectable by
 // cjs-module-lexer, so `import { Pool } from 'pg'` fails under Node's ESM
@@ -110,8 +110,12 @@ export class PgDatabase implements PlcDatabase {
     did: string,
     proposed: plc.CompatibleOpOrTombstone,
     proposedDate: Date,
+    ifMatch?: string,
   ): Promise<void> {
     const ops = await this.indexedOpsForDid(did)
+    // checked here rather than in the route so it uses the same ops as validation,
+    // which the prev check in the transaction below guards against concurrent writes
+    enforceIfMatch(ops, ifMatch)
     // throws if invalid
     const { nullified, prev } = await plc.assureValidNextOp(
       did,
@@ -223,7 +227,7 @@ export class PgDatabase implements PlcDatabase {
     }))
   }
 
-  async lastOpForDid(did: string): Promise<plc.CompatibleOpOrTombstone | null> {
+  async lastOpForDid(did: string): Promise<OperationsTableEntry | null> {
     const res = await this.db
       .selectFrom('operations')
       .selectAll()
@@ -232,7 +236,7 @@ export class PgDatabase implements PlcDatabase {
       .orderBy('createdAt', 'desc')
       .limit(1)
       .executeTakeFirst()
-    return res?.operation ?? null
+    return res ?? null
   }
 
   async exportOps(count: number, after?: Date): Promise<plc.ExportedOp[]> {

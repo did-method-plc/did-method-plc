@@ -180,11 +180,12 @@ export const createRouter = (ctx: AppContext): express.Router => {
       if (!last) {
         throw new ServerError(404, `DID not registered: ${did}`)
       }
-      const data = plc.opToData(did, last)
+      const data = plc.opToData(did, last.operation)
       if (data === null) {
         throw new ServerError(404, `DID not available: ${did}`)
       }
       const doc = await plc.formatDidDoc(data)
+      res.setHeader('ETag', `"${last.cid}"`)
       res.type('application/did+ld+json')
       res.send(JSON.stringify(doc))
     }),
@@ -200,10 +201,11 @@ export const createRouter = (ctx: AppContext): express.Router => {
       if (!last) {
         throw new ServerError(404, `DID not registered: ${did}`)
       }
-      const data = plc.opToData(did, last)
+      const data = plc.opToData(did, last.operation)
       if (data === null) {
         throw new ServerError(404, `DID not available: ${did}`)
       }
+      res.setHeader('ETag', `"${last.cid}"`)
       res.json(data)
     }),
   )
@@ -252,11 +254,13 @@ export const createRouter = (ctx: AppContext): express.Router => {
       if (!last) {
         throw new ServerError(404, `DID not registered: ${did}`)
       }
-      res.json(last)
+      res.setHeader('ETag', `"${last.cid}"`)
+      res.json(last.operation)
     }),
   )
 
   // Update or create a DID doc
+  // With If-Match, only update an existing DID doc
   router.post(
     '/:did',
     handler(async function (req, res) {
@@ -264,7 +268,7 @@ export const createRouter = (ctx: AppContext): express.Router => {
       const op = req.body
       try {
         assertValidIncomingOp(op)
-        await ctx.db.validateAndAddOp(did, op, new Date())
+        await ctx.db.validateAndAddOp(did, op, new Date(), req.get('if-match'))
       } catch (err) {
         recordRejectedOperation(err)
         throw err
