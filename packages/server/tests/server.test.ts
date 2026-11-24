@@ -343,6 +343,13 @@ describe('PLC server', () => {
     await expect(attempt).rejects.toThrow()
   })
 
+  const postWithIfMatch = (did: string, op: unknown, ifMatch: string) =>
+    fetch(client.postOpUrl(did), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'if-match': ifMatch },
+      body: JSON.stringify(op),
+    })
+
   it('updates a did with If-Match: *', async () => {
     const lastOp = await client.ensureLastOp(did2)
     const op = await plc.updateHandleOp(
@@ -350,29 +357,28 @@ describe('PLC server', () => {
       rotationKey3,
       'at://bob2.example.com',
     )
-    await axios.post(client.postOpUrl(did2), op, {
-      headers: { 'if-match': '*' },
-    })
+    const res = await postWithIfMatch(did2, op, '*')
+    expect(res.status).toEqual(200)
 
     const doc = await client.getDocumentData(did2)
     expect(doc.alsoKnownAs).toEqual(['at://bob2.example.com'])
   })
 
   it('updates a did with If-Match: <etag>', async () => {
-    const res = await axios.get(`${client.url}/${did2}/log/last`)
-    const etag = res.headers.etag
-    expect(etag).toEqual(`"${await cidForCbor(res.data)}"`)
-    const res2 = await axios.get(client.postOpUrl(did2))
-    expect(res2.headers.etag).toEqual(etag)
+    const res = await fetch(`${client.url}/${did2}/log/last`)
+    const lastOp = await res.json()
+    const etag = `"${await cidForCbor(lastOp)}"`
+    expect(res.headers.get('etag')).toEqual(etag)
+    const res2 = await fetch(client.postOpUrl(did2))
+    expect(res2.headers.get('etag')).toEqual(etag)
 
     const op = await plc.updateHandleOp(
-      res.data,
+      lastOp,
       rotationKey3,
       'at://bob3.example.com',
     )
-    await axios.post(client.postOpUrl(did2), op, {
-      headers: { 'if-match': etag },
-    })
+    const res3 = await postWithIfMatch(did2, op, etag)
+    expect(res3.status).toEqual(200)
 
     const doc = await client.getDocumentData(did2)
     expect(doc.alsoKnownAs).toEqual(['at://bob3.example.com'])
@@ -387,10 +393,8 @@ describe('PLC server', () => {
       rotationKey3,
       'at://bob4.example.com',
     )
-    const promise = axios.post(client.postOpUrl(did2), op, {
-      headers: { 'if-match': staleEtag },
-    })
-    await expect(promise).rejects.toThrow(AxiosError)
+    const res = await postWithIfMatch(did2, op, staleEtag)
+    expect(res.status).toEqual(412)
 
     const doc = await client.getDocumentData(did2)
     expect(doc.alsoKnownAs).toEqual(['at://bob3.example.com'])
@@ -404,10 +408,8 @@ describe('PLC server', () => {
       pds: atpPds,
       signer: rotationKey1,
     })
-    const promise = axios.post(client.postOpUrl(did), op, {
-      headers: { 'if-match': '*' },
-    })
-    await expect(promise).rejects.toThrow(AxiosError)
+    const res = await postWithIfMatch(did, op, '*')
+    expect(res.status).toEqual(412)
 
     const promise2 = client.getDocumentData(did)
     await expect(promise2).rejects.toThrow(PlcClientError)
