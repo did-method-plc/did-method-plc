@@ -89,7 +89,7 @@ describe('PLC server', () => {
     handle1 = 'at://ali.example2.com'
     atpPds = 'https://example2.com'
 
-    await client.updateAtprotoKey(did1, rotationKey1, signingKey.did())
+    await client.updateAtprotoSigningKey(did1, rotationKey1, signingKey.did())
     await client.updateRotationKeys(did1, rotationKey1, [
       newRotationKey.did(),
       rotationKey2.did(),
@@ -122,12 +122,12 @@ describe('PLC server', () => {
 
     // Note: atproto itself does not currently support ed25519 keys, but PLC
     // does not have opinions about atproto (or other services!)
-    await client.updateAtprotoKey(did2, rotationKey3, newSigningKey)
+    await client.updateAtprotoSigningKey(did2, rotationKey3, newSigningKey)
 
     // a BLS12-381 key
     const exoticSigningKeyFromTheFuture =
       'did:key:zUC7K4ndUaGZgV7Cp2yJy6JtMoUHY6u7tkcSYUvPrEidqBmLCTLmi6d5WvwnUqejscAkERJ3bfjEiSYtdPkRSE8kSa11hFBr4sTgnbZ95SJj19PN2jdvJjyzpSZgxkyyxNnBNnY'
-    await client.updateAtprotoKey(
+    await client.updateAtprotoSigningKey(
       did2,
       rotationKey3,
       exoticSigningKeyFromTheFuture,
@@ -146,19 +146,19 @@ describe('PLC server', () => {
   })
 
   it('does not allow syntactically invalid verificationMethod keys', async () => {
-    const promise1 = client.updateAtprotoKey(
+    const promise1 = client.updateAtprotoSigningKey(
       did2,
       rotationKey3,
       'did:key:BJV2WY5DJMJQXGZJANFZSAYLXMVZW63LFEEQFY3ZP', // not b58 (b32!)
     )
     await expect(promise1).rejects.toThrow(PlcClientError)
-    const promise2 = client.updateAtprotoKey(
+    const promise2 = client.updateAtprotoSigningKey(
       did2,
       rotationKey3,
       'did:banana', // a malformed did:key
     )
     await expect(promise2).rejects.toThrow(PlcClientError)
-    const promise3 = client.updateAtprotoKey(
+    const promise3 = client.updateAtprotoSigningKey(
       did2,
       rotationKey3,
       'blah', // an even more malformed did:key
@@ -167,7 +167,7 @@ describe('PLC server', () => {
   })
 
   it('does not allow unreasonably long verificationMethod keys', async () => {
-    const promise = client.updateAtprotoKey(
+    const promise = client.updateAtprotoSigningKey(
       did2,
       rotationKey3,
       'did:key:z41vu8qtWtp8XRJ9Te5QhkyzU9ByBbiw7bZHKXDjZ8iYorixqZQmEZpxgVSteYirYWMBjqQuEbMYTDsCzXXCAanCSH2xG2cwpbCWGZ2coY2PnhbrDVo7QghsAHpm2X5zsRRwDLyUcm9MTNQAZuRs2B22ygQw3UwkKLA7PZ9ZQ9wMHppmkoaBapmUGaxRNjp1Mt4zxrm9RbEx8FiK3ANBL1fsjggNqvkKpbj6MjntRScPQnJCes9Vt1cFe3iwNP7Ya9RfbaKsVi1eothvSBcbWoouHActGeakHgqFLj1JpbkP7PL3hGGSWLQbXxzmdrfzBCYAtiUxGRvpf3JiaNA2WYbJTh58bzx',
@@ -184,7 +184,7 @@ describe('PLC server', () => {
 
   it('rejects on bad updates', async () => {
     const newKey = await P256Keypair.create()
-    const operation = client.updateAtprotoKey(did1, newKey, newKey.did())
+    const operation = client.updateAtprotoSigningKey(did1, newKey, newKey.did())
     await expect(operation).rejects.toThrow()
   })
 
@@ -202,7 +202,10 @@ describe('PLC server', () => {
       rotationKey1.did(),
       newKey.did(),
     ])
-    await client.sendOperation(did1, op)
+    await expect(client.sendOperation(did1, op)).rejects.toBeInstanceOf(
+      plc.PlcPrevMismatchError,
+    )
+    await client.sendOperation(did1, op, { ignorePrevMismatch: true })
 
     rotationKey2 = newKey
 
@@ -261,7 +264,7 @@ describe('PLC server', () => {
     await Promise.all(
       keys.map(async (key) => {
         try {
-          await client.updateAtprotoKey(did1, rotationKey1, key.did())
+          await client.updateAtprotoSigningKey(did1, rotationKey1, key.did())
           successes++
         } catch {
           failures++

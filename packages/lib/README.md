@@ -56,7 +56,7 @@ If no `fetch` is given, the global `fetch` is used.
 
 ### Errors
 
-- A non-2xx response rejects with `PlcClientError`, which has `status`, `headers`, and `data`. A 409 is a `PlcConflictError`.
+- A non-2xx response rejects with `PlcClientError`, which has `status`, `headers`, and `data`. A 409 is a `PlcConflictError`; a 412 is a `PlcPrevMismatchError`.
 - Network failures reject with the error from `fetch` itself (usually a `TypeError`).
 - Calls made with `{ signal }` reject with the signal's reason when aborted.
 
