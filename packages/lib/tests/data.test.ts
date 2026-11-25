@@ -96,7 +96,7 @@ describe('plc did data', () => {
 
   it('rotates signingKey', async () => {
     const newSigningKey = await Secp256k1Keypair.create()
-    const op = await operations.updateAtprotoKeyOp(
+    const op = await operations.updateAtprotoSigningKeyOp(
       lastOp(),
       rotationKey1,
       newSigningKey.did(),

@@ -2,11 +2,14 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import * as http from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { once } from 'node:events'
-import { Secp256k1Keypair } from '@atproto/crypto'
+import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import {
   Client,
+  type MutationOptions,
+  type RequestOptions,
   PlcClientError,
   PlcConflictError,
+  PlcPrevMismatchError,
   TombstonedDidError,
 } from '../src/index.js'
 import * as operations from '../src/operations.js'
@@ -157,9 +160,10 @@ describe('plc client', () => {
       const err = (await catchErr(
         plc.client.getDocument(did),
       )) as PlcClientError
-      expect(err.headers['x-custom']).toEqual('yes')
-      expect(err.headers['content-type']).toMatch(/application\/json/)
-      expect(err.headers['retry-after']).toEqual('120')
+      expect(err.headers).toBeInstanceOf(Headers)
+      expect(err.headers.get('X-Custom')).toEqual('yes')
+      expect(err.headers.get('content-type')).toMatch(/application\/json/)
+      expect(err.headers.get('retry-after')).toEqual('120')
     })
 
     it('maps a 409 to PlcConflictError', async () => {
@@ -170,9 +174,32 @@ describe('plc client', () => {
       })
       const err = await catchErr(plc.client.updateHandle(did, key, 'x.test'))
       expect(err).toBeInstanceOf(PlcConflictError)
+      expect(err).not.toBeInstanceOf(PlcPrevMismatchError)
       expect(err).toBeInstanceOf(PlcClientError)
       expect((err as PlcConflictError).status).toEqual(409)
       expect((err as PlcConflictError).message).toEqual(message)
+    })
+
+    it.each([
+      'If-Match does not match the most recent operation',
+      'DID not registered',
+    ])('maps a 412 to PlcPrevMismatchError: %s', async (message) => {
+      const plc = await mockPlc((req, res) => {
+        if (req.method !== 'POST') return json(res, 200, lastOp)
+        res.setHeader('x-custom', 'yes')
+        return json(res, 412, { message })
+      })
+      const err = await catchErr(plc.client.updateHandle(did, key, 'x.test'))
+      expect(err).toBeInstanceOf(PlcPrevMismatchError)
+      expect(err).toBeInstanceOf(PlcClientError)
+      expect(err).not.toBeInstanceOf(PlcConflictError)
+      const mismatch = err as PlcPrevMismatchError
+      expect(mismatch.name).toEqual('PlcPrevMismatchError')
+      expect(mismatch.status).toEqual(412)
+      expect(mismatch.message).toEqual(message)
+      expect(mismatch.data).toEqual({ message })
+      expect(mismatch.headers).toBeInstanceOf(Headers)
+      expect(mismatch.headers.get('x-custom')).toEqual('yes')
     })
 
     it('propagates a refused connection as a TypeError', async () => {
@@ -343,9 +370,208 @@ describe('plc client', () => {
     })
   })
 
+  describe('headers', () => {
+    const calls: [
+      string,
+      (c: Client, opts: RequestOptions) => Promise<unknown>,
+    ][] = [
+      ['getDocument', (c, opts) => c.getDocument(did, opts)],
+      ['getDocumentData', (c, opts) => c.getDocumentData(did, opts)],
+      ['getOperationLog', (c, opts) => c.getOperationLog(did, opts)],
+      ['getAuditableLog', (c, opts) => c.getAuditableLog(did, opts)],
+      ['getLastOp', (c, opts) => c.getLastOp(did, opts)],
+      ['ensureLastOp', (c, opts) => c.ensureLastOp(did, opts)],
+      ['export', (c, opts) => c.export(0, 10, opts)],
+      ['health', (c, opts) => c.health(opts)],
+      ['sendOperation', (c, opts) => c.sendOperation(did, lastOp, opts)],
+      [
+        'createDid',
+        (c, opts) =>
+          c.createDid(
+            {
+              signingKey: key.did(),
+              rotationKeys: [key.did()],
+              handle: 'alice.test',
+              pds: 'https://pds.test',
+              signer: key,
+            },
+            opts,
+          ),
+      ],
+    ]
+
+    for (const [name, call] of calls) {
+      it(`${name} merges default and request headers without leaking overrides`, async () => {
+        const requests: Headers[] = []
+        const defaults = new Headers({
+          authorization: 'Bearer default',
+          'x-default': 'yes',
+        })
+        const client = new Client('https://plc.invalid', {
+          headers: defaults,
+          fetch: async (_url, init) => {
+            requests.push(new Headers(init?.headers))
+            return Response.json(lastOp)
+          },
+        })
+        const headers: HeadersInit[] = [
+          { Authorization: 'Bearer record', 'x-request': 'yes' },
+          [
+            ['Authorization', 'Bearer tuples'],
+            ['x-request', 'yes'],
+          ],
+          new Headers({ authorization: 'Bearer headers', 'x-request': 'yes' }),
+        ]
+        for (const override of headers) {
+          await call(client, { headers: override })
+        }
+        await call(client, {})
+        expect(requests.map((h) => h.get('authorization'))).toEqual([
+          'Bearer record',
+          'Bearer tuples',
+          'Bearer headers',
+          'Bearer default',
+        ])
+        expect(requests.map((h) => h.get('x-default'))).toEqual([
+          'yes',
+          'yes',
+          'yes',
+          'yes',
+        ])
+        expect(requests.map((h) => h.get('x-request'))).toEqual([
+          'yes',
+          'yes',
+          'yes',
+          null,
+        ])
+        expect(defaults.get('authorization')).toEqual('Bearer default')
+      })
+    }
+  })
+
+  describe('mutations', () => {
+    const updates: [
+      string,
+      (c: Client, opts: MutationOptions) => Promise<void>,
+    ][] = [
+      ['updateData', (c, opts) => c.updateData(did, key, (op) => op, opts)],
+      [
+        'updateAtprotoSigningKey',
+        (c, opts) => c.updateAtprotoSigningKey(did, key, key.did(), opts),
+      ],
+      [
+        'updateAtprotoKemKey',
+        (c, opts) => c.updateAtprotoKemKey(did, key, key.did(), opts),
+      ],
+      [
+        'updateHandle',
+        (c, opts) => c.updateHandle(did, key, 'alice.test', opts),
+      ],
+      [
+        'updatePds',
+        (c, opts) => c.updatePds(did, key, 'https://pds.test', opts),
+      ],
+      [
+        'updateRotationKeys',
+        (c, opts) => c.updateRotationKeys(did, key, [key.did()], opts),
+      ],
+      ['tombstone', (c, opts) => c.tombstone(did, key, opts)],
+      [
+        'sendOperation',
+        async (c, opts) => {
+          const op = await operations.updateHandleOp(lastOp, key, 'alice.test')
+          await c.sendOperation(did, op, opts)
+        },
+      ],
+    ]
+
+    for (const [name, call] of updates) {
+      for (const ignorePrevMismatch of [undefined, false, true]) {
+        it(`${name} posts with If-Match (ignorePrevMismatch: ${ignorePrevMismatch})`, async () => {
+          const requests: { init?: RequestInit; headers: Headers }[] = []
+          const client = new Client('https://plc.invalid', {
+            headers: { authorization: 'Bearer default', 'If-Match': 'default' },
+            fetch: async (_url, init) => {
+              requests.push({ init, headers: new Headers(init?.headers) })
+              return init?.method === 'POST'
+                ? new Response(null)
+                : Response.json(lastOp)
+            },
+          })
+          await call(client, {
+            ignorePrevMismatch,
+            headers: {
+              'x-request': 'yes',
+              'IF-MATCH': 'override',
+              'content-type': 'text/plain',
+            },
+          })
+          const posted = requests.at(-1)!
+          expect(posted.init?.method).toEqual('POST')
+          const op = JSON.parse(posted.init?.body as string)
+          expect(posted.headers.get('if-match')).toEqual(
+            ignorePrevMismatch ? '*' : `"${op.prev}"`,
+          )
+          expect(posted.headers.get('content-type')).toEqual('application/json')
+          for (const request of requests) {
+            expect(request.headers.get('authorization')).toEqual(
+              'Bearer default',
+            )
+            expect(request.headers.get('x-request')).toEqual('yes')
+          }
+        })
+      }
+    }
+
+    it('sends no If-Match on a genesis operation', async () => {
+      const fetch = vi.fn<typeof globalThis.fetch>(
+        async () => new Response(null),
+      )
+      const client = new Client('https://plc.invalid', { fetch })
+      await client.sendOperation(did, lastOp)
+      await client.sendOperation(did, lastOp, { ignorePrevMismatch: true })
+      for (const [, init] of fetch.mock.calls) {
+        expect(new Headers(init?.headers).has('if-match')).toBe(false)
+      }
+    })
+
+    it.each(['signing', 'kem'] as const)(
+      'updates the %s key while preserving other verification methods',
+      async (kind) => {
+        const kemKey = await P256Keypair.create()
+        const replacement = await (kind === 'kem'
+          ? P256Keypair.create()
+          : Secp256k1Keypair.create())
+        const previous = await operations.createAtprotoUpdateOp(lastOp, key, {
+          kemKey: kemKey.did(),
+          verificationMethods: { other: key.did() },
+        })
+        let posted: t.Operation | undefined
+        const client = new Client('https://plc.invalid', {
+          fetch: async (_url, init) => {
+            if (init?.method !== 'POST') return Response.json(previous)
+            posted = JSON.parse(init.body as string)
+            return new Response(null)
+          },
+        })
+        if (kind === 'signing') {
+          await client.updateAtprotoSigningKey(did, key, replacement.did())
+        } else {
+          await client.updateAtprotoKemKey(did, key, replacement.did())
+        }
+        expect(posted?.verificationMethods).toEqual({
+          atproto: kind === 'signing' ? replacement.did() : key.did(),
+          atproto_kem: kind === 'kem' ? replacement.did() : kemKey.did(),
+          other: key.did(),
+        })
+        await operations.assureValidSig([key.did()], posted!)
+      },
+    )
+  })
+
   describe('createDid', () => {
     it('posts a genesis op carrying the kem key', async () => {
-      const kemKey = await Secp256k1Keypair.create()
+      const kemKey = await P256Keypair.create()
       const plc = await mockPlc((_req, res) => json(res, 200, {}))
       const created = await plc.client.createDid({
         signingKey: key.did(),
@@ -552,8 +778,9 @@ describe('plc client', () => {
         (c, signal) => c.updateData(did, key, (op) => op, { signal }),
       ],
       [
-        'updateAtprotoKey',
-        (c, signal) => c.updateAtprotoKey(did, key, key.did(), { signal }),
+        'updateAtprotoSigningKey',
+        (c, signal) =>
+          c.updateAtprotoSigningKey(did, key, key.did(), { signal }),
       ],
       [
         'updateHandle',
@@ -568,6 +795,10 @@ describe('plc client', () => {
         (c, signal) => c.updateRotationKeys(did, key, [key.did()], { signal }),
       ],
       ['tombstone', (c, signal) => c.tombstone(did, key, { signal })],
+      [
+        'updateAtprotoKemKey',
+        (c, signal) => c.updateAtprotoKemKey(did, key, key.did(), { signal }),
+      ],
     ]
 
     for (const [name, call] of updates) {

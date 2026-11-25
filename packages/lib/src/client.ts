@@ -6,7 +6,8 @@ import {
   createUpdateOp,
   didForCreateOp,
   tombstoneOp,
-  updateAtprotoKeyOp,
+  updateAtprotoKemKeyOp,
+  updateAtprotoSigningKeyOp,
   updateHandleOp,
   updatePdsOp,
   updateRotationKeysOp,
@@ -14,6 +15,8 @@ import {
 import * as t from './types.js'
 
 export type RequestOptions = {
+  /** Request headers, overriding the client's defaults. */
+  headers?: HeadersInit
   /**
    * Aborts the request(s) made by the call. An aborted call rejects with the
    * signal's `reason` (an `AbortError` DOMException unless another reason was
@@ -22,7 +25,14 @@ export type RequestOptions = {
   signal?: AbortSignal
 }
 
+export type MutationOptions = RequestOptions & {
+  /** Match any existing head instead of requiring the operation's `prev`. */
+  ignorePrevMismatch?: boolean
+}
+
 export type ClientOptions = {
+  /** Default headers sent with every request. */
+  headers?: HeadersInit
   /**
    * The `fetch` implementation used for requests. Defaults to the global
    * `fetch`, resolved at call time. Rejections from it (network failures,
@@ -33,12 +43,14 @@ export type ClientOptions = {
 
 export class Client {
   private customFetch: typeof globalThis.fetch | undefined
+  private headers: Headers
 
   constructor(
     public url: string,
     opts?: ClientOptions,
   ) {
     this.customFetch = opts?.fetch
+    this.headers = new Headers(opts?.headers)
   }
 
   /**
@@ -55,10 +67,16 @@ export class Client {
     opts?: RequestOptions,
   ): Promise<T> {
     const signal = opts?.signal
+    const headers = new Headers(this.headers)
+    new Headers(opts?.headers).forEach((value, name) =>
+      headers.set(name, value),
+    )
+    // Protocol headers take precedence over caller-supplied headers.
+    new Headers(init.headers).forEach((value, name) => headers.set(name, value))
     // a local variable, so the default fetch is called unbound
     const fetchFn = this.customFetch ?? globalThis.fetch
     try {
-      const res = await fetchFn(url, { ...init, signal })
+      const res = await fetchFn(url, { ...init, headers, signal })
       if (!res.ok) throw await errorFromResponse(res)
       return await read(res)
     } catch (err) {
@@ -132,13 +150,17 @@ export class Client {
   async sendOperation(
     did: string,
     op: t.OpOrTombstone,
-    opts?: RequestOptions,
+    opts?: MutationOptions,
   ): Promise<void> {
+    const headers = new Headers({ 'content-type': 'application/json' })
+    if (op.prev !== null) {
+      headers.set('if-match', opts?.ignorePrevMismatch ? '*' : `"${op.prev}"`)
+    }
     await this.request(
       this.postOpUrl(did),
       {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers,
         body: JSON.stringify(op),
       },
       // release the connection without buffering an unused body
@@ -191,21 +213,32 @@ export class Client {
     did: string,
     signer: Keypair,
     fn: (lastOp: t.UnsignedOperation) => Omit<t.UnsignedOperation, 'prev'>,
-    opts?: RequestOptions,
+    opts?: MutationOptions,
   ) {
     const lastOp = await this.ensureLastOp(did, opts)
     const op = await createUpdateOp(lastOp, signer, fn)
     await this.sendOperation(did, op, opts)
   }
 
-  async updateAtprotoKey(
+  async updateAtprotoSigningKey(
     did: string,
     signer: Keypair,
-    atprotoKey: string,
-    opts?: RequestOptions,
+    signingKey: string,
+    opts?: MutationOptions,
   ) {
     const lastOp = await this.ensureLastOp(did, opts)
-    const op = await updateAtprotoKeyOp(lastOp, signer, atprotoKey)
+    const op = await updateAtprotoSigningKeyOp(lastOp, signer, signingKey)
+    await this.sendOperation(did, op, opts)
+  }
+
+  async updateAtprotoKemKey(
+    did: string,
+    signer: Keypair,
+    kemKey: string,
+    opts?: MutationOptions,
+  ) {
+    const lastOp = await this.ensureLastOp(did, opts)
+    const op = await updateAtprotoKemKeyOp(lastOp, signer, kemKey)
     await this.sendOperation(did, op, opts)
   }
 
@@ -213,7 +246,7 @@ export class Client {
     did: string,
     signer: Keypair,
     handle: string,
-    opts?: RequestOptions,
+    opts?: MutationOptions,
   ) {
     const lastOp = await this.ensureLastOp(did, opts)
     const op = await updateHandleOp(lastOp, signer, handle)
@@ -224,7 +257,7 @@ export class Client {
     did: string,
     signer: Keypair,
     endpoint: string,
-    opts?: RequestOptions,
+    opts?: MutationOptions,
   ) {
     const lastOp = await this.ensureLastOp(did, opts)
     const op = await updatePdsOp(lastOp, signer, endpoint)
@@ -235,14 +268,14 @@ export class Client {
     did: string,
     signer: Keypair,
     keys: string[],
-    opts?: RequestOptions,
+    opts?: MutationOptions,
   ) {
     const lastOp = await this.ensureLastOp(did, opts)
     const op = await updateRotationKeysOp(lastOp, signer, keys)
     await this.sendOperation(did, op, opts)
   }
 
-  async tombstone(did: string, signer: Keypair, opts?: RequestOptions) {
+  async tombstone(did: string, signer: Keypair, opts?: MutationOptions) {
     const lastOp = await this.ensureLastOp(did, opts)
     const prev = await cidForCbor(lastOp)
     const op = await tombstoneOp(prev, signer)
@@ -262,17 +295,17 @@ export class Client {
  */
 export class PlcClientError extends Error {
   override name: string = 'PlcClientError'
-  /** Response headers, lowercased. */
-  public headers: Record<string, string>
+  /** Response headers. */
+  public headers: Headers
 
   constructor(
     public status: number,
     public data: unknown,
     public message: string,
-    opts?: { headers?: Record<string, string>; cause?: unknown },
+    opts?: { headers?: Headers; cause?: unknown },
   ) {
     super(message, { cause: opts?.cause })
-    this.headers = opts?.headers ?? {}
+    this.headers = opts?.headers ?? new Headers()
   }
 }
 
@@ -287,9 +320,25 @@ export class PlcConflictError extends PlcClientError {
   constructor(
     data: unknown,
     message: string,
-    opts?: { headers?: Record<string, string>; cause?: unknown },
+    opts?: { headers?: Headers; cause?: unknown },
   ) {
     super(409, data, message, opts)
+  }
+}
+
+/**
+ * The directory rejected the request with 412 because `If-Match` did not
+ * match the DID's latest operation, or the DID does not exist.
+ */
+export class PlcPrevMismatchError extends PlcClientError {
+  override name: string = 'PlcPrevMismatchError'
+
+  constructor(
+    data: unknown,
+    message: string,
+    opts?: { headers?: Headers; cause?: unknown },
+  ) {
+    super(412, data, message, opts)
   }
 }
 
@@ -303,13 +352,10 @@ export class TombstonedDidError extends Error {
 }
 
 const errorFromResponse = async (res: Response): Promise<PlcClientError> => {
-  const headers: Record<string, string> = {}
-  res.headers.forEach((value, name) => {
-    headers[name.toLowerCase()] = value
-  })
+  const headers = res.headers
   const text = await res.text()
   let data: unknown = text
-  if (headers['content-type']?.includes('json')) {
+  if (headers.get('content-type')?.includes('json')) {
     try {
       data = JSON.parse(text)
     } catch {
@@ -326,6 +372,7 @@ const errorFromResponse = async (res: Response): Promise<PlcClientError> => {
       : `Request failed with status code ${res.status}`
   const opts = { headers }
   if (res.status === 409) return new PlcConflictError(data, message, opts)
+  if (res.status === 412) return new PlcPrevMismatchError(data, message, opts)
   return new PlcClientError(res.status, data, message, opts)
 }
 
