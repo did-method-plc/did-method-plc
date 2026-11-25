@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import * as http from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { once } from 'node:events'
-import { Secp256k1Keypair } from '@atproto/crypto'
+import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import {
   Client,
   type MutationOptions,
@@ -538,9 +538,12 @@ describe('plc client', () => {
     it.each(['signing', 'kem'] as const)(
       'updates the %s key while preserving other verification methods',
       async (kind) => {
-        const replacement = await Secp256k1Keypair.create()
+        const kemKey = await P256Keypair.create()
+        const replacement = await (kind === 'kem'
+          ? P256Keypair.create()
+          : Secp256k1Keypair.create())
         const previous = await operations.createAtprotoUpdateOp(lastOp, key, {
-          kemKey: key.did(),
+          kemKey: kemKey.did(),
           verificationMethods: { other: key.did() },
         })
         let posted: t.Operation | undefined
@@ -558,7 +561,7 @@ describe('plc client', () => {
         }
         expect(posted?.verificationMethods).toEqual({
           atproto: kind === 'signing' ? replacement.did() : key.did(),
-          atproto_kem: kind === 'kem' ? replacement.did() : key.did(),
+          atproto_kem: kind === 'kem' ? replacement.did() : kemKey.did(),
           other: key.did(),
         })
         await operations.assureValidSig([key.did()], posted!)
@@ -568,7 +571,7 @@ describe('plc client', () => {
 
   describe('createDid', () => {
     it('posts a genesis op carrying the kem key', async () => {
-      const kemKey = await Secp256k1Keypair.create()
+      const kemKey = await P256Keypair.create()
       const plc = await mockPlc((_req, res) => json(res, 200, {}))
       const created = await plc.client.createDid({
         signingKey: key.did(),
