@@ -8,7 +8,7 @@ import {
   didForCreateOp,
   normalizeOp,
   updateRotationKeysOp,
-  updateAtprotoKeyOp,
+  updateAtprotoSigningKeyOp,
   validateOperationLog,
 } from '../src/index.js'
 import * as fs from 'fs/promises'
@@ -74,7 +74,7 @@ describe('compatibility', () => {
     const legacyCid = await cidForCbor(legacyOp)
     const newSigner = await Secp256k1Keypair.create()
     const newRotater = await Secp256k1Keypair.create()
-    const nextOp = await updateAtprotoKeyOp(
+    const nextOp = await updateAtprotoSigningKeyOp(
       legacyOp,
       signingKey,
       newSigner.did(),

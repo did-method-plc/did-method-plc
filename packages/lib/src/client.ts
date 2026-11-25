@@ -3,11 +3,11 @@ import type { Keypair } from '@atproto/crypto'
 import type { AtprotoOpOpts } from './operations.js'
 import {
   atprotoOp,
-  createAtprotoUpdateOp,
   createUpdateOp,
   didForCreateOp,
   tombstoneOp,
-  updateAtprotoKeyOp,
+  updateAtprotoKemKeyOp,
+  updateAtprotoSigningKeyOp,
   updateHandleOp,
   updatePdsOp,
   updateRotationKeysOp,
@@ -227,7 +227,7 @@ export class Client {
     opts?: MutationOptions,
   ) {
     const lastOp = await this.ensureLastOp(did, opts)
-    const op = await updateAtprotoKeyOp(lastOp, signer, signingKey)
+    const op = await updateAtprotoSigningKeyOp(lastOp, signer, signingKey)
     await this.sendOperation(did, op, opts)
   }
 
@@ -238,7 +238,7 @@ export class Client {
     opts?: MutationOptions,
   ) {
     const lastOp = await this.ensureLastOp(did, opts)
-    const op = await createAtprotoUpdateOp(lastOp, signer, { kemKey })
+    const op = await updateAtprotoKemKeyOp(lastOp, signer, kemKey)
     await this.sendOperation(did, op, opts)
   }
 

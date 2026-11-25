@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest'
+import { cidForCbor } from '@atproto/common'
 import { P256Keypair, Secp256k1Keypair } from '@atproto/crypto'
 import * as operations from '../src/operations.js'
 
@@ -119,7 +120,7 @@ describe('atproto operation helpers', () => {
     })
   })
 
-  describe('createAtprotoUpdateOp', () => {
+  describe('update helpers', () => {
     const genesis = async () =>
       operations.atprotoOp({
         ...base(),
@@ -129,35 +130,40 @@ describe('atproto operation helpers', () => {
       })
 
     it('adds a kem key while preserving other verification methods', async () => {
-      const update = await operations.createAtprotoUpdateOp(
-        await genesis(),
+      const lastOp = await genesis()
+      const update = await operations.updateAtprotoKemKeyOp(
+        lastOp,
         rotationKey,
-        { kemKey: kemKey.did() },
+        kemKey.did(),
       )
       expect(update.verificationMethods).toEqual({
         atproto: signingKey.did(),
         atproto_kem: kemKey.did(),
         other: otherKey.did(),
       })
+      expect(update.prev).toEqual((await cidForCbor(lastOp)).toString())
+      await operations.assureValidSig([rotationKey.did()], update)
     })
 
     it('preserves the kem key when rotating the signing key', async () => {
-      const withKem = await operations.createAtprotoUpdateOp(
+      const withKem = await operations.updateAtprotoKemKeyOp(
         await genesis(),
         rotationKey,
-        { kemKey: kemKey.did() },
+        kemKey.did(),
       )
       const newSigningKey = await Secp256k1Keypair.create()
-      const update = await operations.createAtprotoUpdateOp(
+      const update = await operations.updateAtprotoSigningKeyOp(
         withKem,
         rotationKey,
-        { signingKey: newSigningKey.did() },
+        newSigningKey.did(),
       )
       expect(update.verificationMethods).toEqual({
         atproto: newSigningKey.did(),
         atproto_kem: kemKey.did(),
         other: otherKey.did(),
       })
+      expect(update.prev).toEqual((await cidForCbor(withKem)).toString())
+      await operations.assureValidSig([rotationKey.did()], update)
     })
 
     it('merges extra verification methods over existing ones', async () => {

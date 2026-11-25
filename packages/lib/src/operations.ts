@@ -159,12 +159,20 @@ export const createAtprotoUpdateOp = async (
   })
 }
 
-export const updateAtprotoKeyOp = async (
+export const updateAtprotoSigningKeyOp = async (
   lastOp: t.CompatibleOp,
   signer: Keypair,
   signingKey: string,
 ): Promise<t.Operation> => {
   return createAtprotoUpdateOp(lastOp, signer, { signingKey })
+}
+
+export const updateAtprotoKemKeyOp = async (
+  lastOp: t.CompatibleOp,
+  signer: Keypair,
+  kemKey: string,
+): Promise<t.Operation> => {
+  return createAtprotoUpdateOp(lastOp, signer, { kemKey })
 }
 
 export const updateHandleOp = async (
