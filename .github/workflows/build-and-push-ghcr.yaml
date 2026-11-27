@@ -64,20 +64,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # The dev stage of Forge Central pins this image by digest rather than
-      # following the `main` tag, so the run that published it is the one that
-      # knows what to deploy. Only fil-forge's `main` builds feed that stage;
-      # other refs and forks publish to their own namespace and stop there.
+      # Forge Central's staging environment pins this image by digest rather
+      # than following the `main` tag, so the run that published it is the one
+      # that knows what to deploy. Only fil-forge's `main` builds feed that
+      # environment; other refs and forks publish to their own namespace and
+      # stop there.
       #
       # The receiver opens a pull request pinning the digest with auto-merge
       # enabled, and infra-central's "Check and deploy" runs `tofu apply` on
-      # dev/apps on every push to its `main`, so merging it is what deploys.
-      # Prod pins are promoted by hand.
+      # staging/apps on every push to its `main`, so merging it is what
+      # deploys. Prod pins are promoted by hand: a person merges the pull
+      # request infra-central keeps open to copy staging's pins to prod.
       #
       # This workflow has no `concurrency` guard, so two pushes to `main` build
       # side by side and finish in whatever order the arm64 legs happen to take.
       # Last dispatch wins at the receiver, so the tip check below is what keeps
-      # an older build from repinning dev behind a newer one.
+      # an older build from repinning staging behind a newer one.
       - name: Resolve the source pull request
         if: github.ref == 'refs/heads/main' && github.repository == 'fil-forge/did-method-plc'
         id: source
@@ -115,10 +117,10 @@ jobs:
             echo "is_tip=true" >> "$GITHUB_OUTPUT"
           else
             echo "is_tip=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::main has moved to $tip; leaving the dev pin to that build"
+            echo "::notice::main has moved to $tip; leaving the staging pin to that build"
           fi
 
-      - name: Request a digest bump in the Forge Central "dev" environment
+      - name: Request a digest bump in the Forge Central "staging" environment
         if: |
           github.ref == 'refs/heads/main'
           && github.repository == 'fil-forge/did-method-plc'
